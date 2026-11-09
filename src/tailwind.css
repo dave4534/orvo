@@ -52,6 +52,7 @@
     --color-card: var(--card);
     --color-foreground: var(--foreground);
     --color-background: var(--background);
+    --color-stack: var(--stack);
     --color-info: var(--info);
     --color-info-foreground: var(--info-foreground);
     --color-info-border: var(--info-border);
@@ -75,7 +76,9 @@
 }
 
 :root {
-    --background: oklch(0.975 0.003 100);
+    --background: oklch(1 0 0);
+    /** Light gray behind the stacked claim cards. Kept apart from --background so the rest of the UI can be white. */
+    --stack: oklch(0.975 0.003 100);
     --foreground: oklch(0.2 0.01 270);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
@@ -113,7 +116,7 @@
     --danger-border: oklch(0.8 0.1 27);
     --radius: 0.625rem;
     --header-height: 4rem;
-    --sidebar: oklch(0.985 0.002 100);
+    --sidebar: oklch(1 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
     --sidebar-primary: oklch(0.205 0 0);
     --sidebar-primary-foreground: oklch(0.985 0 0);
@@ -125,6 +128,7 @@
 
 .dark {
     --background: oklch(0.145 0 0);
+    --stack: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.205 0 0);
     --card-foreground: oklch(0.985 0 0);

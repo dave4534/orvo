@@ -399,7 +399,7 @@ export function ClaimsView() {
         {inTriage && detailsOpen ? (
           <>
             <ResizableHandle />
-            <ResizablePanel id="details" defaultSize={384} minSize={300} maxSize={720} groupResizeBehavior="preserve-pixel-size" style={{ overflow: "hidden" }}>
+            <ResizablePanel id="details" defaultSize={520} minSize={420} maxSize={720} groupResizeBehavior="preserve-pixel-size" style={{ overflow: "hidden" }}>
               <MoreInfoPanel claim={openClaim} allClaims={claims} tab={moreTab} onTab={setMoreTab} onClose={() => setDetailsOpen(false)} onOpenPastClaim={setPastId} />
             </ResizablePanel>
           </>

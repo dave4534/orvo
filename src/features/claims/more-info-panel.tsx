@@ -232,17 +232,17 @@ function Policy({ claim }: { claim: LocalClaim }) {
       <Table className="table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[34%] pl-0 text-left">Check</TableHead>
-            <TableHead className="text-left">Policy</TableHead>
-            <TableHead className="w-24 text-left">Passed</TableHead>
+            <TableHead className="w-[34%] px-4 py-3 text-left">Check</TableHead>
+            <TableHead className="px-4 py-3 text-left">Policy</TableHead>
+            <TableHead className="w-28 px-4 py-3 text-left">Passed</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {claim.agent.checks.map((c) => (
             <TableRow key={c.id}>
-              <TableCell className="pl-0 font-medium whitespace-normal">{c.label}</TableCell>
-              <TableCell className="whitespace-normal text-left text-muted-foreground">{rules.find((r) => r.id === c.rule_id)?.text ?? "No policy number"}</TableCell>
-              <TableCell className="text-left">
+              <TableCell className="px-4 py-4 font-medium whitespace-normal">{c.label}</TableCell>
+              <TableCell className="px-4 py-4 whitespace-normal text-left text-muted-foreground">{rules.find((r) => r.id === c.rule_id)?.text ?? "No policy number"}</TableCell>
+              <TableCell className="px-4 py-4 text-left">
                 <Badge variant="outline" className={cn("bg-card", CHECK_STYLE[c.result])}>
                   {PASSED_LABEL[c.result]}
                 </Badge>

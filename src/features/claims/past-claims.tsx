@@ -26,10 +26,10 @@ export function PastClaims({ claim, allClaims, onOpenClaim }: Props) {
     <div className="overflow-hidden rounded-lg border">
       <Table className="table-fixed">
         <TableHeader>
-          <TableRow className="bg-muted/40">
-            <TableHead>Claim</TableHead>
-            <TableHead className="w-24 text-right">Amount</TableHead>
-            <TableHead className="w-36">Status</TableHead>
+          <TableRow>
+            <TableHead className="px-4 py-3 text-left">Claim</TableHead>
+            <TableHead className="w-24 px-4 py-3 text-left">Amount</TableHead>
+            <TableHead className="w-44 px-4 py-3 text-left">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -54,15 +54,15 @@ export function PastClaims({ claim, allClaims, onOpenClaim }: Props) {
                       }
                 }
               >
-                <TableCell className="whitespace-normal">
+                <TableCell className="px-4 py-4 whitespace-normal">
                   <div className="text-base font-semibold">
                     {c.merchant}
                     {related.has(c.id) ? <span className="ml-1.5 text-xs font-normal text-muted-foreground">Related</span> : null}
                   </div>
                   <div className="text-xs text-muted-foreground">{formatSubmitted(c.submitted_at)}</div>
                 </TableCell>
-                <TableCell className="text-right tabular-nums">{formatUsd(c.amount.usd_claimed)}</TableCell>
-                <TableCell className="whitespace-normal">
+                <TableCell className="px-4 py-4 text-left tabular-nums">{formatUsd(c.amount.usd_claimed)}</TableCell>
+                <TableCell className="px-4 py-4 whitespace-normal">
                   <Badge variant="outline" className="bg-card text-muted-foreground">
                     {rowStatus(c)}
                   </Badge>

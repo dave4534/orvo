@@ -178,7 +178,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
   const savedPreview = savedInput ? actionPreview(claim, savedInput, allClaims) : null;
 
   return (
-    <section aria-label={`Claim ${claim.id}, ${full}`} className={cn("@container flex min-h-0 min-w-0 flex-1 flex-col", flat ? "bg-card" : "bg-background")}>
+    <section aria-label={`Claim ${claim.id}, ${full}`} className={cn("@container flex min-h-0 min-w-0 flex-1 flex-col", flat ? "bg-card" : "bg-stack")}>
       <div className={cn("flex min-h-0 flex-1 flex-col overflow-y-auto", flat ? "p-0" : "p-6", padded && "@3xl:px-[100px] @3xl:[@media(min-height:880px)]:py-[100px]")}>
         <div className={cn("relative flex flex-1 flex-col", !flat && "pb-5")}>
           {stacked ? (
