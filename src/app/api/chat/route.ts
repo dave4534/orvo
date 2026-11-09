@@ -34,7 +34,7 @@ const bodySchema = z.object({
 
 const json = (body: unknown, status: number, headers?: Record<string, string>) => Response.json(body, { status, headers });
 
-const UI_TOOLS = ["openClaim", "nextClaim", "previousClaim", "backToClaims", "openDetails", "closeDetails", "showClaimsTab", "takeAction", "undoLastDecision", "searchClaims", "clearSearch"];
+const UI_TOOLS = ["openClaim", "nextClaim", "previousClaim", "backToClaims", "openDetails", "closeDetails", "showClaimsTab", "takeAction", "undoLastDecision", "searchClaims", "clearSearch", "confirmDialog", "cancelDialog"];
 
 /**
  * Keeps the text of earlier turns. Lookups are left out (the model asks again if it needs them). Finished screen actions are kept

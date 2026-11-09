@@ -116,10 +116,12 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
         const surge = fact(claim, /surge/i);
         return {
           kind: "money",
-          left: { label: "Usual", tone: "neutral", amount: usual, sub: "Median of other SFO rides this week" },
+          left: { label: "Policy", tone: "neutral", amount: usual, sub: "No limit. Median of other SFO rides this week" },
           right: { label: "Claim", tone: "info", amount: claimed, sub: surge ? `Surge ${surge}` : undefined },
           scale: scaleFor(usual, claimed),
           sentence: `${formatUsd(claimed - usual)} above a usual ride. No policy limit applies.`,
+          // No policy rule is broken, so the card shows the green check like the other cards that agree.
+          matches: true,
           evidence: note,
         };
       }

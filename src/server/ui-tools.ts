@@ -17,6 +17,8 @@ export const UI_TOOL_NAMES = [
   "undoLastDecision",
   "searchClaims",
   "clearSearch",
+  "confirmDialog",
+  "cancelDialog",
 ] as const;
 
 export const CLAIM_TABS = ["needs_review", "waiting", "done", "all"] as const;
@@ -61,13 +63,18 @@ export function buildUiTools(openClaim: LocalClaim | undefined, claims: LocalCla
       description: "Open the Details panel on one of its tabs: overview (transaction and receipt), policy (checks run), past (the employee's other claims) or chat (messages with the employee).",
       inputSchema: z.object({ tab: z.enum(DETAIL_TABS) }),
     });
+    tools.confirmDialog = tool({
+      description: 'Send or confirm the pop-up that is open, for example the message to an employee. Use when Noa says "send it", "yes", "go ahead" or similar after you opened one.',
+      inputSchema: z.object({}),
+    });
+    tools.cancelDialog = tool({ description: 'Close the pop-up that is open without sending. Use when Noa says "cancel" or "never mind".', inputSchema: z.object({}) });
     tools.closeDetails = tool({ description: "Close the Details panel.", inputSchema: z.object({}) });
   }
 
   if (labels.length > 0) {
     tools.takeAction = tool({
       description:
-        "Carry out one of the buttons on the open claim now: approve, decline, hold for a receipt, ask the employee a question, send to Finance, approve a different amount. Only call it when Noa has asked for that decision or accepted your suggestion. The decision is applied at once, and Noa can undo it.",
+        "Carry out one of the buttons on the open claim now: approve, decline, hold for a receipt, send to Finance, approve a different amount. The button that asks the employee a question opens the message pop-up for Noa to send instead of sending at once. Only call it when Noa has asked for that decision or accepted your suggestion. The decision is applied at once, and Noa can undo it.",
       inputSchema: z.object({
         buttonLabel: z.enum(labels as [string, ...string[]]).describe("Exact label of the button"),
         amount: z.number().positive().optional().describe('Only for "Approve a different amount": the amount in USD that Noa said. Required there.'),

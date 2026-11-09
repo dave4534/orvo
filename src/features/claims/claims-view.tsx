@@ -45,7 +45,7 @@ const tabOfStatus = (status: Status): TabId =>
 
 export function ClaimsView() {
   const { claims, sessionIds, simulateError, setSimulateError, reset, undoLast } = useClaims();
-  const { aiOpen, setAiOpen, setAiSession, addAiMessage, hasAiMessages, resetAi, setChatContext, setUiToolHandler, runAction, voiceOpen, homeRequest } = useWorkspace();
+  const { aiOpen, setAiOpen, setAiSession, addAiMessage, hasAiMessages, resetAi, setChatContext, setUiToolHandler, runAction, controlDialog, voiceOpen, homeRequest } = useWorkspace();
   const seenHome = useRef(homeRequest);
 
   const [tab, setTab] = useState<TabId>("needs_review");
@@ -115,8 +115,12 @@ export function ClaimsView() {
             amount: typeof input.amount === "number" ? input.amount : undefined,
             message: typeof input.message === "string" ? input.message : undefined,
           });
-          return result.ok ? { ok: true, done: input.buttonLabel } : { ok: false, error: result.error ?? "That button is not available." };
+          return result.ok ? { ok: true, done: input.buttonLabel, ...(result.note ? { note: result.note } : {}) } : { ok: false, error: result.error ?? "That button is not available." };
         }
+        case "confirmDialog":
+          return { ...controlDialog("confirm") };
+        case "cancelDialog":
+          return { ...controlDialog("cancel") };
         case "searchClaims": {
           if (openId !== null) return { ok: false, error: "A claim is open. Go back to claims first." };
           changeFilters({ ...filters, query: String(input.query ?? "") });

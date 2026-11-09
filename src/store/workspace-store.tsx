@@ -7,7 +7,7 @@ import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls, type
 import type { ChatContext } from "@/logic/chat-context";
 
 /** Screen tools the browser runs. Must match src/server/ui-tools.ts. */
-const UI_TOOLS = new Set(["openClaim", "nextClaim", "previousClaim", "backToClaims", "openDetails", "closeDetails", "showClaimsTab", "takeAction", "undoLastDecision", "searchClaims", "clearSearch"]);
+const UI_TOOLS = new Set(["openClaim", "nextClaim", "previousClaim", "backToClaims", "openDetails", "closeDetails", "showClaimsTab", "takeAction", "undoLastDecision", "searchClaims", "clearSearch", "confirmDialog", "cancelDialog"]);
 
 export type AiMeta = {
   /** Posted by the app itself (claim summary and recommendation, offline reply), not by the model. */
@@ -25,7 +25,8 @@ type NewMessage = { role: "user" | "assistant"; text: string } & AiMeta;
 
 /** What a spoken or typed command can add to a button: the wording of a message, or an amount. */
 export type ActionExtra = { message?: string; amount?: number; /** The button was clicked, so a missing amount opens the dialog instead of failing. */ interactive?: boolean };
-export type ActionRunResult = { ok: boolean; error?: string };
+export type ActionRunResult = { ok: boolean; error?: string; note?: string };
+export type DialogControl = { confirm: () => ActionRunResult; cancel: () => ActionRunResult };
 
 /** Which chat is shown: one per claim, plus one for the claims list. */
 export const LIST_SESSION = "list";
@@ -60,6 +61,9 @@ type WorkspaceStore = {
   runAction: (label: string, extra?: ActionExtra) => ActionRunResult;
   /** The claims view tells the chat where the user is and what changed this session. */
   setChatContext: (read: (() => ChatContext) | null) => void;
+  /** The triage panel registers the open pop-up (for example the message to an employee) so the chat can send or cancel it. */
+  setDialogControl: (control: DialogControl | null) => void;
+  controlDialog: (action: "confirm" | "cancel") => ActionRunResult;
   /** The claims view runs screen tools for the chat. Returns the result sent back to the model. */
   setUiToolHandler: (run: ((name: string, input: Record<string, unknown>) => Record<string, unknown>) | null) => void;
   /** The top bar logo asks the claims view to go back to the Expenses list. Each call bumps homeRequest. */
@@ -124,6 +128,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [epoch, setEpoch] = useState(0);
   const [homeRequest, setHomeRequest] = useState(0);
   const goHome = useCallback(() => setHomeRequest((n) => n + 1), []);
+  const dialog = useRef<DialogControl | null>(null);
   const runner = useRef<((label: string, extra?: ActionExtra) => ActionRunResult) | null>(null);
 
   const chat = useMemo(() => getChat(epoch, aiSession), [epoch, aiSession]);
@@ -158,6 +163,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const setReplyListener = useCallback((run: ((text: string) => void) | null) => {
     chatHooks.reply = run;
   }, []);
+  const setDialogControl = useCallback((control: DialogControl | null) => {
+    dialog.current = control;
+  }, []);
+  const controlDialog = useCallback((action: "confirm" | "cancel"): ActionRunResult => (dialog.current ? dialog.current[action]() : { ok: false, error: "There is no pop-up open." }), []);
   const setUiToolHandler = useCallback((run: ((name: string, input: Record<string, unknown>) => Record<string, unknown>) | null) => {
     chatHooks.ui = run;
   }, []);
@@ -169,8 +178,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ aiOpen, setAiOpen, aiSession, setAiSession, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome }),
-    [aiOpen, aiSession, messages, status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome],
+    () => ({ aiOpen, setAiOpen, aiSession, setAiSession, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome }),
+    [aiOpen, aiSession, messages, status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

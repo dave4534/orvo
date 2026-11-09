@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -36,12 +36,16 @@ type Props = {
   spec: ActionSpec;
   onConfirm: (input: ActionInput) => void;
   onCancel: () => void;
+  /** Wording to start with instead of the standard message, for example what was dictated. */
+  initialMessage?: string;
+  /** Lets the AI chat confirm the dialog ("send it"). It gets the same check as the Confirm button. */
+  registerSubmit?: (submit: (() => boolean) | null) => void;
 };
 
-export function ActionDialog({ claim, allClaims, spec, onConfirm, onCancel }: Props) {
+export function ActionDialog({ claim, allClaims, spec, onConfirm, onCancel, initialMessage, registerSubmit }: Props) {
   const claimed = claim.amount.usd_claimed;
   const [amountText, setAmountText] = useState(spec.askAmount ? "" : "");
-  const [message, setMessage] = useState(() => defaultMessage(spec, claim));
+  const [message, setMessage] = useState(() => initialMessage ?? defaultMessage(spec, claim));
   const [touched, setTouched] = useState(false);
 
   const typed = Number(amountText.replace(/[$,\s]/g, ""));
@@ -64,6 +68,15 @@ export function ActionDialog({ claim, allClaims, spec, onConfirm, onCancel }: Pr
   const preview = actionPreview(claim, input, allClaims);
   const messageMissing = spec.askMessage === "ask" || spec.askMessage === "hold" ? message.trim() === "" : false;
   const blocked = Boolean(amountError) || messageMissing;
+
+  useEffect(() => {
+    registerSubmit?.(() => {
+      if (blocked) return false;
+      onConfirm(input);
+      return true;
+    });
+    return () => registerSubmit?.(null);
+  });
 
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>

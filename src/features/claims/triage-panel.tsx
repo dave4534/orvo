@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Ban, Check, ChevronDown, CircleDollarSign, Clock, Info, Landmark, ListChecks, MessageSquare, Pencil, Wrench, type LucideIcon } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -89,8 +89,11 @@ function retarget(spec: ActionSpec, claim: LocalClaim): ActionSpec {
 /** Triage column of the claims queue: the claim, its comparison and the decision actions (actions stay pinned at the bottom). */
 export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMore, padded = true, flat = false, primary = true, onDecided, onReopen, onContinue }: Props) {
   const { perform, sendMessage } = useClaims();
-  const { setActionRunner } = useWorkspace();
+  const { setActionRunner, setDialogControl } = useWorkspace();
   const [pending, setPending] = useState<ActionSpec | null>(null);
+  /** Wording to start the pop-up with, when it was opened from the chat. */
+  const [pendingMessage, setPendingMessage] = useState<string | undefined>(undefined);
+  const dialogSubmit = useRef<(() => boolean) | null>(null);
   const [fixOpen, setFixOpen] = useState(false);
   const [error, setError] = useState<ActionInput | null>(null);
   const [choice, setChoice] = useState<Outcome>("keep");
@@ -124,8 +127,10 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
   function choose(spec: ActionSpec) {
     const target = retarget(spec, claim);
     track("action_chosen", { claim: claim.id, action: target.id, recommended: rec?.recommended?.label === spec.label });
-    if (target.confirm) setPending(target);
-    else run(target.input);
+    if (target.confirm) {
+      setPendingMessage(undefined);
+      setPending(target);
+    } else run(target.input);
   }
 
   useEffect(() => {
@@ -137,6 +142,12 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
             const spec = allActionsFor(claim).find((s) => s.label === label);
             if (!spec) return { ok: false, error: "That button is not available." };
             const target = retarget(spec, claim);
+            // Asking the employee a question opens the message pop-up with the wording filled in, so it can be read and sent or cancelled.
+            if (spec.askMessage === "ask") {
+              setPendingMessage(extra?.message?.trim() || undefined);
+              setPending(target);
+              return { ok: true, note: `The message to ${name} is open for Noa to check. She can say "send it" to send it or "cancel" to close it.` };
+            }
             let input = target.input;
             if (spec.askAmount) {
               const amount = extra?.amount;
@@ -161,7 +172,22 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
           }
         : null,
     );
-    return () => setActionRunner(null);
+    // The chat can send or cancel the pop-up that is open.
+    setDialogControl(
+      pending
+        ? {
+            confirm: () => (dialogSubmit.current?.() ? { ok: true } : { ok: false, error: "The pop-up is not ready to send." }),
+            cancel: () => {
+              setPending(null);
+              return { ok: true };
+            },
+          }
+        : null,
+    );
+    return () => {
+      setActionRunner(null);
+      setDialogControl(null);
+    };
   });
 
   // Menu: decision actions not already shown as buttons, then actions about Orvo's work.
@@ -462,6 +488,10 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
           claim={claim}
           allClaims={allClaims}
           spec={pending}
+          initialMessage={pendingMessage}
+          registerSubmit={(submit) => {
+            dialogSubmit.current = submit;
+          }}
           onCancel={() => setPending(null)}
           onConfirm={run}
         />
