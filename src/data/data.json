@@ -1,0 +1,6819 @@
+{
+  "meta": {
+    "dataset": "Orvo expense claims, Noa's week",
+    "version": "1.0.0",
+    "generated_on": "2026-11-08",
+    "generated_by": "Claude (AI-assisted), hand-written scenario data, deterministic build script in _source/build.py",
+    "now": "2026-11-16T08:30:00",
+    "time_note": "All timestamps are local company time with no offset. Treat 'now' as the moment Noa opens her queue.",
+    "week": {
+      "start": "2026-11-09",
+      "end": "2026-11-15"
+    },
+    "currency": "USD",
+    "company": {
+      "name": "Spotify",
+      "note": "Stand-in from Story.md. Swap this one field to rename the company everywhere."
+    },
+    "manager_id": "noa",
+    "finance_id": "finance",
+    "baseline": {
+      "avg_days_to_approval": 9,
+      "goal_days_to_approval": 2,
+      "weekly_claims_a_year_ago": 10,
+      "weekly_claims_now": 40,
+      "minutes_per_claim_today": [
+        1,
+        2
+      ],
+      "steps_per_claim_today": 5
+    },
+    "story_ref": "Story.md: team offsite around the MONO Music Conference, San Francisco, 12 to 15 Nov 2026 (fictional dates for the show and dinner).",
+    "counts": {
+      "total": 40,
+      "auto_approved": 26,
+      "chasing": 3,
+      "auto_declined": 2,
+      "escalated_total": 9,
+      "waiting_on_noa": 7,
+      "resolved_by_noa": 2,
+      "planted_agent_mistakes": 3
+    }
+  },
+  "assumptions": [
+    "Policy has only the three assignment rules. Everything else the agent does (FX tolerance, duplicate matching, unusual-amount flag, linked-claims flag) is our assumption and is marked in policy.agent_settings.",
+    "External guests (ext_ravi, ext_guest1, ext_speaker1...) appear only in attendee lists. They are not people in the system.",
+    "Exchange rates are fixtures, not real quotes. EUR to USD is 1.0800 and SEK to USD is 0.1052 on 12 Nov 2026.",
+    "The company is named Spotify in Story.md but Personas.md describes a small-to-midsize software company. Only meta.company.name needs to change.",
+    "Payout is out of scope. 'approved' means approved, not paid.",
+    "Noa does not attend the concert. Kwame bought 9 tickets for the team of 9, so Noa is not approving her own spend.",
+    "Merchant names are fictional except the MONO Music Conference and the Red Hot Chili Peppers, which come from Story.md."
+  ],
+  "policy": {
+    "version": "v3",
+    "published_at": "2026-09-01T09:00:00",
+    "source": "assignment",
+    "rules": [
+      {
+        "id": "meal_cap",
+        "text": "Meals: up to $60 per person, per meal",
+        "type": "cap_per_person",
+        "category": "meals",
+        "limit_usd": 60,
+        "source": "assignment"
+      },
+      {
+        "id": "receipt_required",
+        "text": "Receipt required for anything over $25",
+        "type": "receipt_threshold",
+        "threshold_usd": 25,
+        "source": "assignment"
+      },
+      {
+        "id": "finance_over_1000",
+        "text": "Over $1,000 also needs Finance approval",
+        "type": "approval_threshold",
+        "threshold_usd": 1000,
+        "approver": "finance",
+        "source": "assignment"
+      }
+    ],
+    "agent_settings": {
+      "note": "Not in the assignment. These are our assumptions so the agent behaves consistently. Change freely.",
+      "source": "assumption",
+      "auto_approve_when_all_checks_pass": true,
+      "chase": {
+        "max_attempts": 2,
+        "hours_between_attempts": 24,
+        "escalate_after_hours_of_silence": 24
+      },
+      "fx_tolerance_pct": 3,
+      "unusual_amount_multiple_of_median": 3,
+      "linked_claims_window_hours": 24
+    }
+  },
+  "people": [
+    {
+      "id": "noa",
+      "name": "Noa",
+      "role": "manager",
+      "based_in": null
+    },
+    {
+      "id": "finance",
+      "name": "Finance",
+      "role": "finance_approver",
+      "based_in": null
+    },
+    {
+      "id": "marco",
+      "name": "Marco Bellanova",
+      "role": "team_member",
+      "based_in": null
+    },
+    {
+      "id": "aaliyah",
+      "name": "Aaliyah Washington",
+      "role": "team_member",
+      "based_in": null
+    },
+    {
+      "id": "wei",
+      "name": "Wei Chen",
+      "role": "team_member",
+      "based_in": null
+    },
+    {
+      "id": "priya",
+      "name": "Priya Raman",
+      "role": "team_member",
+      "based_in": "Stockholm"
+    },
+    {
+      "id": "dima",
+      "name": "Dmitri \"Dima\" Volkov",
+      "role": "team_member",
+      "based_in": "Stockholm"
+    },
+    {
+      "id": "carmen",
+      "name": "Carmen Delgado",
+      "role": "team_member",
+      "based_in": null
+    },
+    {
+      "id": "kwame",
+      "name": "Kwame Mensah",
+      "role": "team_member",
+      "based_in": null
+    },
+    {
+      "id": "fatima",
+      "name": "Fatima Hassan",
+      "role": "team_member",
+      "based_in": null
+    },
+    {
+      "id": "shiv",
+      "name": "Siobhan \"Shiv\" O'Malley",
+      "role": "team_member",
+      "based_in": "Stockholm"
+    }
+  ],
+  "enums": {
+    "agent_outcome": {
+      "auto_approved": "Approved by agent",
+      "chasing": "Chasing details",
+      "escalated": "Needs review",
+      "auto_declined": "Declined by agent"
+    },
+    "status": {
+      "approved_by_agent": "Approved by agent",
+      "approved_by_noa": "Approved by Noa",
+      "declined_by_agent": "Declined by agent",
+      "declined_by_noa": "Declined by Noa",
+      "waiting_on_employee": "Waiting on employee",
+      "waiting_on_noa": "Waiting on Noa",
+      "waiting_on_finance": "Waiting on Finance"
+    },
+    "reason_type": {
+      "within_policy": "Within policy",
+      "over_meal_cap": "Over the meal cap",
+      "receipt_missing": "Receipt missing",
+      "receipt_unreadable": "Receipt unreadable",
+      "receipt_missing_unresolved": "Receipt still missing",
+      "over_finance_threshold": "Over $1,000, needs Finance",
+      "no_matching_rule": "No rule covers this",
+      "currency_mismatch": "Currency doesn't match",
+      "possible_duplicate": "Possible duplicate",
+      "possible_split": "Possibly split to avoid a limit",
+      "unusual_amount": "Unusual amount",
+      "unusual_pattern": "Unusual pattern"
+    },
+    "category": {
+      "meals": "Meals",
+      "travel_air": "Flights",
+      "travel_ground": "Ground transport",
+      "lodging": "Hotel",
+      "conference_training": "Conference or training",
+      "entertainment": "Entertainment",
+      "software": "Software",
+      "equipment": "Equipment",
+      "other": "Other"
+    },
+    "check_result": {
+      "pass": "Passed",
+      "fail": "Failed",
+      "flag": "Flagged",
+      "unsure": "Unsure",
+      "skipped": "Not needed"
+    }
+  },
+  "claims": [
+    {
+      "id": "C-1001",
+      "employee_id": "wei",
+      "submitted_at": "2026-11-09T09:12:00",
+      "expense_date": "2026-11-09",
+      "category": "software",
+      "merchant": "Miro",
+      "description": "Miro team seat, annual",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "wei"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 96,
+          "currency": "USD"
+        },
+        "usd_claimed": 96,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Miro",
+          "date": "2026-11-09",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Team plan seat, 1 year",
+              "amount": 96
+            }
+          ],
+          "subtotal": 96,
+          "tax": 0,
+          "tip": 0,
+          "total": 96,
+          "covers": null,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "Miro",
+          "date": "2026-11-09",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Team plan seat, 1 year",
+              "amount": 96
+            }
+          ],
+          "subtotal": 96,
+          "tax": 0,
+          "tip": 0,
+          "total": 96,
+          "covers": null,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Receipt matches the claim and no policy rule is triggered.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $96.00 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-09T09:13:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-09T09:12:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Wei submitted the claim."
+        },
+        {
+          "at": "2026-11-09T09:13:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1002",
+      "employee_id": "marco",
+      "submitted_at": "2026-11-09T10:05:00",
+      "expense_date": "2026-11-09",
+      "category": "travel_ground",
+      "merchant": "City Center Parking",
+      "description": "Parking during client visit",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "marco"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 18,
+          "currency": "USD"
+        },
+        "usd_claimed": 18,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "City Center Parking",
+          "date": "2026-11-09",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Parking, 4 hours",
+              "amount": 18
+            }
+          ],
+          "subtotal": 18,
+          "tax": 0,
+          "tip": 0,
+          "total": 18,
+          "covers": null,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "City Center Parking",
+          "date": "2026-11-09",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Parking, 4 hours",
+              "amount": 18
+            }
+          ],
+          "subtotal": 18,
+          "tax": 0,
+          "tip": 0,
+          "total": 18,
+          "covers": null,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Under $25, so no receipt is needed, and no policy rule is triggered.",
+        "cited_rule_ids": [],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "skipped",
+            "detail": "Under $25, so no receipt is required.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $18.00 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-09T10:06:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-09T10:05:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Marco submitted the claim."
+        },
+        {
+          "at": "2026-11-09T10:06:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1003",
+      "employee_id": "carmen",
+      "submitted_at": "2026-11-09T11:20:00",
+      "expense_date": "2026-11-09",
+      "category": "meals",
+      "merchant": "Blue Door Coffee",
+      "description": "Coffee and breakfast before a candidate call",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "carmen"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 9.79,
+          "currency": "USD"
+        },
+        "usd_claimed": 9.79,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Blue Door Coffee",
+          "date": "2026-11-09",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Flat white",
+              "amount": 4.8
+            },
+            {
+              "label": "Croissant",
+              "amount": 4.2
+            }
+          ],
+          "subtotal": 9,
+          "tax": 0.79,
+          "tip": 0,
+          "total": 9.79,
+          "covers": 1,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "Blue Door Coffee",
+          "date": "2026-11-09",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Flat white",
+              "amount": 4.8
+            },
+            {
+              "label": "Croissant",
+              "amount": 4.2
+            }
+          ],
+          "subtotal": 9,
+          "tax": 0.79,
+          "tip": 0,
+          "total": 9.79,
+          "covers": 1,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "$9.79 per person, under the $60 cap. Receipt matches the claim.",
+        "cited_rule_ids": [
+          "meal_cap"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "skipped",
+            "detail": "Under $25, so no receipt is required.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $9.79 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "meal_cap",
+            "label": "Meal cap",
+            "result": "pass",
+            "detail": "$9.79 per person (1 person), under the $60 cap.",
+            "rule_id": "meal_cap"
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-09T11:21:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-09T11:20:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Carmen submitted the claim."
+        },
+        {
+          "at": "2026-11-09T11:21:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1004",
+      "employee_id": "kwame",
+      "submitted_at": "2026-11-09T15:10:00",
+      "expense_date": "2026-11-09",
+      "category": "other",
+      "merchant": "Parcel Post",
+      "description": "Courier for signed contract",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "kwame"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 14.3,
+          "currency": "USD"
+        },
+        "usd_claimed": 14.3,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Parcel Post",
+          "date": "2026-11-09",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Overnight courier, signed contract",
+              "amount": 14.3
+            }
+          ],
+          "subtotal": 14.3,
+          "tax": 0,
+          "tip": 0,
+          "total": 14.3,
+          "covers": null,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "Parcel Post",
+          "date": "2026-11-09",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Overnight courier, signed contract",
+              "amount": 14.3
+            }
+          ],
+          "subtotal": 14.3,
+          "tax": 0,
+          "tip": 0,
+          "total": 14.3,
+          "covers": null,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Under $25, so no receipt is needed, and no policy rule is triggered.",
+        "cited_rule_ids": [],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "skipped",
+            "detail": "Under $25, so no receipt is required.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $14.30 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-09T15:11:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-09T15:10:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Kwame submitted the claim."
+        },
+        {
+          "at": "2026-11-09T15:11:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1005",
+      "employee_id": "dima",
+      "submitted_at": "2026-11-10T08:40:00",
+      "expense_date": "2026-11-10",
+      "category": "meals",
+      "merchant": "Corner Roast",
+      "description": "Morning coffee",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "dima"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 4.57,
+          "currency": "USD"
+        },
+        "usd_claimed": 4.57,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Corner Roast",
+          "date": "2026-11-10",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Cortado",
+              "amount": 4.2
+            }
+          ],
+          "subtotal": 4.2,
+          "tax": 0.37,
+          "tip": 0,
+          "total": 4.57,
+          "covers": 1,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "Corner Roast",
+          "date": "2026-11-10",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Cortado",
+              "amount": 4.2
+            }
+          ],
+          "subtotal": 4.2,
+          "tax": 0.37,
+          "tip": 0,
+          "total": 4.57,
+          "covers": 1,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "$4.57 per person, under the $60 cap. Receipt matches the claim.",
+        "cited_rule_ids": [
+          "meal_cap"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "skipped",
+            "detail": "Under $25, so no receipt is required.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $4.57 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "meal_cap",
+            "label": "Meal cap",
+            "result": "pass",
+            "detail": "$4.57 per person (1 person), under the $60 cap.",
+            "rule_id": "meal_cap"
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-10T08:41:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-10T08:40:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Dima submitted the claim."
+        },
+        {
+          "at": "2026-11-10T08:41:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1006",
+      "employee_id": "priya",
+      "submitted_at": "2026-11-10T13:48:00",
+      "expense_date": "2026-11-10",
+      "category": "meals",
+      "merchant": "Olive & Rye",
+      "description": "Client lunch with Ravi (Northwind)",
+      "employee_note": null,
+      "attendees": {
+        "count": 2,
+        "ids": [
+          "priya",
+          "ext_ravi"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 95.1,
+          "currency": "USD"
+        },
+        "usd_claimed": 95.1,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Olive & Rye",
+          "date": "2026-11-10",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Lunch special x2",
+              "amount": 62
+            },
+            {
+              "label": "Sparkling water",
+              "amount": 6
+            },
+            {
+              "label": "Coffee x2",
+              "amount": 9
+            }
+          ],
+          "subtotal": 77,
+          "tax": 6.55,
+          "tip": 11.55,
+          "total": 95.1,
+          "covers": 2,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "Olive & Rye",
+          "date": "2026-11-10",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Lunch special x2",
+              "amount": 62
+            },
+            {
+              "label": "Sparkling water",
+              "amount": 6
+            },
+            {
+              "label": "Coffee x2",
+              "amount": 9
+            }
+          ],
+          "subtotal": 77,
+          "tax": 6.55,
+          "tip": 11.55,
+          "total": 95.1,
+          "covers": 2,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "$47.55 per person, under the $60 cap. Receipt matches the claim.",
+        "cited_rule_ids": [
+          "meal_cap"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $95.10 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "meal_cap",
+            "label": "Meal cap",
+            "result": "pass",
+            "detail": "$47.55 per person (2 people), under the $60 cap.",
+            "rule_id": "meal_cap"
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-10T13:49:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-10T13:48:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Priya submitted the claim."
+        },
+        {
+          "at": "2026-11-10T13:49:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1007",
+      "employee_id": "carmen",
+      "submitted_at": "2026-11-10T14:05:00",
+      "expense_date": "2026-11-10",
+      "category": "meals",
+      "merchant": "Fig & Salt",
+      "description": "Client lunch with two guests from Halden Labs",
+      "employee_note": null,
+      "attendees": {
+        "count": 3,
+        "ids": [
+          "carmen",
+          "ext_guest1",
+          "ext_guest2"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 163.02,
+          "currency": "USD"
+        },
+        "usd_claimed": 163.02,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Fig & Salt",
+          "date": "2026-11-10",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Lunch plates x3",
+              "amount": 114
+            },
+            {
+              "label": "Drinks x3",
+              "amount": 18
+            }
+          ],
+          "subtotal": 132,
+          "tax": 11.22,
+          "tip": 19.8,
+          "total": 163.02,
+          "covers": 3,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "Fig & Salt",
+          "date": "2026-11-10",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Lunch plates x3",
+              "amount": 114
+            },
+            {
+              "label": "Drinks x3",
+              "amount": 18
+            }
+          ],
+          "subtotal": 132,
+          "tax": 11.22,
+          "tip": 19.8,
+          "total": 163.02,
+          "covers": 3,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "$54.34 per person, under the $60 cap. Receipt matches the claim.",
+        "cited_rule_ids": [
+          "meal_cap"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $163.02 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "meal_cap",
+            "label": "Meal cap",
+            "result": "pass",
+            "detail": "$54.34 per person (3 people), under the $60 cap.",
+            "rule_id": "meal_cap"
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-10T14:06:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-10T14:05:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Carmen submitted the claim."
+        },
+        {
+          "at": "2026-11-10T14:06:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1008",
+      "employee_id": "kwame",
+      "submitted_at": "2026-11-10T16:30:00",
+      "expense_date": "2026-11-10",
+      "category": "travel_ground",
+      "merchant": "Hop Rideshare",
+      "description": "Ride to client site",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "kwame"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 24.4,
+          "currency": "USD"
+        },
+        "usd_claimed": 24.4,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-10",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare",
+              "amount": 19.4
+            },
+            {
+              "label": "Booking fee",
+              "amount": 2
+            },
+            {
+              "label": "Tip",
+              "amount": 3
+            }
+          ],
+          "subtotal": 24.4,
+          "tax": 0,
+          "tip": 0,
+          "total": 24.4,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-61044",
+            "pickup": "Office",
+            "dropoff": "Halden Labs"
+          }
+        },
+        "agent_read": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-10",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare",
+              "amount": 19.4
+            },
+            {
+              "label": "Booking fee",
+              "amount": 2
+            },
+            {
+              "label": "Tip",
+              "amount": 3
+            }
+          ],
+          "subtotal": 24.4,
+          "tax": 0,
+          "tip": 0,
+          "total": 24.4,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-61044",
+            "pickup": "Office",
+            "dropoff": "Halden Labs"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Under $25, so no receipt is needed, and no policy rule is triggered.",
+        "cited_rule_ids": [],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "skipped",
+            "detail": "Under $25, so no receipt is required.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $24.40 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-10T16:31:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-10T16:30:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Kwame submitted the claim."
+        },
+        {
+          "at": "2026-11-10T16:31:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1009",
+      "employee_id": "fatima",
+      "submitted_at": "2026-11-10T17:02:00",
+      "expense_date": "2026-11-10",
+      "category": "equipment",
+      "merchant": "Tech Depot",
+      "description": "USB-C dock for home office",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "fatima"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 86.79,
+          "currency": "USD"
+        },
+        "usd_claimed": 86.79,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Tech Depot",
+          "date": "2026-11-10",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "USB-C dock, 12-in-1",
+              "amount": 79.99
+            }
+          ],
+          "subtotal": 79.99,
+          "tax": 6.8,
+          "tip": 0,
+          "total": 86.79,
+          "covers": null,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "Tech Depot",
+          "date": "2026-11-10",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "USB-C dock, 12-in-1",
+              "amount": 79.99
+            }
+          ],
+          "subtotal": 79.99,
+          "tax": 6.8,
+          "tip": 0,
+          "total": 86.79,
+          "covers": null,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Receipt matches the claim and no policy rule is triggered.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $86.79 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-10T17:03:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-10T17:02:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Fatima submitted the claim."
+        },
+        {
+          "at": "2026-11-10T17:03:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1010",
+      "employee_id": "dima",
+      "submitted_at": "2026-11-10T21:35:00",
+      "expense_date": "2026-11-10",
+      "category": "meals",
+      "merchant": "Atelier Bleu",
+      "description": "Client closing dinner with the Meridian team",
+      "employee_note": "Closing dinner for the Meridian deal.",
+      "attendees": {
+        "count": 2,
+        "ids": [
+          "dima",
+          "ext_meridian"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 128,
+          "currency": "USD"
+        },
+        "usd_claimed": 128,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Atelier Bleu",
+          "date": "2026-11-10",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Tasting menu x2",
+              "amount": 104
+            },
+            {
+              "label": "Glass of wine x2",
+              "amount": 24
+            }
+          ],
+          "subtotal": 128,
+          "tax": 0,
+          "tip": 0,
+          "total": 128,
+          "covers": 2,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "Atelier Bleu",
+          "date": "2026-11-10",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Tasting menu x2",
+              "amount": 104
+            },
+            {
+              "label": "Glass of wine x2",
+              "amount": 24
+            }
+          ],
+          "subtotal": 128,
+          "tax": 0,
+          "tip": 0,
+          "total": 128,
+          "covers": 2,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        2
+      ],
+      "agent": {
+        "outcome": "escalated",
+        "reason_type": "over_meal_cap",
+        "headline": "Dinner is $4.00 per person over the meal cap",
+        "explanation": "2 people, $128.00, so $64.00 each against the $60 cap. Receipt matches the claim.",
+        "cited_rule_ids": [
+          "meal_cap"
+        ],
+        "facts": [
+          {
+            "label": "People",
+            "value": "2"
+          },
+          {
+            "label": "Per person",
+            "value": "$64.00"
+          },
+          {
+            "label": "Cap",
+            "value": "$60.00"
+          },
+          {
+            "label": "Over by",
+            "value": "$8.00 in total"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $128.00 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "meal_cap",
+            "label": "Meal cap",
+            "result": "fail",
+            "detail": "$64.00 per person is $4.00 over the $60 cap.",
+            "rule_id": "meal_cap"
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": "Accept a small overage on a client dinner, or ask Dima to cover $8.00.",
+        "policy_version": "v3",
+        "decided_at": "2026-11-10T21:37:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_noa",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "done"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": {
+        "decision": "approved",
+        "decided_at": "2026-11-11T14:10:00",
+        "note": "Closing dinner with the Meridian team. Fine once.",
+        "approved_amount_usd": 128,
+        "overrode_agent": false
+      },
+      "events": [
+        {
+          "at": "2026-11-10T21:35:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Dima submitted the claim."
+        },
+        {
+          "at": "2026-11-10T21:37:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent sent it to Noa: $4.00 per person over the meal cap."
+        },
+        {
+          "at": "2026-11-11T14:10:00",
+          "actor": "noa",
+          "type": "noa_decision",
+          "text": "Noa approved. Note: Closing dinner with the Meridian team. Fine once."
+        }
+      ]
+    },
+    {
+      "id": "C-1011",
+      "employee_id": "shiv",
+      "submitted_at": "2026-11-11T09:15:00",
+      "expense_date": "2026-11-11",
+      "category": "software",
+      "merchant": "Passkey Co",
+      "description": "Password manager team add-on",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "shiv"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 36,
+          "currency": "USD"
+        },
+        "usd_claimed": 36,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Passkey Co",
+          "date": "2026-11-11",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Team add-on, monthly",
+              "amount": 36
+            }
+          ],
+          "subtotal": 36,
+          "tax": 0,
+          "tip": 0,
+          "total": 36,
+          "covers": null,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "Passkey Co",
+          "date": "2026-11-11",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Team add-on, monthly",
+              "amount": 36
+            }
+          ],
+          "subtotal": 36,
+          "tax": 0,
+          "tip": 0,
+          "total": 36,
+          "covers": null,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Receipt matches the claim and no policy rule is triggered.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $36.00 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-11T09:16:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-11T09:15:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Shiv submitted the claim."
+        },
+        {
+          "at": "2026-11-11T09:16:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1012",
+      "employee_id": "wei",
+      "submitted_at": "2026-11-11T10:40:00",
+      "expense_date": "2026-11-11",
+      "category": "equipment",
+      "merchant": "Keystroke Co",
+      "description": "Keyboard for home office",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "wei"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 96.57,
+          "currency": "USD"
+        },
+        "usd_claimed": 96.57,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Keystroke Co",
+          "date": "2026-11-11",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "TKL mechanical keyboard",
+              "amount": 89
+            }
+          ],
+          "subtotal": 89,
+          "tax": 7.57,
+          "tip": 0,
+          "total": 96.57,
+          "covers": null,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "Keystroke Co",
+          "date": "2026-11-11",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "TKL mechanical keyboard",
+              "amount": 89
+            }
+          ],
+          "subtotal": 89,
+          "tax": 7.57,
+          "tip": 0,
+          "total": 96.57,
+          "covers": null,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Receipt matches the claim and no policy rule is triggered.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $96.57 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-11T10:41:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-11T10:40:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Wei submitted the claim."
+        },
+        {
+          "at": "2026-11-11T10:41:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1013",
+      "employee_id": "aaliyah",
+      "submitted_at": "2026-11-11T12:50:00",
+      "expense_date": "2026-11-11",
+      "category": "meals",
+      "merchant": "Greenbowl",
+      "description": "Working lunch",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "aaliyah"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 16.82,
+          "currency": "USD"
+        },
+        "usd_claimed": 16.82,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Greenbowl",
+          "date": "2026-11-11",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Harvest bowl",
+              "amount": 15.5
+            }
+          ],
+          "subtotal": 15.5,
+          "tax": 1.32,
+          "tip": 0,
+          "total": 16.82,
+          "covers": 1,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "Greenbowl",
+          "date": "2026-11-11",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Harvest bowl",
+              "amount": 15.5
+            }
+          ],
+          "subtotal": 15.5,
+          "tax": 1.32,
+          "tip": 0,
+          "total": 16.82,
+          "covers": 1,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "$16.82 per person, under the $60 cap. Receipt matches the claim.",
+        "cited_rule_ids": [
+          "meal_cap"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "skipped",
+            "detail": "Under $25, so no receipt is required.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $16.82 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "meal_cap",
+            "label": "Meal cap",
+            "result": "pass",
+            "detail": "$16.82 per person (1 person), under the $60 cap.",
+            "rule_id": "meal_cap"
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-11T12:51:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-11T12:50:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Aaliyah submitted the claim."
+        },
+        {
+          "at": "2026-11-11T12:51:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1014",
+      "employee_id": "shiv",
+      "submitted_at": "2026-11-11T16:22:00",
+      "expense_date": "2026-11-11",
+      "category": "equipment",
+      "merchant": "Tech Depot",
+      "description": "27 inch monitor for home office",
+      "employee_note": "Better screen for design review.",
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "shiv"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 617.37,
+          "currency": "USD"
+        },
+        "usd_claimed": 617.37,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Tech Depot",
+          "date": "2026-11-11",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "ViewPro 27in 4K monitor",
+              "amount": 569
+            }
+          ],
+          "subtotal": 569,
+          "tax": 48.37,
+          "tip": 0,
+          "total": 617.37,
+          "covers": null,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "Tech Depot",
+          "date": "2026-11-11",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "ViewPro 27in 4K monitor",
+              "amount": 569
+            }
+          ],
+          "subtotal": 569,
+          "tax": 48.37,
+          "tip": 0,
+          "total": 617.37,
+          "covers": null,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "escalated",
+        "reason_type": "unusual_pattern",
+        "headline": "Second monitor claimed in 34 days",
+        "explanation": "In policy, but Shiv claimed another monitor ($579.00) on 8 Oct. The agent can't tell whether a second one is intended.",
+        "cited_rule_ids": [],
+        "facts": [
+          {
+            "label": "Earlier claim",
+            "value": "Monitor, $579.00, 8 Oct"
+          },
+          {
+            "label": "Days apart",
+            "value": "34"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $617.37 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "flag",
+            "detail": "No rule covers repeat equipment purchases.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "Different item from the earlier claim.",
+            "rule_id": null
+          }
+        ],
+        "unsure": true,
+        "needs_from_noa": "Decide whether a second monitor is okay.",
+        "policy_version": "v3",
+        "decided_at": "2026-11-11T16:24:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "declined_by_noa",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "done"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": {
+        "decision": "declined",
+        "decided_at": "2026-11-12T08:55:00",
+        "note": "You already have one from last month. Please use that or ask IT.",
+        "approved_amount_usd": 0,
+        "overrode_agent": false
+      },
+      "events": [
+        {
+          "at": "2026-11-11T16:22:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Shiv submitted the claim."
+        },
+        {
+          "at": "2026-11-11T16:24:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent sent it to Noa: a second monitor in 34 days."
+        },
+        {
+          "at": "2026-11-12T08:55:00",
+          "actor": "noa",
+          "type": "noa_decision",
+          "text": "Noa declined. Note: You already have one from last month. Please use that or ask IT."
+        }
+      ]
+    },
+    {
+      "id": "C-1015",
+      "employee_id": "marco",
+      "submitted_at": "2026-11-11T18:20:00",
+      "expense_date": "2026-11-11",
+      "category": "travel_ground",
+      "merchant": "Bayline Taxi",
+      "description": "Taxi home after client dinner",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "marco"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 31.6,
+          "currency": "USD"
+        },
+        "usd_claimed": 31.6,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Bayline Taxi",
+          "date": "2026-11-11",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Metered fare",
+              "amount": 27.6
+            },
+            {
+              "label": "Tip",
+              "amount": 4
+            }
+          ],
+          "subtotal": 31.6,
+          "tax": 0,
+          "tip": 0,
+          "total": 31.6,
+          "covers": null,
+          "details": {
+            "ride_id": "BT-30918",
+            "pickup": "Halden Labs",
+            "dropoff": "Home"
+          }
+        },
+        "agent_read": {
+          "merchant": "Bayline Taxi",
+          "date": "2026-11-11",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Metered fare",
+              "amount": 27.6
+            },
+            {
+              "label": "Tip",
+              "amount": 4
+            }
+          ],
+          "subtotal": 31.6,
+          "tax": 0,
+          "tip": 0,
+          "total": 31.6,
+          "covers": null,
+          "details": {
+            "ride_id": "BT-30918",
+            "pickup": "Halden Labs",
+            "dropoff": "Home"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Receipt matches the claim and no policy rule is triggered.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $31.60 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-11T18:21:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-11T18:20:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Marco submitted the claim."
+        },
+        {
+          "at": "2026-11-11T18:21:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1016",
+      "employee_id": "aaliyah",
+      "submitted_at": "2026-11-12T21:18:00",
+      "expense_date": "2026-11-12",
+      "category": "travel_ground",
+      "merchant": "Hop Rideshare",
+      "description": "Ride from SFO to the hotel",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "aaliyah"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 52.3,
+          "currency": "USD"
+        },
+        "usd_claimed": 52.3,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-12",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare",
+              "amount": 44.3
+            },
+            {
+              "label": "Airport fee",
+              "amount": 5
+            },
+            {
+              "label": "Tip",
+              "amount": 3
+            }
+          ],
+          "subtotal": 52.3,
+          "tax": 0,
+          "tip": 0,
+          "total": 52.3,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-70118",
+            "pickup": "SFO Airport",
+            "dropoff": "Harbor Street Hotel"
+          }
+        },
+        "agent_read": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-12",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare",
+              "amount": 44.3
+            },
+            {
+              "label": "Airport fee",
+              "amount": 5
+            },
+            {
+              "label": "Tip",
+              "amount": 3
+            }
+          ],
+          "subtotal": 52.3,
+          "tax": 0,
+          "tip": 0,
+          "total": 52.3,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-70118",
+            "pickup": "SFO Airport",
+            "dropoff": "Harbor Street Hotel"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Receipt matches the claim and no policy rule is triggered.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $52.30 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-12T21:19:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-12T21:18:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Aaliyah submitted the claim."
+        },
+        {
+          "at": "2026-11-12T21:19:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1017",
+      "employee_id": "carmen",
+      "submitted_at": "2026-11-12T22:02:00",
+      "expense_date": "2026-11-12",
+      "category": "travel_ground",
+      "merchant": "Hop Rideshare",
+      "description": "Ride from SFO to the hotel",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "carmen"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 85.9,
+          "currency": "USD"
+        },
+        "usd_claimed": 85.9,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-12",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare",
+              "amount": 49.9
+            },
+            {
+              "label": "Airport fee",
+              "amount": 5
+            },
+            {
+              "label": "Tip",
+              "amount": 4
+            }
+          ],
+          "subtotal": 58.9,
+          "tax": 0,
+          "tip": 0,
+          "total": 58.9,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-70155",
+            "pickup": "SFO Airport",
+            "dropoff": "Harbor Street Hotel"
+          }
+        },
+        "agent_read": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-12",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare",
+              "amount": 76.9
+            },
+            {
+              "label": "Airport fee",
+              "amount": 5
+            },
+            {
+              "label": "Tip",
+              "amount": 4
+            }
+          ],
+          "subtotal": 81.9,
+          "tax": 0,
+          "tip": 4,
+          "total": 85.9,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-70155",
+            "pickup": "SFO Airport",
+            "dropoff": "Harbor Street Hotel"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        8
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Receipt matches the claim and no policy rule is triggered.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $85.90 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-12T22:03:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-12T22:02:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Carmen submitted the claim."
+        },
+        {
+          "at": "2026-11-12T22:03:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1018",
+      "employee_id": "wei",
+      "submitted_at": "2026-11-12T22:10:00",
+      "expense_date": "2026-11-12",
+      "category": "travel_ground",
+      "merchant": "Bayline Taxi",
+      "description": "Taxi from SFO to the hotel",
+      "employee_note": "Left the receipt in the taxi.",
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "wei"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 48.5,
+          "currency": "USD"
+        },
+        "usd_claimed": 48.5,
+        "fx": null
+      },
+      "receipt": {
+        "status": "missing",
+        "document": null,
+        "agent_read": null,
+        "attachments": [
+          {
+            "kind": "card_statement",
+            "label": "Card statement screenshot",
+            "shows": "BAYLINE TAXI SF  $48.50  12 NOV"
+          }
+        ]
+      },
+      "story_moments": [
+        3
+      ],
+      "agent": {
+        "outcome": "escalated",
+        "reason_type": "receipt_missing_unresolved",
+        "headline": "No receipt after two requests",
+        "explanation": "$48.50 is over the $25 receipt limit. Wei says the receipt was left in the taxi and sent a card statement that shows $48.50 at Bayline Taxi on 12 Nov, which matches the claim. A statement is not a receipt under the policy, so the agent can't approve it.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [
+          {
+            "label": "Claimed",
+            "value": "$48.50"
+          },
+          {
+            "label": "Receipt requests sent",
+            "value": "2"
+          },
+          {
+            "label": "Wei's reply",
+            "value": "Left it in the taxi. Card statement attached."
+          },
+          {
+            "label": "Statement shows",
+            "value": "BAYLINE TAXI SF, $48.50, 12 Nov"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "fail",
+            "detail": "No receipt. A card statement was attached instead.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches statement",
+            "result": "pass",
+            "detail": "Card statement shows $48.50, same as the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": "Accept the card statement in place of a receipt, or hold out for a receipt from the taxi company.",
+        "policy_version": "v3",
+        "decided_at": "2026-11-14T08:01:00",
+        "chase": {
+          "max_attempts": 2,
+          "status": "unresolved",
+          "next_attempt_at": null,
+          "escalates_at": "2026-11-14T08:01:00",
+          "attempts": [
+            {
+              "sent_at": "2026-11-12T22:11:00",
+              "message": "A receipt is required for claims over $25. Please attach one so this can be approved.",
+              "reply": {
+                "at": "2026-11-13T07:40:00",
+                "text": "Left it in the taxi. Card statement attached.",
+                "attachments": [
+                  "card_statement"
+                ]
+              }
+            },
+            {
+              "sent_at": "2026-11-13T07:42:00",
+              "message": "A card statement can't replace a receipt. Bayline Taxi can email a trip receipt. Can you request one?",
+              "reply": null
+            }
+          ]
+        },
+        "related_claim_ids": []
+      },
+      "status": "waiting_on_noa",
+      "awaiting": "noa",
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "waiting"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-12T22:10:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Wei submitted the claim without a receipt."
+        },
+        {
+          "at": "2026-11-12T22:11:00",
+          "actor": "agent",
+          "type": "chase_sent",
+          "text": "Agent asked Wei for a receipt (request 1 of 2)."
+        },
+        {
+          "at": "2026-11-13T07:40:00",
+          "actor": "employee",
+          "type": "employee_replied",
+          "text": "Wei: \"Left it in the taxi. Card statement attached.\""
+        },
+        {
+          "at": "2026-11-13T07:42:00",
+          "actor": "agent",
+          "type": "chase_sent",
+          "text": "Agent asked Wei to request a trip receipt from the taxi company (request 2 of 2)."
+        },
+        {
+          "at": "2026-11-14T08:01:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "No reply after 24 hours. Agent sent it to Noa."
+        }
+      ]
+    },
+    {
+      "id": "C-1019",
+      "employee_id": "dima",
+      "submitted_at": "2026-11-13T07:50:00",
+      "expense_date": "2026-11-12",
+      "category": "travel_air",
+      "merchant": "Nordair",
+      "description": "Return flight Stockholm to San Francisco for the offsite",
+      "employee_note": "Economy flex was the only fare on those dates.",
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "dima"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 11640,
+          "currency": "SEK"
+        },
+        "usd_claimed": 1224.53,
+        "fx": {
+          "rate": 0.1052,
+          "rate_date": "2026-11-12",
+          "rate_source": "Daily rate (fixture, not a real quote)",
+          "usd_computed": 1224.53,
+          "gap_usd": 0,
+          "gap_pct": 0,
+          "tolerance_pct": 3
+        }
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Nordair",
+          "date": "2026-11-12",
+          "currency": "SEK",
+          "lines": [
+            {
+              "label": "Fare, Stockholm to San Francisco return, economy flex",
+              "amount": 9980
+            },
+            {
+              "label": "Taxes and fees",
+              "amount": 1660
+            }
+          ],
+          "subtotal": 11640,
+          "tax": 0,
+          "tip": 0,
+          "total": 11640,
+          "covers": null,
+          "details": {
+            "route": "ARN-SFO-ARN",
+            "outbound": "2026-11-12",
+            "return": "2026-11-15"
+          }
+        },
+        "agent_read": {
+          "merchant": "Nordair",
+          "date": "2026-11-12",
+          "currency": "SEK",
+          "lines": [
+            {
+              "label": "Fare, Stockholm to San Francisco return, economy flex",
+              "amount": 9980
+            },
+            {
+              "label": "Taxes and fees",
+              "amount": 1660
+            }
+          ],
+          "subtotal": 11640,
+          "tax": 0,
+          "tip": 0,
+          "total": 11640,
+          "covers": null,
+          "details": {
+            "route": "ARN-SFO-ARN",
+            "outbound": "2026-11-12",
+            "return": "2026-11-15"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        4
+      ],
+      "agent": {
+        "outcome": "escalated",
+        "reason_type": "over_finance_threshold",
+        "headline": "$1,224.53 needs your approval, then Finance",
+        "explanation": "In policy and the receipt matches. At SEK 11,640.00 (about $1,224.53) it is over $1,000, so it needs you first and then Finance.",
+        "cited_rule_ids": [
+          "finance_over_1000"
+        ],
+        "facts": [
+          {
+            "label": "Receipt",
+            "value": "SEK 11,640.00"
+          },
+          {
+            "label": "Rate",
+            "value": "0.1052"
+          },
+          {
+            "label": "Converted",
+            "value": "$1,224.53"
+          },
+          {
+            "label": "Over the Finance limit by",
+            "value": "$224.53"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "fx_match",
+            "label": "Currency",
+            "result": "pass",
+            "detail": "Converted amount matches the receipt.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies to flights.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "flag",
+            "detail": "$1,224.53 is over $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": "Approve to send it on to Finance, or decline.",
+        "policy_version": "v3",
+        "decided_at": "2026-11-13T07:52:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "waiting_on_noa",
+      "awaiting": "noa",
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "waiting"
+        },
+        {
+          "step": "finance",
+          "state": "waiting"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-13T07:50:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Dima submitted the claim."
+        },
+        {
+          "at": "2026-11-13T07:52:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent sent it to Noa: over $1,000, so Finance approves after her."
+        }
+      ]
+    },
+    {
+      "id": "C-1020",
+      "employee_id": "fatima",
+      "submitted_at": "2026-11-13T08:10:00",
+      "expense_date": "2026-11-12",
+      "category": "travel_ground",
+      "merchant": "Hop Rideshare",
+      "description": "Ride from SFO to the hotel after a late landing",
+      "employee_note": "Landed at 00:30 after the last shuttles stopped. Surge was 3.2x.",
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "fatima"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 187.4,
+          "currency": "USD"
+        },
+        "usd_claimed": 187.4,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-12",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare (includes 3.2x surge)",
+              "amount": 168.9
+            },
+            {
+              "label": "Airport fee",
+              "amount": 7.5
+            },
+            {
+              "label": "Tip",
+              "amount": 11
+            }
+          ],
+          "subtotal": 187.4,
+          "tax": 0,
+          "tip": 0,
+          "total": 187.4,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-70290",
+            "pickup": "SFO Airport",
+            "dropoff": "Harbor Street Hotel",
+            "surge_multiplier": 3.2,
+            "pickup_time": "00:48"
+          }
+        },
+        "agent_read": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-12",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare (includes 3.2x surge)",
+              "amount": 168.9
+            },
+            {
+              "label": "Airport fee",
+              "amount": 7.5
+            },
+            {
+              "label": "Tip",
+              "amount": 11
+            }
+          ],
+          "subtotal": 187.4,
+          "tax": 0,
+          "tip": 0,
+          "total": 187.4,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-70290",
+            "pickup": "SFO Airport",
+            "dropoff": "Harbor Street Hotel",
+            "surge_multiplier": 3.2,
+            "pickup_time": "00:48"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "escalated",
+        "reason_type": "unusual_amount",
+        "headline": "Ride is 3.6x the usual airport fare this week",
+        "explanation": "No policy limit applies, but $187.40 is 3.6 times the median of the other SFO rides this week ($52.30). The receipt shows a 3.2x surge at 00:48, which fits Fatima's note.",
+        "cited_rule_ids": [],
+        "facts": [
+          {
+            "label": "Claimed",
+            "value": "$187.40"
+          },
+          {
+            "label": "Median of other SFO rides this week",
+            "value": "$52.30"
+          },
+          {
+            "label": "Surge",
+            "value": "3.2x at 00:48"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $187.40 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "amount_typical",
+            "label": "Typical amount",
+            "result": "flag",
+            "detail": "3.6 times the median airport ride this week.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": "Accept the surge fare?",
+        "policy_version": "v3",
+        "decided_at": "2026-11-13T08:12:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "waiting_on_noa",
+      "awaiting": "noa",
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "waiting"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-13T08:10:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Fatima submitted the claim."
+        },
+        {
+          "at": "2026-11-13T08:12:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent sent it to Noa: 3.6 times the usual airport fare."
+        }
+      ]
+    },
+    {
+      "id": "C-1021",
+      "employee_id": "aaliyah",
+      "submitted_at": "2026-11-13T08:30:00",
+      "expense_date": "2026-11-13",
+      "category": "conference_training",
+      "merchant": "MONO Music Conference",
+      "description": "MONO 2026 delegate pass",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "aaliyah"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 349,
+          "currency": "USD"
+        },
+        "usd_claimed": 349,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "MONO Music Conference",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "2-day delegate pass",
+              "amount": 349
+            }
+          ],
+          "subtotal": 349,
+          "tax": 0,
+          "tip": 0,
+          "total": 349,
+          "covers": null,
+          "details": {
+            "invoice": "INV-20388"
+          }
+        },
+        "agent_read": {
+          "merchant": "MONO Music Conference",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "2-day delegate pass",
+              "amount": 349
+            }
+          ],
+          "subtotal": 349,
+          "tax": 0,
+          "tip": 0,
+          "total": 349,
+          "covers": null,
+          "details": {
+            "invoice": "INV-20388"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Receipt matches the claim and no policy rule is triggered.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $349.00 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-13T08:31:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-13T08:30:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Aaliyah submitted the claim."
+        },
+        {
+          "at": "2026-11-13T08:31:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1022",
+      "employee_id": "fatima",
+      "submitted_at": "2026-11-13T08:44:00",
+      "expense_date": "2026-11-13",
+      "category": "conference_training",
+      "merchant": "MONO Music Conference",
+      "description": "MONO 2026 delegate pass",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "fatima"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 349,
+          "currency": "USD"
+        },
+        "usd_claimed": 349,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "MONO Music Conference",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "2-day delegate pass",
+              "amount": 349
+            }
+          ],
+          "subtotal": 349,
+          "tax": 0,
+          "tip": 0,
+          "total": 349,
+          "covers": null,
+          "details": {
+            "invoice": "INV-20391"
+          }
+        },
+        "agent_read": {
+          "merchant": "MONO Music Conference",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "2-day delegate pass",
+              "amount": 349
+            }
+          ],
+          "subtotal": 349,
+          "tax": 0,
+          "tip": 0,
+          "total": 349,
+          "covers": null,
+          "details": {
+            "invoice": "INV-20391"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Receipt matches the claim and no policy rule is triggered.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $349.00 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-13T08:45:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-13T08:44:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Fatima submitted the claim."
+        },
+        {
+          "at": "2026-11-13T08:45:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1023",
+      "employee_id": "marco",
+      "submitted_at": "2026-11-13T09:41:00",
+      "expense_date": "2026-11-13",
+      "category": "meals",
+      "merchant": "MONO Cafe",
+      "description": "Coffee at the conference",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "marco"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 10.86,
+          "currency": "USD"
+        },
+        "usd_claimed": 10.86,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "MONO Cafe",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Cold brew",
+              "amount": 5.5
+            },
+            {
+              "label": "Muffin",
+              "amount": 4.5
+            }
+          ],
+          "subtotal": 10,
+          "tax": 0.86,
+          "tip": 0,
+          "total": 10.86,
+          "covers": 1,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "MONO Cafe",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Cold brew",
+              "amount": 5.5
+            },
+            {
+              "label": "Muffin",
+              "amount": 4.5
+            }
+          ],
+          "subtotal": 10,
+          "tax": 0.86,
+          "tip": 0,
+          "total": 10.86,
+          "covers": 1,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "$10.86 per person, under the $60 cap. Receipt matches the claim.",
+        "cited_rule_ids": [
+          "meal_cap"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "skipped",
+            "detail": "Under $25, so no receipt is required.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $10.86 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "meal_cap",
+            "label": "Meal cap",
+            "result": "pass",
+            "detail": "$10.86 per person (1 person), under the $60 cap.",
+            "rule_id": "meal_cap"
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-13T09:42:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-13T09:41:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Marco submitted the claim."
+        },
+        {
+          "at": "2026-11-13T09:42:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1024",
+      "employee_id": "priya",
+      "submitted_at": "2026-11-13T10:02:00",
+      "expense_date": "2026-11-13",
+      "category": "lodging",
+      "merchant": "StayBooker (Harbor Street Hotel)",
+      "description": "Hotel, 3 nights, paid in euros",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "priya"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 640,
+          "currency": "EUR"
+        },
+        "usd_claimed": 692.4,
+        "fx": {
+          "rate": 1.08,
+          "rate_date": "2026-11-12",
+          "rate_source": "Daily rate (fixture, not a real quote)",
+          "usd_computed": 691.2,
+          "gap_usd": 1.2,
+          "gap_pct": 0.17,
+          "tolerance_pct": 3
+        }
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "StayBooker (Harbor Street Hotel)",
+          "date": "2026-11-12",
+          "currency": "EUR",
+          "lines": [
+            {
+              "label": "Room, standard, 3 nights (12 to 15 Nov)",
+              "amount": 564
+            },
+            {
+              "label": "Taxes and fees",
+              "amount": 76
+            }
+          ],
+          "subtotal": 640,
+          "tax": 0,
+          "tip": 0,
+          "total": 640,
+          "covers": null,
+          "details": {
+            "nights": 3,
+            "booking": "SB-558201"
+          }
+        },
+        "agent_read": {
+          "merchant": "StayBooker (Harbor Street Hotel)",
+          "date": "2026-11-12",
+          "currency": "EUR",
+          "lines": [
+            {
+              "label": "Room, standard, 3 nights (12 to 15 Nov)",
+              "amount": 564
+            },
+            {
+              "label": "Taxes and fees",
+              "amount": 76
+            }
+          ],
+          "subtotal": 640,
+          "tax": 0,
+          "tip": 0,
+          "total": 640,
+          "covers": null,
+          "details": {
+            "nights": 3,
+            "booking": "SB-558201"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        7
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy; currency difference is small",
+        "explanation": "Receipt is €640.00. At the 12 Nov rate (1.0800) that is $691.20. The claim is $692.40, a difference of $1.20 (0.17%), inside the 3% tolerance.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [
+          {
+            "label": "Receipt",
+            "value": "€640.00"
+          },
+          {
+            "label": "Rate",
+            "value": "1.0800"
+          },
+          {
+            "label": "Converted",
+            "value": "$691.20"
+          },
+          {
+            "label": "Claimed",
+            "value": "$692.40"
+          },
+          {
+            "label": "Gap",
+            "value": "$1.20 (0.17%)"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "fx_match",
+            "label": "Currency",
+            "result": "pass",
+            "detail": "Converted amount is within 3% of the receipt.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-13T10:03:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-13T10:02:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Priya submitted the claim."
+        },
+        {
+          "at": "2026-11-13T10:03:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1025",
+      "employee_id": "shiv",
+      "submitted_at": "2026-11-13T10:15:00",
+      "expense_date": "2026-11-12",
+      "category": "lodging",
+      "merchant": "StayBooker (Harbor Street Hotel)",
+      "description": "Hotel, 3 nights, paid in euros",
+      "employee_note": "Amount is from my card statement.",
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "shiv"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 795,
+          "currency": "EUR"
+        },
+        "usd_claimed": 921.3,
+        "fx": {
+          "rate": 1.08,
+          "rate_date": "2026-11-12",
+          "rate_source": "Daily rate (fixture, not a real quote)",
+          "usd_computed": 858.6,
+          "gap_usd": 62.7,
+          "gap_pct": 7.3,
+          "tolerance_pct": 3
+        }
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "StayBooker (Harbor Street Hotel)",
+          "date": "2026-11-12",
+          "currency": "EUR",
+          "lines": [
+            {
+              "label": "Room, bay view, 3 nights (12 to 15 Nov)",
+              "amount": 704
+            },
+            {
+              "label": "Taxes and fees",
+              "amount": 91
+            }
+          ],
+          "subtotal": 795,
+          "tax": 0,
+          "tip": 0,
+          "total": 795,
+          "covers": null,
+          "details": {
+            "nights": 3,
+            "booking": "SB-558366"
+          }
+        },
+        "agent_read": {
+          "merchant": "StayBooker (Harbor Street Hotel)",
+          "date": "2026-11-12",
+          "currency": "EUR",
+          "lines": [
+            {
+              "label": "Room, bay view, 3 nights (12 to 15 Nov)",
+              "amount": 704
+            },
+            {
+              "label": "Taxes and fees",
+              "amount": 91
+            }
+          ],
+          "subtotal": 795,
+          "tax": 0,
+          "tip": 0,
+          "total": 795,
+          "covers": null,
+          "details": {
+            "nights": 3,
+            "booking": "SB-558366"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        7
+      ],
+      "agent": {
+        "outcome": "escalated",
+        "reason_type": "currency_mismatch",
+        "headline": "Claim is $62.70 higher than the receipt converts to",
+        "explanation": "Receipt is €795.00. At the 12 Nov rate (1.0800) that is $858.60. The claim is $921.30, which is $62.70 (7.3%) more. The tolerance is 3%. A card foreign-transaction fee could explain it, but the receipt doesn't show one.",
+        "cited_rule_ids": [],
+        "facts": [
+          {
+            "label": "Receipt",
+            "value": "€795.00"
+          },
+          {
+            "label": "Rate",
+            "value": "1.0800"
+          },
+          {
+            "label": "Converted",
+            "value": "$858.60"
+          },
+          {
+            "label": "Claimed",
+            "value": "$921.30"
+          },
+          {
+            "label": "Gap",
+            "value": "$62.70 (7.3%)"
+          },
+          {
+            "label": "Tolerance",
+            "value": "3%"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "fx_match",
+            "label": "Currency",
+            "result": "fail",
+            "detail": "Claim is 7.3% above the converted receipt. Tolerance is 3%.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies to lodging.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": "Pay the receipt amount ($858.60) or the card statement amount ($921.30)?",
+        "policy_version": "v3",
+        "decided_at": "2026-11-13T10:17:00",
+        "chase": null,
+        "related_claim_ids": [
+          "C-1024"
+        ]
+      },
+      "status": "waiting_on_noa",
+      "awaiting": "noa",
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "waiting"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-13T10:15:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Shiv submitted the claim."
+        },
+        {
+          "at": "2026-11-13T10:17:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent sent it to Noa: the claim is 7.3% above the converted receipt."
+        }
+      ]
+    },
+    {
+      "id": "C-1026",
+      "employee_id": "carmen",
+      "submitted_at": "2026-11-13T12:04:00",
+      "expense_date": "2026-11-13",
+      "category": "conference_training",
+      "merchant": "MONO Music Conference",
+      "description": "Workshop add-on: Mixing for Streaming",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "carmen"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 540,
+          "currency": "USD"
+        },
+        "usd_claimed": 540,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "MONO Music Conference",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Workshop add-on: Mixing for Streaming",
+              "amount": 540
+            }
+          ],
+          "subtotal": 540,
+          "tax": 0,
+          "tip": 0,
+          "total": 540,
+          "covers": null,
+          "details": {
+            "invoice": "INV-20413"
+          }
+        },
+        "agent_read": {
+          "merchant": "MONO Music Conference",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Workshop add-on: Mixing for Streaming",
+              "amount": 540
+            }
+          ],
+          "subtotal": 540,
+          "tax": 0,
+          "tip": 0,
+          "total": 540,
+          "covers": null,
+          "details": {
+            "invoice": "INV-20413"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Receipt matches the claim and no policy rule is triggered.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $540.00 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-13T12:05:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-13T12:04:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Carmen submitted the claim."
+        },
+        {
+          "at": "2026-11-13T12:05:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1027",
+      "employee_id": "carmen",
+      "submitted_at": "2026-11-13T12:15:00",
+      "expense_date": "2026-11-13",
+      "category": "conference_training",
+      "merchant": "MONO Music Conference",
+      "description": "Workshop add-on: Mastering Masterclass",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "carmen"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 498,
+          "currency": "USD"
+        },
+        "usd_claimed": 498,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "MONO Music Conference",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Workshop add-on: Mastering Masterclass",
+              "amount": 498
+            }
+          ],
+          "subtotal": 498,
+          "tax": 0,
+          "tip": 0,
+          "total": 498,
+          "covers": null,
+          "details": {
+            "invoice": "INV-20414"
+          }
+        },
+        "agent_read": {
+          "merchant": "MONO Music Conference",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Workshop add-on: Mastering Masterclass",
+              "amount": 498
+            }
+          ],
+          "subtotal": 498,
+          "tax": 0,
+          "tip": 0,
+          "total": 498,
+          "covers": null,
+          "details": {
+            "invoice": "INV-20414"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "escalated",
+        "reason_type": "possible_split",
+        "headline": "Together with a claim from 11 minutes earlier, this is over $1,000",
+        "explanation": "Carmen filed $540.00 (approved) and this $498.00 claim, both to MONO Music Conference, 11 minutes apart. Together they are $1,038.00. Each is under the $1,000 Finance limit, but together they would not be. They have separate invoice numbers, so this may be two real workshops.",
+        "cited_rule_ids": [
+          "finance_over_1000"
+        ],
+        "facts": [
+          {
+            "label": "This claim",
+            "value": "$498.00, INV-20414"
+          },
+          {
+            "label": "Earlier claim",
+            "value": "$540.00, INV-20413, approved 12:05"
+          },
+          {
+            "label": "Combined",
+            "value": "$1,038.00"
+          },
+          {
+            "label": "Time apart",
+            "value": "11 minutes"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Invoice attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Invoice total $498.00 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "split_pattern",
+            "label": "Linked claims",
+            "result": "flag",
+            "detail": "Combined with a claim 11 minutes earlier: $1,038.00.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "This claim alone is under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "Different invoice and workshop.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": "Two separate workshops, or one purchase split to stay under $1,000?",
+        "policy_version": "v3",
+        "decided_at": "2026-11-13T12:17:00",
+        "chase": null,
+        "related_claim_ids": [
+          "C-1026"
+        ]
+      },
+      "status": "waiting_on_noa",
+      "awaiting": "noa",
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "waiting"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-13T12:15:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Carmen submitted the claim."
+        },
+        {
+          "at": "2026-11-13T12:17:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent sent it to Noa: together with an earlier claim it is $1,038.00."
+        }
+      ]
+    },
+    {
+      "id": "C-1028",
+      "employee_id": "kwame",
+      "submitted_at": "2026-11-13T13:15:00",
+      "expense_date": "2026-11-13",
+      "category": "meals",
+      "merchant": "The Midway Food Hall",
+      "description": "Lunch between sessions",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "kwame"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 26.35,
+          "currency": "USD"
+        },
+        "usd_claimed": 26.35,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "The Midway Food Hall",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Poke bowl",
+              "amount": 17.5
+            },
+            {
+              "label": "Iced tea",
+              "amount": 4
+            }
+          ],
+          "subtotal": 21.5,
+          "tax": 1.85,
+          "tip": 3,
+          "total": 26.35,
+          "covers": 1,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "The Midway Food Hall",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Poke bowl",
+              "amount": 17.5
+            },
+            {
+              "label": "Iced tea",
+              "amount": 4
+            }
+          ],
+          "subtotal": 21.5,
+          "tax": 1.85,
+          "tip": 3,
+          "total": 26.35,
+          "covers": 1,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "$26.35 per person, under the $60 cap. Receipt matches the claim.",
+        "cited_rule_ids": [
+          "meal_cap"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $26.35 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "meal_cap",
+            "label": "Meal cap",
+            "result": "pass",
+            "detail": "$26.35 per person (1 person), under the $60 cap.",
+            "rule_id": "meal_cap"
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-13T13:16:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-13T13:15:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Kwame submitted the claim."
+        },
+        {
+          "at": "2026-11-13T13:16:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1029",
+      "employee_id": "priya",
+      "submitted_at": "2026-11-13T14:20:00",
+      "expense_date": "2026-11-13",
+      "category": "meals",
+      "merchant": "Brasserie Midway",
+      "description": "Lunch with two MONO speakers",
+      "employee_note": "Lunch with two speakers from the panel.",
+      "attendees": {
+        "count": 3,
+        "ids": [
+          "priya",
+          "ext_speaker1",
+          "ext_speaker2"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 171,
+          "currency": "USD"
+        },
+        "usd_claimed": 171,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Brasserie Midway",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Prix fixe lunch, 2 covers",
+              "amount": 110
+            },
+            {
+              "label": "Wine pairing x2",
+              "amount": 32
+            }
+          ],
+          "subtotal": 142,
+          "tax": 12.25,
+          "tip": 16.75,
+          "total": 171,
+          "covers": 2,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "Brasserie Midway",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Prix fixe lunch, 2 covers",
+              "amount": 110
+            },
+            {
+              "label": "Wine pairing x2",
+              "amount": 32
+            }
+          ],
+          "subtotal": 142,
+          "tax": 12.25,
+          "tip": 16.75,
+          "total": 171,
+          "covers": null,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        8
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "$57.00 per person (3 people), under the $60 cap. Receipt matches the claim.",
+        "cited_rule_ids": [
+          "meal_cap"
+        ],
+        "facts": [
+          {
+            "label": "People (from claim)",
+            "value": "3"
+          },
+          {
+            "label": "Per person",
+            "value": "$57.00"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $171.00 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "meal_cap",
+            "label": "Meal cap",
+            "result": "pass",
+            "detail": "$57.00 per person (3 people), under the $60 cap.",
+            "rule_id": "meal_cap"
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-13T14:21:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-13T14:20:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Priya submitted the claim."
+        },
+        {
+          "at": "2026-11-13T14:21:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1030",
+      "employee_id": "wei",
+      "submitted_at": "2026-11-13T18:52:00",
+      "expense_date": "2026-11-13",
+      "category": "travel_ground",
+      "merchant": "Hop Rideshare",
+      "description": "Ride back to the hotel, shared with Carmen",
+      "employee_note": "Shared with Carmen.",
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "wei"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 38.6,
+          "currency": "USD"
+        },
+        "usd_claimed": 38.6,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare, 2 riders",
+              "amount": 31.6
+            },
+            {
+              "label": "Booking fee",
+              "amount": 2
+            },
+            {
+              "label": "Tip",
+              "amount": 5
+            }
+          ],
+          "subtotal": 38.6,
+          "tax": 0,
+          "tip": 0,
+          "total": 38.6,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-77213",
+            "pickup": "The Midway, Gate B",
+            "dropoff": "Harbor Street Hotel",
+            "riders": 2
+          }
+        },
+        "agent_read": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare, 2 riders",
+              "amount": 31.6
+            },
+            {
+              "label": "Booking fee",
+              "amount": 2
+            },
+            {
+              "label": "Tip",
+              "amount": 5
+            }
+          ],
+          "subtotal": 38.6,
+          "tax": 0,
+          "tip": 0,
+          "total": 38.6,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-77213",
+            "pickup": "The Midway, Gate B",
+            "dropoff": "Harbor Street Hotel",
+            "riders": 2
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        6
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Receipt matches the claim and no policy rule is triggered.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $38.60 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-13T18:53:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-13T18:52:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Wei submitted the claim."
+        },
+        {
+          "at": "2026-11-13T18:53:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1031",
+      "employee_id": "carmen",
+      "submitted_at": "2026-11-13T19:05:00",
+      "expense_date": "2026-11-13",
+      "category": "travel_ground",
+      "merchant": "Hop Rideshare",
+      "description": "Ride back to the hotel",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "carmen"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 38.6,
+          "currency": "USD"
+        },
+        "usd_claimed": 38.6,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare, 2 riders",
+              "amount": 31.6
+            },
+            {
+              "label": "Booking fee",
+              "amount": 2
+            },
+            {
+              "label": "Tip",
+              "amount": 5
+            }
+          ],
+          "subtotal": 38.6,
+          "tax": 0,
+          "tip": 0,
+          "total": 38.6,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-77213",
+            "pickup": "The Midway, Gate B",
+            "dropoff": "Harbor Street Hotel",
+            "riders": 2
+          }
+        },
+        "agent_read": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare, 2 riders",
+              "amount": 31.6
+            },
+            {
+              "label": "Booking fee",
+              "amount": 2
+            },
+            {
+              "label": "Tip",
+              "amount": 5
+            }
+          ],
+          "subtotal": 38.6,
+          "tax": 0,
+          "tip": 0,
+          "total": 38.6,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-77213",
+            "pickup": "The Midway, Gate B",
+            "dropoff": "Harbor Street Hotel",
+            "riders": 2
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        6
+      ],
+      "agent": {
+        "outcome": "auto_declined",
+        "reason_type": "possible_duplicate",
+        "headline": "Same ride was already claimed",
+        "explanation": "Ride HR-77213 was claimed by Wei Chen at 18:52 for the same $38.60. It is the same trip receipt, so the agent declined this one as a duplicate payment.",
+        "cited_rule_ids": [],
+        "facts": [
+          {
+            "label": "Ride ID",
+            "value": "HR-77213"
+          },
+          {
+            "label": "Already claimed by",
+            "value": "Wei Chen, 13 Nov 18:52"
+          },
+          {
+            "label": "Amount",
+            "value": "$38.60"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $38.60 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "fail",
+            "detail": "Ride HR-77213 is already on another claim.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-13T19:06:00",
+        "chase": null,
+        "related_claim_ids": [
+          "C-1030"
+        ]
+      },
+      "status": "declined_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-13T19:05:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Carmen submitted the claim."
+        },
+        {
+          "at": "2026-11-13T19:06:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent declined: the same ride was claimed by Wei at 18:52."
+        }
+      ]
+    },
+    {
+      "id": "C-1032",
+      "employee_id": "fatima",
+      "submitted_at": "2026-11-14T13:40:00",
+      "expense_date": "2026-11-14",
+      "category": "meals",
+      "merchant": "Taco Spot",
+      "description": "Lunch between sessions",
+      "employee_note": "Paid cash. Receipt got thrown out.",
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "fatima"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 31.2,
+          "currency": "USD"
+        },
+        "usd_claimed": 31.2,
+        "fx": null
+      },
+      "receipt": {
+        "status": "missing",
+        "document": null,
+        "agent_read": null,
+        "attachments": []
+      },
+      "story_moments": [
+        3
+      ],
+      "agent": {
+        "outcome": "chasing",
+        "reason_type": "receipt_missing",
+        "headline": "Waiting for a receipt",
+        "explanation": "$31.20 is over the $25 receipt limit and nothing is attached. The agent has asked twice. It passes this to Noa if there is no reply by Mon 16 Nov, 13:41.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [
+          {
+            "label": "Amount",
+            "value": "$31.20"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "fail",
+            "detail": "No receipt attached.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-14T13:41:00",
+        "chase": {
+          "max_attempts": 2,
+          "status": "waiting",
+          "attempts": [
+            {
+              "sent_at": "2026-11-14T13:41:00",
+              "message": "A receipt is required for claims over $25. Please attach one so this can be approved.",
+              "reply": null
+            },
+            {
+              "sent_at": "2026-11-15T13:41:00",
+              "message": "Reminder: this claim is still missing a receipt. If you can't find it, reply with what you have and your manager will see it.",
+              "reply": null
+            }
+          ],
+          "next_attempt_at": null,
+          "escalates_at": "2026-11-16T13:41:00"
+        },
+        "related_claim_ids": []
+      },
+      "status": "waiting_on_employee",
+      "awaiting": "employee",
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "waiting"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-14T13:40:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Fatima submitted the claim."
+        },
+        {
+          "at": "2026-11-14T13:41:00",
+          "actor": "agent",
+          "type": "chase_sent",
+          "text": "Agent asked Fatima for a receipt (request 1 of 2)."
+        },
+        {
+          "at": "2026-11-15T13:41:00",
+          "actor": "agent",
+          "type": "chase_sent",
+          "text": "Agent asked Fatima for a receipt (request 2 of 2)."
+        }
+      ]
+    },
+    {
+      "id": "C-1033",
+      "employee_id": "marco",
+      "submitted_at": "2026-11-14T17:30:00",
+      "expense_date": "2026-11-14",
+      "category": "travel_ground",
+      "merchant": "Hop Rideshare",
+      "description": "Ride back to the hotel",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "marco"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 27.8,
+          "currency": "USD"
+        },
+        "usd_claimed": 27.8,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-14",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare",
+              "amount": 22.8
+            },
+            {
+              "label": "Booking fee",
+              "amount": 2
+            },
+            {
+              "label": "Tip",
+              "amount": 3
+            }
+          ],
+          "subtotal": 27.8,
+          "tax": 0,
+          "tip": 0,
+          "total": 27.8,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-80402",
+            "pickup": "The Midway, Gate A",
+            "dropoff": "Harbor Street Hotel"
+          }
+        },
+        "agent_read": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-14",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare",
+              "amount": 22.8
+            },
+            {
+              "label": "Booking fee",
+              "amount": 2
+            },
+            {
+              "label": "Tip",
+              "amount": 3
+            }
+          ],
+          "subtotal": 27.8,
+          "tax": 0,
+          "tip": 0,
+          "total": 27.8,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-80402",
+            "pickup": "The Midway, Gate A",
+            "dropoff": "Harbor Street Hotel"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Receipt matches the claim and no policy rule is triggered.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $27.80 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-14T17:31:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-14T17:30:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Marco submitted the claim."
+        },
+        {
+          "at": "2026-11-14T17:31:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1034",
+      "employee_id": "kwame",
+      "submitted_at": "2026-11-14T17:55:00",
+      "expense_date": "2026-11-14",
+      "category": "travel_ground",
+      "merchant": "Hop Rideshare",
+      "description": "Ride back to the hotel to change before the show",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "kwame"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 41.2,
+          "currency": "USD"
+        },
+        "usd_claimed": 41.2,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-14",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare",
+              "amount": 36.2
+            },
+            {
+              "label": "Booking fee",
+              "amount": 2
+            },
+            {
+              "label": "Tip",
+              "amount": 3
+            }
+          ],
+          "subtotal": 41.2,
+          "tax": 0,
+          "tip": 0,
+          "total": 41.2,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-80921",
+            "pickup": "The Midway, Gate B",
+            "pickup_time": "17:42",
+            "dropoff": "Harbor Street Hotel"
+          }
+        },
+        "agent_read": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-14",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare",
+              "amount": 36.2
+            },
+            {
+              "label": "Booking fee",
+              "amount": 2
+            },
+            {
+              "label": "Tip",
+              "amount": 3
+            }
+          ],
+          "subtotal": 41.2,
+          "tax": 0,
+          "tip": 0,
+          "total": 41.2,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-80921",
+            "pickup": "The Midway, Gate B",
+            "pickup_time": "17:42",
+            "dropoff": "Harbor Street Hotel"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        6,
+        8
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "Receipt matches the claim and no policy rule is triggered.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $41.20 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "pass",
+            "detail": "No category limit applies.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-14T17:56:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-14T17:55:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Kwame submitted the claim."
+        },
+        {
+          "at": "2026-11-14T17:56:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1035",
+      "employee_id": "aaliyah",
+      "submitted_at": "2026-11-14T18:03:00",
+      "expense_date": "2026-11-14",
+      "category": "travel_ground",
+      "merchant": "Hop Rideshare",
+      "description": "Ride back to the hotel to change before the show",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "aaliyah"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 41.2,
+          "currency": "USD"
+        },
+        "usd_claimed": 41.2,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-14",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare",
+              "amount": 36.2
+            },
+            {
+              "label": "Booking fee",
+              "amount": 2
+            },
+            {
+              "label": "Tip",
+              "amount": 3
+            }
+          ],
+          "subtotal": 41.2,
+          "tax": 0,
+          "tip": 0,
+          "total": 41.2,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-80934",
+            "pickup": "The Midway, Gate D",
+            "pickup_time": "17:51",
+            "dropoff": "Harbor Street Hotel"
+          }
+        },
+        "agent_read": {
+          "merchant": "Hop Rideshare",
+          "date": "2026-11-14",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Trip fare",
+              "amount": 36.2
+            },
+            {
+              "label": "Booking fee",
+              "amount": 2
+            },
+            {
+              "label": "Tip",
+              "amount": 3
+            }
+          ],
+          "subtotal": 41.2,
+          "tax": 0,
+          "tip": 0,
+          "total": 41.2,
+          "covers": null,
+          "details": {
+            "ride_id": "HR-80934",
+            "pickup": "The Midway, Gate D",
+            "pickup_time": "17:51",
+            "dropoff": "Harbor Street Hotel"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        6,
+        8
+      ],
+      "agent": {
+        "outcome": "auto_declined",
+        "reason_type": "possible_duplicate",
+        "headline": "Looks like Kwame's ride",
+        "explanation": "Same route (The Midway to Harbor Street Hotel) and the same fare ($41.20) as Kwame Mensah's ride, 9 minutes apart. The agent declined it as a likely duplicate.",
+        "cited_rule_ids": [],
+        "facts": [
+          {
+            "label": "Similar claim",
+            "value": "Kwame Mensah, 14 Nov 17:55, $41.20"
+          },
+          {
+            "label": "Route",
+            "value": "The Midway to Harbor Street Hotel"
+          },
+          {
+            "label": "Time apart",
+            "value": "9 minutes"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $41.20 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "fail",
+            "detail": "Same route, same fare, within 10 minutes of another claim.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-14T18:04:00",
+        "chase": null,
+        "related_claim_ids": [
+          "C-1034"
+        ]
+      },
+      "status": "declined_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-14T18:03:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Aaliyah submitted the claim."
+        },
+        {
+          "at": "2026-11-14T18:04:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent declined: looks like a duplicate of Kwame's ride."
+        }
+      ]
+    },
+    {
+      "id": "C-1036",
+      "employee_id": "shiv",
+      "submitted_at": "2026-11-15T08:20:00",
+      "expense_date": "2026-11-15",
+      "category": "meals",
+      "merchant": "Corner Cafe SF",
+      "description": "Breakfast before checkout",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "shiv"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 21.75,
+          "currency": "USD"
+        },
+        "usd_claimed": 21.75,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Corner Cafe SF",
+          "date": "2026-11-15",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Breakfast sandwich",
+              "amount": 12.5
+            },
+            {
+              "label": "Coffee",
+              "amount": 4.5
+            }
+          ],
+          "subtotal": 17,
+          "tax": 1.47,
+          "tip": 3.28,
+          "total": 21.75,
+          "covers": 1,
+          "details": {}
+        },
+        "agent_read": {
+          "merchant": "Corner Cafe SF",
+          "date": "2026-11-15",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Breakfast sandwich",
+              "amount": 12.5
+            },
+            {
+              "label": "Coffee",
+              "amount": 4.5
+            }
+          ],
+          "subtotal": 17,
+          "tax": 1.47,
+          "tip": 3.28,
+          "total": 21.75,
+          "covers": 1,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        1
+      ],
+      "agent": {
+        "outcome": "auto_approved",
+        "reason_type": "within_policy",
+        "headline": "Within policy",
+        "explanation": "$21.75 per person, under the $60 cap. Receipt matches the claim.",
+        "cited_rule_ids": [
+          "meal_cap"
+        ],
+        "facts": [],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "skipped",
+            "detail": "Under $25, so no receipt is required.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $21.75 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "meal_cap",
+            "label": "Meal cap",
+            "result": "pass",
+            "detail": "$21.75 per person (1 person), under the $60 cap.",
+            "rule_id": "meal_cap"
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found this week.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-15T08:21:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "approved_by_agent",
+      "awaiting": null,
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "skipped"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-15T08:20:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Shiv submitted the claim."
+        },
+        {
+          "at": "2026-11-15T08:21:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent approved. All checks passed."
+        }
+      ]
+    },
+    {
+      "id": "C-1037",
+      "employee_id": "kwame",
+      "submitted_at": "2026-11-15T08:52:00",
+      "expense_date": "2026-11-14",
+      "category": "entertainment",
+      "merchant": "Showpass",
+      "description": "Concert tickets for the team",
+      "employee_note": "team culture",
+      "attendees": {
+        "count": 9,
+        "ids": [
+          "marco",
+          "aaliyah",
+          "wei",
+          "priya",
+          "dima",
+          "carmen",
+          "kwame",
+          "fatima",
+          "shiv"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 943.65,
+          "currency": "USD"
+        },
+        "usd_claimed": 943.65,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Showpass",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Red Hot Chili Peppers, Bayfront Arena, 14 Nov, x9",
+              "amount": 864
+            },
+            {
+              "label": "Service fees",
+              "amount": 79.65
+            }
+          ],
+          "subtotal": 943.65,
+          "tax": 0,
+          "tip": 0,
+          "total": 943.65,
+          "covers": null,
+          "details": {
+            "event": "Red Hot Chili Peppers",
+            "venue": "Bayfront Arena, San Francisco",
+            "event_date": "2026-11-14",
+            "tickets": 9
+          }
+        },
+        "agent_read": {
+          "merchant": "Showpass",
+          "date": "2026-11-13",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Red Hot Chili Peppers, Bayfront Arena, 14 Nov, x9",
+              "amount": 864
+            },
+            {
+              "label": "Service fees",
+              "amount": 79.65
+            }
+          ],
+          "subtotal": 943.65,
+          "tax": 0,
+          "tip": 0,
+          "total": 943.65,
+          "covers": null,
+          "details": {
+            "event": "Red Hot Chili Peppers",
+            "venue": "Bayfront Arena, San Francisco",
+            "event_date": "2026-11-14",
+            "tickets": 9
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        5
+      ],
+      "agent": {
+        "outcome": "escalated",
+        "reason_type": "no_matching_rule",
+        "headline": "Concert tickets: no policy covers this",
+        "explanation": "Nine tickets to the Red Hot Chili Peppers on 14 Nov, $943.65 with fees. The policy has no rule for entertainment, and the only note is \"team culture\". The agent can't tell whether this is an approved team event.",
+        "cited_rule_ids": [],
+        "facts": [
+          {
+            "label": "Tickets",
+            "value": "9 at $96.00"
+          },
+          {
+            "label": "Fees",
+            "value": "$79.65"
+          },
+          {
+            "label": "Total",
+            "value": "$943.65"
+          },
+          {
+            "label": "Paid by",
+            "value": "Kwame, on his own card"
+          },
+          {
+            "label": "Employee note",
+            "value": "team culture"
+          },
+          {
+            "label": "Under the Finance limit by",
+            "value": "$56.35"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $943.65 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "rule_coverage",
+            "label": "Policy",
+            "result": "unsure",
+            "detail": "No rule covers entertainment or team events.",
+            "rule_id": null
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found.",
+            "rule_id": null
+          }
+        ],
+        "unsure": true,
+        "needs_from_noa": "Was this team event approved, and should the company pay for it?",
+        "policy_version": "v3",
+        "decided_at": "2026-11-15T08:54:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "waiting_on_noa",
+      "awaiting": "noa",
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "waiting"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-15T08:52:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Kwame submitted the claim for 9 tickets."
+        },
+        {
+          "at": "2026-11-15T08:54:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent sent it to Noa: no rule covers entertainment."
+        }
+      ]
+    },
+    {
+      "id": "C-1038",
+      "employee_id": "marco",
+      "submitted_at": "2026-11-15T08:58:00",
+      "expense_date": "2026-11-15",
+      "category": "meals",
+      "merchant": "The Midway Food Hall",
+      "description": "Breakfast before the team brunch",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "marco"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 26.4,
+          "currency": "USD"
+        },
+        "usd_claimed": 26.4,
+        "fx": null
+      },
+      "receipt": {
+        "status": "unreadable",
+        "document": {
+          "merchant": "The Midway Food Hall",
+          "date": "2026-11-15",
+          "currency": "USD",
+          "lines": [],
+          "subtotal": null,
+          "tax": null,
+          "tip": null,
+          "total": null,
+          "covers": null,
+          "details": {
+            "problem": "Photo cuts off the bottom of the receipt"
+          }
+        },
+        "agent_read": {
+          "merchant": "The Midway Food Hall",
+          "date": "2026-11-15",
+          "currency": "USD",
+          "lines": [],
+          "subtotal": null,
+          "tax": null,
+          "tip": null,
+          "total": null,
+          "covers": null,
+          "details": {}
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        3
+      ],
+      "agent": {
+        "outcome": "chasing",
+        "reason_type": "receipt_unreadable",
+        "headline": "Waiting for a clearer receipt photo",
+        "explanation": "The photo cuts off the total, so the agent can't confirm $26.40. It asked for a clearer photo once. A second request goes out Mon 16 Nov at 08:59.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [
+          {
+            "label": "Amount",
+            "value": "$26.40"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "fail",
+            "detail": "Receipt is attached but the total is cut off.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-15T08:59:00",
+        "chase": {
+          "max_attempts": 2,
+          "status": "waiting",
+          "attempts": [
+            {
+              "sent_at": "2026-11-15T08:59:00",
+              "message": "Your receipt photo is cut off at the bottom, so the total can't be read. Please upload a clearer photo.",
+              "reply": null
+            }
+          ],
+          "next_attempt_at": "2026-11-16T08:59:00",
+          "escalates_at": "2026-11-17T08:59:00"
+        },
+        "related_claim_ids": []
+      },
+      "status": "waiting_on_employee",
+      "awaiting": "employee",
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "waiting"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-15T08:58:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Marco submitted the claim."
+        },
+        {
+          "at": "2026-11-15T08:59:00",
+          "actor": "agent",
+          "type": "chase_sent",
+          "text": "Agent asked Marco for a receipt (request 1 of 2)."
+        }
+      ]
+    },
+    {
+      "id": "C-1039",
+      "employee_id": "dima",
+      "submitted_at": "2026-11-15T17:30:00",
+      "expense_date": "2026-11-15",
+      "category": "travel_ground",
+      "merchant": "SFO Parking",
+      "description": "Airport parking on the return",
+      "employee_note": null,
+      "attendees": {
+        "count": 1,
+        "ids": [
+          "dima"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 64,
+          "currency": "USD"
+        },
+        "usd_claimed": 64,
+        "fx": null
+      },
+      "receipt": {
+        "status": "missing",
+        "document": null,
+        "agent_read": null,
+        "attachments": []
+      },
+      "story_moments": [
+        3
+      ],
+      "agent": {
+        "outcome": "chasing",
+        "reason_type": "receipt_missing",
+        "headline": "Waiting for a receipt",
+        "explanation": "$64.00 is over the $25 receipt limit and nothing is attached. The agent asked once. A second request goes out Mon 16 Nov at 17:31.",
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
+        "facts": [
+          {
+            "label": "Amount",
+            "value": "$64.00"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "fail",
+            "detail": "No receipt attached.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": null,
+        "policy_version": "v3",
+        "decided_at": "2026-11-15T17:31:00",
+        "chase": {
+          "max_attempts": 2,
+          "status": "waiting",
+          "attempts": [
+            {
+              "sent_at": "2026-11-15T17:31:00",
+              "message": "A receipt is required for claims over $25. Please attach one so this can be approved.",
+              "reply": null
+            }
+          ],
+          "next_attempt_at": "2026-11-16T17:31:00",
+          "escalates_at": "2026-11-17T17:31:00"
+        },
+        "related_claim_ids": []
+      },
+      "status": "waiting_on_employee",
+      "awaiting": "employee",
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "waiting"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-15T17:30:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Dima submitted the claim."
+        },
+        {
+          "at": "2026-11-15T17:31:00",
+          "actor": "agent",
+          "type": "chase_sent",
+          "text": "Agent asked Dima for a receipt (request 1 of 2)."
+        }
+      ]
+    },
+    {
+      "id": "C-1040",
+      "employee_id": "marco",
+      "submitted_at": "2026-11-15T21:40:00",
+      "expense_date": "2026-11-15",
+      "category": "meals",
+      "merchant": "Harbor & Vine, San Francisco",
+      "description": "Offsite closing team dinner",
+      "employee_note": "Offsite closing dinner. Fatima left after mains.",
+      "attendees": {
+        "count": 9,
+        "ids": [
+          "marco",
+          "aaliyah",
+          "wei",
+          "priya",
+          "dima",
+          "carmen",
+          "kwame",
+          "fatima",
+          "shiv"
+        ]
+      },
+      "amount": {
+        "original": {
+          "value": 585,
+          "currency": "USD"
+        },
+        "usd_claimed": 585,
+        "fx": null
+      },
+      "receipt": {
+        "status": "attached",
+        "document": {
+          "merchant": "Harbor & Vine, San Francisco",
+          "date": "2026-11-15",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Starters x6 (shared)",
+              "amount": 96
+            },
+            {
+              "label": "Mains x9",
+              "amount": 243
+            },
+            {
+              "label": "Shared desserts x3",
+              "amount": 42
+            },
+            {
+              "label": "Bottle of Nebbiolo",
+              "amount": 72
+            },
+            {
+              "label": "Sparkling water x2",
+              "amount": 9
+            }
+          ],
+          "subtotal": 462,
+          "tax": 39.85,
+          "tip": 83.15,
+          "total": 585,
+          "covers": 9,
+          "details": {
+            "note": "One guest left before dessert (from claim note)"
+          }
+        },
+        "agent_read": {
+          "merchant": "Harbor & Vine, San Francisco",
+          "date": "2026-11-15",
+          "currency": "USD",
+          "lines": [
+            {
+              "label": "Starters x6 (shared)",
+              "amount": 96
+            },
+            {
+              "label": "Mains x9",
+              "amount": 243
+            },
+            {
+              "label": "Shared desserts x3",
+              "amount": 42
+            },
+            {
+              "label": "Bottle of Nebbiolo",
+              "amount": 72
+            },
+            {
+              "label": "Sparkling water x2",
+              "amount": 9
+            }
+          ],
+          "subtotal": 462,
+          "tax": 39.85,
+          "tip": 83.15,
+          "total": 585,
+          "covers": 9,
+          "details": {
+            "note": "One guest left before dessert (from claim note)"
+          }
+        },
+        "attachments": []
+      },
+      "story_moments": [
+        2
+      ],
+      "agent": {
+        "outcome": "escalated",
+        "reason_type": "over_meal_cap",
+        "headline": "Dinner is $5.00 per person over the meal cap",
+        "explanation": "9 people, $585.00 with tax and tip, so $65.00 each against the $60 cap. The bill is uneven: one $72.00 bottle of wine was ordered and one person left before dessert. Without the wine it would be $54.87 each.",
+        "cited_rule_ids": [
+          "meal_cap"
+        ],
+        "facts": [
+          {
+            "label": "People",
+            "value": "9"
+          },
+          {
+            "label": "Total",
+            "value": "$585.00"
+          },
+          {
+            "label": "Per person",
+            "value": "$65.00"
+          },
+          {
+            "label": "Cap",
+            "value": "$60.00 per person ($540.00 for 9)"
+          },
+          {
+            "label": "Over by",
+            "value": "$45.00 in total"
+          },
+          {
+            "label": "Wine",
+            "value": "1 bottle, $72.00 ($91.17 with tax and tip)"
+          },
+          {
+            "label": "Per person without wine",
+            "value": "$54.87"
+          }
+        ],
+        "checks": [
+          {
+            "id": "receipt_present",
+            "label": "Receipt",
+            "result": "pass",
+            "detail": "Receipt attached, itemized and readable.",
+            "rule_id": "receipt_required"
+          },
+          {
+            "id": "amount_match",
+            "label": "Amount matches receipt",
+            "result": "pass",
+            "detail": "Receipt total $585.00 matches the claim.",
+            "rule_id": null
+          },
+          {
+            "id": "meal_cap",
+            "label": "Meal cap",
+            "result": "fail",
+            "detail": "$65.00 per person is $5.00 over the $60 cap.",
+            "rule_id": "meal_cap"
+          },
+          {
+            "id": "finance_threshold",
+            "label": "Finance threshold",
+            "result": "pass",
+            "detail": "Under $1,000.",
+            "rule_id": "finance_over_1000"
+          },
+          {
+            "id": "duplicate",
+            "label": "Duplicate check",
+            "result": "pass",
+            "detail": "No matching claim found.",
+            "rule_id": null
+          }
+        ],
+        "unsure": false,
+        "needs_from_noa": "Pay the full $585.00 as an exception, pay up to the cap ($540.00), or ask Marco to cover the wine.",
+        "policy_version": "v3",
+        "decided_at": "2026-11-15T21:42:00",
+        "chase": null,
+        "related_claim_ids": []
+      },
+      "status": "waiting_on_noa",
+      "awaiting": "noa",
+      "approval_chain": [
+        {
+          "step": "agent",
+          "state": "done"
+        },
+        {
+          "step": "noa",
+          "state": "waiting"
+        },
+        {
+          "step": "finance",
+          "state": "not_needed"
+        }
+      ],
+      "noa": null,
+      "events": [
+        {
+          "at": "2026-11-15T21:40:00",
+          "actor": "employee",
+          "type": "submitted",
+          "text": "Marco submitted the claim for 9 people."
+        },
+        {
+          "at": "2026-11-15T21:42:00",
+          "actor": "agent",
+          "type": "agent_decision",
+          "text": "Agent sent it to Noa: $5.00 per person over the meal cap, uneven split."
+        }
+      ]
+    }
+  ]
+}
