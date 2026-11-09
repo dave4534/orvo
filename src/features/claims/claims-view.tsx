@@ -45,7 +45,7 @@ const tabOfStatus = (status: Status): TabId =>
 
 export function ClaimsView() {
   const { claims, sessionIds, simulateError, setSimulateError, reset } = useClaims();
-  const { aiOpen, setAiOpen, setAiSession, addAiMessage, hasAiMessages, resetAi, setChatContext } = useWorkspace();
+  const { aiOpen, setAiOpen, setAiSession, addAiMessage, hasAiMessages, resetAi, setChatContext, setUiToolHandler, runAction } = useWorkspace();
 
   const [tab, setTab] = useState<TabId>("needs_review");
   const [filters, setFilters] = useState<ClaimFilters>(DEFAULT_FILTERS);
@@ -61,6 +61,51 @@ export function ClaimsView() {
   useEffect(() => {
     setChatContext(() => buildChatContext(claims, { tab, openClaimId: openId, detailsOpen: openId !== null && detailsOpen, detailsTab: moreTab, search: filters.query }));
     return () => setChatContext(null);
+  });
+
+  // The screen tools the chat can run. Registered on every render so they always see the current state.
+  useEffect(() => {
+    setUiToolHandler((name, input) => {
+      switch (name) {
+        case "openClaim": {
+          const id = String(input.claimId ?? "");
+          if (!claims.some((c) => c.id === id)) return { ok: false, error: `No claim ${id}.` };
+          openClaimById(id);
+          return { ok: true, opened: id };
+        }
+        case "showClaimsTab": {
+          if (openId !== null) return { ok: false, error: "A claim is open. Go back to claims first." };
+          setTab(String(input.tab) as TabId);
+          return { ok: true, tab: input.tab };
+        }
+        case "nextClaim":
+          if (scopeIndex >= scopeIds.length - 1) return { ok: false, error: "This is the last claim in the group." };
+          step(1);
+          return { ok: true };
+        case "previousClaim":
+          if (scopeIndex <= 0) return { ok: false, error: "This is the first claim in the group." };
+          step(-1);
+          return { ok: true };
+        case "backToClaims":
+          closeWorkspace();
+          return { ok: true };
+        case "openDetails":
+          if (openId === null) return { ok: false, error: "No claim is open." };
+          openMore(String(input.tab) as MoreTab);
+          return { ok: true, tab: input.tab };
+        case "closeDetails":
+          setDetailsOpen(false);
+          return { ok: true };
+        case "takeAction": {
+          if (openClaim?.status !== "waiting_on_noa") return { ok: false, error: "This claim is not waiting for review." };
+          const done = runAction(String(input.buttonLabel ?? ""));
+          return done ? { ok: true, done: input.buttonLabel } : { ok: false, error: "That button is not available." };
+        }
+        default:
+          return { ok: false, error: `Unknown screen action ${name}.` };
+      }
+    });
+    return () => setUiToolHandler(null);
   });
 
   const brief = useMemo(() => buildDailyBrief(claims), [claims]);

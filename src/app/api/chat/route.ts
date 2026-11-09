@@ -9,6 +9,7 @@ import { AI_MODEL_ID } from "@/lib/ai-model";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { STATIC_INSTRUCTIONS, uiInstructions } from "@/server/chat-prompt";
 import { buildChatTools, buildSuggestActionTool } from "@/server/chat-tools";
+import { buildUiTools } from "@/server/ui-tools";
 
 export const maxDuration = 60;
 
@@ -68,7 +69,8 @@ export async function POST(req: Request) {
   }
 
   const uiMessages = cleanMessages(parsed.messages);
-  if (uiMessages.at(-1)?.role !== "user") return json({ error: "bad_request" }, 400);
+  // Usually the last message is the user's. After a screen action it is the assistant's, carrying the tool result, which is also valid.
+  if (uiMessages.length === 0) return json({ error: "bad_request" }, 400);
 
   const claims = mergeOverlay(dataset.claims as unknown as LocalClaim[], parsed.context.overlay as unknown as ClaimOverlay[]);
 
@@ -79,7 +81,7 @@ export async function POST(req: Request) {
       { role: "system", content: STATIC_INSTRUCTIONS, providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } } },
       { role: "system", content: uiInstructions(parsed.context.ui, openClaim) },
     ],
-    tools: { ...buildChatTools(claims), ...buildSuggestActionTool(openClaim) },
+    tools: { ...buildChatTools(claims), ...buildSuggestActionTool(openClaim), ...buildUiTools(openClaim, claims) },
     stopWhen: isStepCount(6),
     maxOutputTokens: 700,
   });

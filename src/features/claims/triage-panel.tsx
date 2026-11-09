@@ -124,11 +124,16 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
 
   useEffect(() => {
     if (!primary) return;
+    // The AI chat runs a button by its label. Decisions are carried out at once; the toast offers Undo.
     setActionRunner(
       needsReview
         ? (label) => {
             const spec = allActionsFor(claim).find((s) => s.label === label);
-            if (spec) choose(spec);
+            if (!spec) return false;
+            const target = retarget(spec, claim);
+            track("action_chosen", { claim: claim.id, action: target.id, recommended: rec?.recommended?.label === spec.label, via: "chat" });
+            run(target.input);
+            return true;
           }
         : null,
     );

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 export type StepPart = { type: string; state?: string; input?: unknown; output?: unknown };
 
-type Input = { id?: string; employee?: string };
+type Input = { id?: string; employee?: string; claimId?: string; buttonLabel?: string };
 
 const LABELS: Record<string, { running: (i: Input) => string; done: (i: Input) => string }> = {
   "tool-getQueueSummary": { running: () => "Checking the queue", done: () => "Checked the queue" },
@@ -17,6 +17,14 @@ const LABELS: Record<string, { running: (i: Input) => string; done: (i: Input) =
   "tool-getClaim": { running: (i) => `Reading claim ${i.id ?? ""}`.trim(), done: (i) => `Read claim ${i.id ?? ""}`.trim() },
   "tool-getEmployeeHistory": { running: (i) => `Looking up ${i.employee ?? "an employee"}'s claims`, done: (i) => `Looked up ${i.employee ?? "an employee"}'s claims` },
   "tool-getPolicy": { running: () => "Reading the policy", done: () => "Read the policy" },
+  "tool-openClaim": { running: (i) => `Opening claim ${i.claimId ?? ""}`.trim(), done: (i) => `Opened claim ${i.claimId ?? ""}`.trim() },
+  "tool-nextClaim": { running: () => "Moving to the next claim", done: () => "Moved to the next claim" },
+  "tool-previousClaim": { running: () => "Moving to the previous claim", done: () => "Moved to the previous claim" },
+  "tool-backToClaims": { running: () => "Going back to claims", done: () => "Back on claims" },
+  "tool-openDetails": { running: () => "Opening details", done: () => "Opened details" },
+  "tool-closeDetails": { running: () => "Closing details", done: () => "Closed details" },
+  "tool-showClaimsTab": { running: () => "Switching the tab", done: () => "Switched the tab" },
+  "tool-takeAction": { running: (i) => `Carrying out ${i.buttonLabel ?? "the decision"}`, done: (i) => `Carried out ${i.buttonLabel ?? "the decision"}` },
   "tool-getRecommendedAction": { running: (i) => `Checking the recommendation for ${i.id ?? "the claim"}`, done: (i) => `Checked the recommendation for ${i.id ?? "the claim"}` },
 };
 

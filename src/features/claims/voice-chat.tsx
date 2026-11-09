@@ -64,20 +64,24 @@ export function VoiceChat({ busy, reply, onAsk, onStopAnswer, onEnd }: Props) {
       return;
     }
     if (!wasBusy.current) return;
-    wasBusy.current = false;
-    const spoken = reply ? plainForSpeech(reply) : "";
-    const started = speak(spoken, {
-      onStart: () => setSpeaking(true),
-      onEnd: () => {
-        setSpeaking(false);
+    // Wait a moment: a screen action can finish and the answer can carry on right after. Only speak if nothing started again.
+    const timer = window.setTimeout(() => {
+      wasBusy.current = false;
+      const spoken = reply ? plainForSpeech(reply) : "";
+      const started = speak(spoken, {
+        onStart: () => setSpeaking(true),
+        onEnd: () => {
+          setSpeaking(false);
+          keepListening.current = !muted;
+          listen();
+        },
+      });
+      if (!started) {
         keepListening.current = !muted;
         listen();
-      },
-    });
-    if (!started) {
-      keepListening.current = !muted;
-      listen();
-    }
+      }
+    }, 900);
+    return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [busy]);
 
