@@ -38,7 +38,8 @@ type Props = {
 
 export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
   const finding = detectFinding(claim, allClaims);
-  const [step, setStep] = useState<1 | 2>(finding ? 2 : 1);
+  // Always start at step 1 (what went wrong). A detected finding only pre-selects its option, so the reader confirms it.
+  const [step, setStep] = useState<1 | 2>(1);
   const [option, setOption] = useState<OptionId | null>(finding ? FINDING_TO_OPTION[finding] : null);
 
   const doc = claim.receipt.document;
@@ -46,7 +47,7 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
   const name = firstName(claim);
 
   // Fix-step state. Defaults come from the receipt, never typed by hand.
-  const [amountText, setAmountText] = useState(doc?.total != null ? String(doc.total) : "");
+  const [amountText, setAmountText] = useState(doc?.total != null ? doc.total.toFixed(2) : "");
   const [peopleChoice, setPeopleChoice] = useState<"cap" | "ask">("cap");
   const [reverseChoice, setReverseChoice] = useState<"reverse" | "keep">("reverse");
   const [otherOutcome, setOtherOutcome] = useState<"approved" | "declined" | "ask">("approved");
@@ -73,10 +74,13 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
     else if (typed > claimed) error = `The amount can't be more than the ${formatUsd(claimed)} approved.`;
     else if (!unchanged) input = { id: "correct", to: "approved", amount: typed, feedback };
   } else if (option === "people") {
-    input =
-      peopleChoice === "cap"
-        ? { id: "correct", to: "approved", amount: Math.min(capAmount, claimed), feedback }
-        : { id: "correct", to: "ask", message: `The receipt shows ${covers} diners but the claim lists ${claim.attendees.count}. Explain the difference.`, feedback };
+    const capped = Math.min(capAmount, claimed);
+    if (peopleChoice === "cap") {
+      // Capping to the amount already approved is no correction.
+      if (Math.abs(capped - approvedNow) >= 0.005) input = { id: "correct", to: "approved", amount: capped, feedback };
+    } else {
+      input = { id: "correct", to: "ask", message: `The receipt shows ${covers} diners but the claim lists ${claim.attendees.count}. Explain the difference.`, feedback };
+    }
   } else if (option === "declined_valid") {
     input = reverseChoice === "reverse" ? { id: "correct", to: "approved", amount: claimed, feedback } : null;
   } else if (option === "linked") {
