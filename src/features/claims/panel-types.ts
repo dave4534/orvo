@@ -1,1 +1,1 @@
-export type MoreTab = "overview" | "documents" | "policy" | "past";
+export type MoreTab = "overview" | "policy" | "past" | "chat";

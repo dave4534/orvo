@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Send, Sparkles, X } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { employeeName } from "@/logic/comparison";
 import type { LocalClaim } from "@/logic/local";
 import { track } from "@/logic/track";
 import { replyTo, suggestedPrompts } from "@/mocks/ai-replies";
@@ -15,15 +13,22 @@ import type { MoreTab } from "./panel-types";
 
 type Props = {
   claim: LocalClaim | null;
+  /** Label of the recommended action for the open claim. Shown as a primary button after the latest message. */
+  primaryLabel?: string | null;
+  onPrimary?: () => void;
   allClaims: LocalClaim[];
   onClose: () => void;
   onOpenMore: (tab: MoreTab) => void;
 };
 
-export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
+export function AiPanel({ claim, allClaims, primaryLabel, onPrimary, onClose, onOpenMore }: Props) {
   const { aiMessages, addAiMessage } = useWorkspace();
   const [draft, setDraft] = useState("");
   const [thinking, setThinking] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: "end" });
+  }, [aiMessages.length, thinking, primaryLabel]);
 
   function ask(prompt: string) {
     const text = prompt.trim();
@@ -40,7 +45,7 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
   }
 
   return (
-    <aside aria-label="Ask Orvo AI" className="flex h-full min-h-0 w-[22rem] max-w-full shrink-0 flex-col border-l bg-card">
+    <aside aria-label="Ask Orvo AI" className="flex h-full min-h-0 w-full flex-col bg-card">
       <div className="flex h-16 shrink-0 items-center justify-between border-b px-5">
         <h2 className="flex items-center gap-2 text-base font-semibold">
           <Sparkles aria-hidden className="size-4 text-primary" />
@@ -49,13 +54,6 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
         <Button variant="ghost" size="icon-sm" aria-label="Close Ask Orvo AI" onClick={onClose}>
           <X />
         </Button>
-      </div>
-
-      <div className="border-b px-5 py-2.5 text-xs text-muted-foreground">
-        About:{" "}
-        <Badge variant="outline" className="ml-1 bg-card text-foreground">
-          {claim ? `${claim.id}, ${employeeName(claim)}` : "All claims"}
-        </Badge>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5" aria-live="polite">
@@ -86,6 +84,12 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
           ))
         )}
         {thinking ? <p className="text-sm text-muted-foreground">Checking the claim.</p> : null}
+        {primaryLabel && onPrimary ? (
+          <Button size="lg" className="h-11 w-full bg-success text-success-foreground hover:bg-success/90" onClick={onPrimary}>
+            {primaryLabel}
+          </Button>
+        ) : null}
+        <div ref={endRef} />
       </div>
 
       <form

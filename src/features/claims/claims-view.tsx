@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Status } from "@/data/types";
 import type { ActionId } from "@/logic/actions";
@@ -23,6 +24,7 @@ import {
   type TabId,
 } from "@/logic/claims";
 import { isSpotCheck } from "@/logic/local";
+import { recommendationFor } from "@/logic/recommendations";
 import { sectionsFor } from "@/logic/sections";
 import { claimSummary } from "@/logic/summary";
 import { cn } from "@/lib/utils";
@@ -32,6 +34,8 @@ import { useWorkspace } from "@/store/workspace-store";
 import { AiPanel } from "./ai-panel";
 import { ClaimsFilters } from "./claims-filters";
 import { ClaimsQueue } from "./claims-queue";
+import { MoreInfoPanel } from "./more-info-panel";
+import { PastClaimModal } from "./past-claim-modal";
 import { ClaimsTable } from "./claims-table";
 import { DailyBriefBanner } from "./daily-brief";
 import type { MoreTab } from "./panel-types";
@@ -41,7 +45,7 @@ const tabOfStatus = (status: Status): TabId =>
 
 export function ClaimsView() {
   const { claims, sessionIds, simulateError, setSimulateError, reset } = useClaims();
-  const { aiOpen, setAiOpen, addAiMessage, resetAi } = useWorkspace();
+  const { aiOpen, setAiOpen, addAiMessage, resetAi, runPrimaryAction } = useWorkspace();
 
   const [tab, setTab] = useState<TabId>("needs_review");
   const [filters, setFilters] = useState<ClaimFilters>(DEFAULT_FILTERS);
@@ -50,6 +54,7 @@ export function ClaimsView() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [openId, setOpenId] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [pastId, setPastId] = useState<string | null>(null);
   const [moreTab, setMoreTab] = useState<MoreTab>("overview");
 
   const brief = useMemo(() => buildDailyBrief(claims), [claims]);
@@ -95,13 +100,17 @@ export function ClaimsView() {
   function closeWorkspace() {
     setOpenId(null);
     setDetailsOpen(false);
+    setPastId(null);
   }
 
   function openMore(nextTab: MoreTab = "overview") {
     track("more_info_opened", { tab: nextTab });
     setMoreTab(nextTab);
-    setDetailsOpen(true);
+    if (openId !== null) setDetailsOpen(true);
   }
+
+  // A past claim opens in a modal over the review. Closing it, or deciding on it, leaves the review exactly as it was.
+  const pastClaim = claims.find((c) => c.id === pastId) ?? null;
 
   // After a decision, move on: to the next claim in the group, or close when there is none (PRD FR-ACT-1).
   function onDecided(claimId: string, status: Status, action: ActionId) {
@@ -156,27 +165,26 @@ export function ClaimsView() {
   const cleared = tab === "needs_review" && !filtered && rows.length === 0;
   const hasSpotChecks = claims.some((c) => c.status === "approved_by_agent" && isSpotCheck(c));
 
+  const primaryRec = openClaim && openClaim.status === "waiting_on_noa" ? recommendationFor(openClaim).recommended : null;
+
   return (
-    <div className={cn("flex w-full", inTriage ? "h-[calc(100svh-var(--header-height))]" : "min-h-[calc(100svh-var(--header-height))]")}>
-      {inTriage ? (
-        <ClaimsQueue
-          claim={openClaim}
-          allClaims={claims}
-          position={position}
-          detailsOpen={detailsOpen}
-          moreTab={moreTab}
-          onPrev={scopeIndex > 0 ? () => step(-1) : undefined}
-          onNext={scopeIndex < scopeIds.length - 1 ? () => step(1) : undefined}
-          onBack={closeWorkspace}
-          onOpenDetails={() => openMore(moreTab)}
-          onCloseDetails={() => setDetailsOpen(false)}
-          onOpenMore={openMore}
-          onMoreTab={setMoreTab}
-          onOpenClaim={openClaimById}
-          onDecided={onDecided}
-          onReopen={onReopen}
-        />
-      ) : (
+    <div className={cn("w-full", inTriage ? "h-[calc(100svh-var(--header-height))] overflow-hidden" : "min-h-[calc(100svh-var(--header-height))]")}>
+      <ResizablePanelGroup className={inTriage ? "h-full" : "h-auto min-h-[calc(100svh-var(--header-height))]"}>
+        <ResizablePanel id="main" minSize={420} style={{ overflow: inTriage ? "hidden" : "visible" }}>
+          {inTriage ? (
+            <ClaimsQueue
+              claim={openClaim}
+              allClaims={claims}
+              position={position}
+              onPrev={scopeIndex > 0 ? () => step(-1) : undefined}
+              onNext={scopeIndex < scopeIds.length - 1 ? () => step(1) : undefined}
+              onBack={closeWorkspace}
+              onOpenDetails={() => openMore(moreTab)}
+              onOpenMore={openMore}
+              onDecided={onDecided}
+              onReopen={onReopen}
+            />
+          ) : (
       <main className="mx-auto flex min-w-0 w-full max-w-[1400px] flex-1 flex-col gap-6 p-8">
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-3xl font-semibold tracking-tight">Claims</h1>
@@ -305,9 +313,35 @@ export function ClaimsView() {
           </Empty>
         )}
       </main>
-      )}
-
-      {aiOpen ? <AiPanel claim={openClaim} allClaims={claims} onClose={() => setAiOpen(false)} onOpenMore={openMore} /> : null}
+          )}
+        </ResizablePanel>
+        {inTriage && detailsOpen ? (
+          <>
+            <ResizableHandle />
+            <ResizablePanel id="details" defaultSize={384} minSize={300} maxSize={720} groupResizeBehavior="preserve-pixel-size" style={{ overflow: "hidden" }}>
+              <MoreInfoPanel claim={openClaim} allClaims={claims} tab={moreTab} onTab={setMoreTab} onClose={() => setDetailsOpen(false)} onOpenPastClaim={setPastId} />
+            </ResizablePanel>
+          </>
+        ) : null}
+        {aiOpen ? (
+          <>
+            <ResizableHandle />
+            <ResizablePanel id="ai" defaultSize={352} minSize={280} maxSize={560} groupResizeBehavior="preserve-pixel-size" style={{ overflow: "hidden" }}>
+              <AiPanel
+                claim={openClaim}
+                allClaims={claims}
+                primaryLabel={primaryRec?.label ?? null}
+                onPrimary={runPrimaryAction}
+                onClose={() => setAiOpen(false)}
+                onOpenMore={openMore}
+              />
+            </ResizablePanel>
+          </>
+        ) : null}
+      </ResizablePanelGroup>
+      {pastClaim ? (
+        <PastClaimModal claim={pastClaim} allClaims={claims} onClose={() => setPastId(null)} onDecided={() => setPastId(null)} onReopen={setPastId} />
+      ) : null}
     </div>
   );
 }

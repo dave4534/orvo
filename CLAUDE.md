@@ -78,6 +78,9 @@ Rules:
 
 - **No second person.** Do not write "you", "your", "yours" or "could you" in product copy, including messages to employees and AI replies.
 - **No third person for the agent or the manager.** Do not write "Orvo can't confirm it", "Orvo asks", "Noa approved" or "Orvo's review said". State the fact neutrally instead: "can't be confirmed", "Next: ...", "Approved automatically", "Review said". Names of employees are fine.
+- **Tone:** relaxed and positive, but not overly excited. Never apathetic and never overly formal. Plain, friendly sentences, no exclamation marks, no stiff phrasing.
+- **Action labels** start with a verb. An approval says "Approve" plus two to three words that make the effect clear ("Approve with card statement", "Approve $540.00, the cap"). Avoid vague verbs like "Accept" or "Pay". The logic and labels for actions live in `src/logic/recommendations.ts` (labels and recommendation table) and `src/logic/actions.ts` (what each action does and its preview).
+- **No Slack.** Messages to employees stay in the local claim chat (the Chat tab in Details).
 - **Imperatives are allowed** for next actions ("Approve it for Finance, or decline").
 - **Brand names are exempt:** "Orvo" as the product name, "Ask Orvo AI", and the Orvo logo text.
 - **AI summary** (the box at the top of the triage panel) is at most 170 characters and 35 words. It says: the gap, why the claim was escalated and could not be decided automatically, and the next action. It has no "Orvo asks:" label. Its title is a short headline of the gap.

@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ArrowRight, ChevronDown, Info } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, Ban, Check, ChevronDown, CircleDollarSign, Clock, Info, Landmark, ListChecks, MessageSquare, Pencil, Wrench, type LucideIcon } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -23,7 +23,9 @@ import { claimStatusLabel, formatUsd, initials } from "@/logic/format";
 import { isAgentDecided, isSpotCheck, type LocalClaim } from "@/logic/local";
 import { moreOptionsFor, recommendationFor, type ActionSpec } from "@/logic/recommendations";
 import { track } from "@/logic/track";
+import { cn } from "@/lib/utils";
 import { useClaims } from "@/store/claims-store";
+import { useWorkspace } from "@/store/workspace-store";
 import { ActionDialog } from "./action-dialog";
 import { ComparisonView } from "./comparison-view";
 import { FixDialog } from "./fix-dialog";
@@ -36,13 +38,31 @@ type Props = {
   allClaims: LocalClaim[];
   /** Show the next claims peeking behind the card. */
   stacked: boolean;
-  onOpenDetails: () => void;
-  onOpenMore: (tab?: MoreTab) => void;
+  /** Leave out to hide "View details" (for example inside the past claim modal). */
+  onOpenDetails?: () => void;
+  /** Leave out to hide "See how the decision was made". */
+  onOpenMore?: (tab?: MoreTab) => void;
+  /** Wide spacing around the card stack. Off inside the past claim modal. */
+  padded?: boolean;
+  /** Registers the recommended action so the AI chat can run it. */
+  primary?: boolean;
   onDecided: (claimId: string, status: Status, action: ActionId) => void;
   onReopen: (claimId: string) => void;
 };
 
 const dayFormat = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
+const ACTION_ICON: Partial<Record<ActionId, LucideIcon>> = {
+  approve: Check,
+  approve_amount: CircleDollarSign,
+  exception: Check,
+  decline: Ban,
+  ask: MessageSquare,
+  hold: Clock,
+  to_finance: Landmark,
+  to_finance_both: Landmark,
+  correct: Pencil,
+};
+
 const formatDay = (ts: string) => dayFormat.format(new Date(ts)).replace(",", "");
 
 /** For a decided claim, the menu actions are corrections of that decision. */
@@ -58,8 +78,9 @@ function retarget(spec: ActionSpec, claim: LocalClaim): ActionSpec {
 }
 
 /** Triage column of the claims queue: the claim, its comparison and the decision actions (actions stay pinned at the bottom). */
-export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMore, onDecided, onReopen }: Props) {
+export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMore, padded = true, primary = true, onDecided, onReopen }: Props) {
   const { perform } = useClaims();
+  const { setPrimaryAction } = useWorkspace();
   const [pending, setPending] = useState<ActionSpec | null>(null);
   const [fixOpen, setFixOpen] = useState(false);
   const [error, setError] = useState<ActionInput | null>(null);
@@ -94,6 +115,13 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
     else run(target.input);
   }
 
+  useEffect(() => {
+    if (!primary) return;
+    const recommended = rec?.recommended;
+    setPrimaryAction(recommended ? () => choose(recommended) : null);
+    return () => setPrimaryAction(null);
+  });
+
   // Menu: decision actions not already shown as buttons, then actions about Orvo's work.
   const shown = rec ? [rec.recommended, ...rec.secondary].filter((s): s is ActionSpec => Boolean(s)) : [];
   const decisionMenu: ActionSpec[] = needsReview
@@ -111,8 +139,8 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
   const chase = claim.agent.chase;
 
   return (
-    <section aria-label={`Claim ${claim.id}, ${full}`} className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
+    <section aria-label={`Claim ${claim.id}, ${full}`} className="@container flex min-h-0 min-w-0 flex-1 flex-col bg-background">
+      <div className={cn("flex min-h-0 flex-1 flex-col overflow-y-auto p-6", padded && "@3xl:px-[100px] @3xl:[@media(min-height:880px)]:py-[100px]")}>
         <div className="relative flex flex-1 flex-col pb-5">
           {stacked ? (
             <>
@@ -137,9 +165,11 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                 <Info aria-hidden className="size-4 shrink-0" />
                 <span className="truncate">{needsReview ? dataset.enums.reason_type[claim.agent.reason_type] : claimStatusLabel(claim)}</span>
               </span>
-              <Button variant="outline" size="sm" onClick={onOpenDetails}>
-                View details <ArrowRight data-icon="inline-end" />
-              </Button>
+              {onOpenDetails ? (
+                <Button variant="outline" size="sm" onClick={onOpenDetails}>
+                  View details <ArrowRight data-icon="inline-end" />
+                </Button>
+              ) : null}
             </div>
 
             <div className="mt-6 border-t">
@@ -157,7 +187,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
         </div>
       </div>
 
-      <div className="flex shrink-0 flex-col gap-2.5 border-t bg-card px-6 py-4">
+      <div className="flex shrink-0 flex-col gap-3 border-t bg-card px-6 py-4">
         {error ? (
           <Alert variant="destructive">
             <AlertTitle>Decision not saved</AlertTitle>
@@ -175,84 +205,103 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
           </Alert>
         ) : null}
 
-        {needsReview && rec ? (
-          <>
-            {rec.recommended ? (
-              <Button size="lg" className="h-11 w-full bg-success text-success-foreground hover:bg-success/90" onClick={() => choose(rec.recommended!)}>
-                {rec.recommended.label}
-              </Button>
-            ) : (
-              <p className="text-sm text-muted-foreground">No recommendation for this claim. {claim.agent.unsure ? "It could not be judged." : ""}</p>
-            )}
-            {rec.secondary.map((spec) => (
-              <Button key={spec.label} variant="outline" size="lg" className="h-10 w-full" onClick={() => choose(spec)}>
-                {spec.label}
-              </Button>
-            ))}
-          </>
-        ) : null}
-
-        {spot ? (
-          <Button size="lg" className="h-11 w-full bg-success text-success-foreground hover:bg-success/90" onClick={() => run({ id: "confirm" })}>
-            Confirm decision
-          </Button>
-        ) : null}
-
-        {agentDecided || decidedByNoa ? (
-          <Button variant="outline" size="lg" className="h-10 w-full" onClick={() => setFixOpen(true)}>
-            Edit decision
-          </Button>
-        ) : null}
-
-        {claim.status === "waiting_on_employee" ? (
-          <Button size="lg" className="h-11 w-full" onClick={() => run({ id: "decide_now" })}>
-            Decide now
-          </Button>
+        {needsReview && rec && !rec.recommended ? (
+          <p className="text-sm text-muted-foreground">No recommendation for this claim. {claim.agent.unsure ? "It could not be judged." : ""}</p>
         ) : null}
 
         {claim.status === "waiting_on_finance" ? (
           <p className="text-sm text-muted-foreground">With Finance since {claim.noa ? formatDay(claim.noa.decided_at) : "today"}. No action is needed until Finance decides.</p>
         ) : null}
 
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button variant="outline" size="lg" className="h-10 w-full">
-                More options <ChevronDown data-icon="inline-end" />
-              </Button>
-            }
-          />
-          <DropdownMenuContent align="end" className="w-72">
-            {decisionMenu.length > 0 ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="outline" size="lg" className="h-11">
+                  More options <ChevronDown data-icon="inline-end" />
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="start" side="top" className="w-72">
+              {decisionMenu.length > 0 ? (
+                <>
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>DECISION</DropdownMenuLabel>
+                    {decisionMenu.map((spec) => {
+                      const Icon = ACTION_ICON[spec.id];
+                      return (
+                        <DropdownMenuItem key={spec.label} onClick={() => choose(spec)}>
+                          {Icon ? <Icon /> : null}
+                          {spec.label}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                </>
+              ) : null}
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>ABOUT AUTOMATIC DECISIONS</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => setFixOpen(true)}>
+                  <Wrench />
+                  <span className="flex flex-col">
+                    <span>Correct an automatic decision</span>
+                    <span className="text-xs text-muted-foreground">Record what went wrong</span>
+                  </span>
+                </DropdownMenuItem>
+                {onOpenMore ? (
+                  <DropdownMenuItem onClick={() => onOpenMore("policy")}>
+                    <ListChecks />
+                    <span className="flex flex-col">
+                      <span>See how the decision was made</span>
+                      <span className="text-xs text-muted-foreground">Evidence and checks that were run</span>
+                    </span>
+                  </DropdownMenuItem>
+                ) : null}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            {needsReview && rec ? (
               <>
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel>DECISION</DropdownMenuLabel>
-                  {decisionMenu.map((spec) => (
-                    <DropdownMenuItem key={spec.label} onClick={() => choose(spec)}>
+                {rec.secondary.map((spec) => {
+                  const Icon = ACTION_ICON[spec.id];
+                  return (
+                    <Button key={spec.label} variant="outline" size="lg" className="h-11" onClick={() => choose(spec)}>
+                      {Icon ? <Icon data-icon="inline-start" /> : null}
                       {spec.label}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
+                    </Button>
+                  );
+                })}
+                {rec.recommended ? (
+                  <Button size="lg" className="h-11 bg-success text-success-foreground hover:bg-success/90" onClick={() => choose(rec.recommended!)}>
+                    {rec.recommended.label}
+                  </Button>
+                ) : null}
               </>
             ) : null}
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>ABOUT AUTOMATIC DECISIONS</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => setFixOpen(true)}>
-                <span className="flex flex-col">
-                  <span>Correct an automatic decision</span>
-                  <span className="text-xs text-muted-foreground">Record what went wrong</span>
-                </span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onOpenMore("policy")}>
-                <span className="flex flex-col">
-                  <span>See how the decision was made</span>
-                  <span className="text-xs text-muted-foreground">Evidence and checks it ran</span>
-                </span>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+
+            {spot ? (
+              <Button size="lg" className="h-11 bg-success text-success-foreground hover:bg-success/90" onClick={() => run({ id: "confirm" })}>
+                Confirm decision
+              </Button>
+            ) : null}
+
+            {agentDecided || decidedByNoa ? (
+              <Button variant="outline" size="lg" className="h-11" onClick={() => setFixOpen(true)}>
+                <Pencil data-icon="inline-start" />
+                Edit decision
+              </Button>
+            ) : null}
+
+            {claim.status === "waiting_on_employee" ? (
+              <Button size="lg" className="h-11" onClick={() => run({ id: "decide_now" })}>
+                Decide now
+              </Button>
+            ) : null}
+          </div>
+        </div>
       </div>
 
       {pending ? (

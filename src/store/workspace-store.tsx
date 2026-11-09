@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 
 export type AiMessage = {
   id: number;
@@ -8,7 +8,7 @@ export type AiMessage = {
   text: string;
   /** Small label above the message, naming the claim the summary is about. */
   heading?: string;
-  action?: { label: string; kind: "documents" | "policy" };
+  action?: { label: string; kind: "overview" | "policy" };
 };
 
 type WorkspaceStore = {
@@ -17,6 +17,9 @@ type WorkspaceStore = {
   aiMessages: AiMessage[];
   addAiMessage: (message: Omit<AiMessage, "id">) => void;
   resetAi: () => void;
+  /** The triage panel registers its recommended action so the AI chat can run it. */
+  setPrimaryAction: (run: (() => void) | null) => void;
+  runPrimaryAction: () => void;
 };
 
 const Context = createContext<WorkspaceStore | null>(null);
@@ -31,10 +34,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     [],
   );
   const resetAi = useCallback(() => setAiMessages([]), []);
+  const primary = useRef<(() => void) | null>(null);
+  const setPrimaryAction = useCallback((run: (() => void) | null) => {
+    primary.current = run;
+  }, []);
+  const runPrimaryAction = useCallback(() => primary.current?.(), []);
 
   const value = useMemo(
-    () => ({ aiOpen, setAiOpen, aiMessages, addAiMessage, resetAi }),
-    [aiOpen, aiMessages, addAiMessage, resetAi],
+    () => ({ aiOpen, setAiOpen, aiMessages, addAiMessage, resetAi, setPrimaryAction, runPrimaryAction }),
+    [aiOpen, aiMessages, addAiMessage, resetAi, setPrimaryAction, runPrimaryAction],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

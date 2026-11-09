@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import { NOW } from "@/data";
 import type { Status } from "@/data/types";
-import { applyAction, type ActionInput } from "@/logic/actions";
+import { applyAction, isoLocal, type ActionInput } from "@/logic/actions";
 import { initialClaims, type LocalClaim } from "@/logic/local";
 import { track } from "@/logic/track";
 
@@ -27,6 +27,8 @@ type ClaimsStore = {
   simulateError: boolean;
   setSimulateError: (on: boolean) => void;
   perform: (claimId: string, input: ActionInput, options?: PerformOptions) => PerformResult;
+  /** Adds a message from the manager to the claim chat. Local only. */
+  sendMessage: (claimId: string, text: string) => void;
   reset: () => void;
 };
 
@@ -81,6 +83,16 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
     [claims, simulateError, undo],
   );
 
+  const sendMessage = useCallback((claimId: string, text: string) => {
+    const body = text.trim();
+    if (!body) return;
+    tick.current += 1;
+    const at = isoLocal(new Date(NOW.getTime() + tick.current * 60_000));
+    setClaims((current) =>
+      current.map((c) => (c.id === claimId ? { ...c, local: { ...c.local, thread: [...(c.local?.thread ?? []), { at, from: "manager" as const, text: body }] } } : c)),
+    );
+  }, []);
+
   const reset = useCallback(() => {
     setClaims(initialClaims());
     setSessionIds([]);
@@ -90,8 +102,8 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<ClaimsStore>(
-    () => ({ claims, sessionIds, simulateError, setSimulateError, perform, reset }),
-    [claims, sessionIds, simulateError, perform, reset],
+    () => ({ claims, sessionIds, simulateError, setSimulateError, perform, sendMessage, reset }),
+    [claims, sessionIds, simulateError, perform, sendMessage, reset],
   );
 
   return <Context.Provider value={value}>{children}</Context.Provider>;

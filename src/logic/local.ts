@@ -13,11 +13,15 @@ export type LocalEventType =
 
 export type LocalEvent = Omit<ClaimEvent, "type"> & { type: LocalEventType };
 
+export type ThreadMessage = { at: string; from: "manager"; text: string };
+
 export type LocalClaim = Omit<Claim, "events"> & {
   events: LocalEvent[];
   local?: {
     spot_checked?: boolean;
     feedback?: { option: string; text?: string; at: string }[];
+    /** Messages the manager sent to the employee from this claim. Kept locally, in the claim chat. */
+    thread?: ThreadMessage[];
   };
 };
 

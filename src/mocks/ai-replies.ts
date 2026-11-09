@@ -4,7 +4,7 @@ import { formatUsd } from "@/logic/format";
 import type { LocalClaim } from "@/logic/local";
 import { recommendationFor } from "@/logic/recommendations";
 
-export type AiReply = { text: string; action?: { label: string; kind: "documents" | "policy" } };
+export type AiReply = { text: string; action?: { label: string; kind: "overview" | "policy" } };
 
 /**
  * Scripted replies (PRD 11.2). They are grounded in the claim's own fields, say when the data cannot answer,
@@ -47,7 +47,7 @@ export function replyTo(prompt: string, claim: LocalClaim | null, all: LocalClai
         : claim.receipt.status === "missing"
           ? `There is no receipt on this claim.`
           : "The attached receipt can't be read.",
-      action: { label: "Open the receipt", kind: "documents" },
+      action: { label: "Open the receipt", kind: "overview" },
     };
   }
   if (/recommend|should|what would/.test(q)) {

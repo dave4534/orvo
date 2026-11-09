@@ -42,7 +42,7 @@ const exception = (claim: LocalClaim, amount: number, label: string, reason: str
   confirm: true,
 });
 
-const decline = (): ActionSpec => ({ id: "decline", label: "Decline", input: { id: "decline" }, confirm: true, askMessage: "decline", destructive: true });
+const decline = (): ActionSpec => ({ id: "decline", label: "Decline claim", input: { id: "decline" }, confirm: true, askMessage: "decline", destructive: true });
 
 const ask = (claim: LocalClaim): ActionSpec => ({
   id: "ask",
@@ -77,21 +77,21 @@ export function recommendationFor(claim: LocalClaim): Recommendation {
     case "currency_mismatch": {
       const receiptAmount = claim.amount.fx?.usd_computed ?? claimed;
       return {
-        recommended: { ...approve(claim, receiptAmount, `Pay ${formatUsd(receiptAmount)}, the receipt amount`), confirm: true },
-        secondary: [exception(claim, claimed, `Pay ${formatUsd(claimed)}, card fees included`, "currency gap above the 3% tolerance"), ask(claim)],
+        recommended: { ...approve(claim, receiptAmount, `Approve ${formatUsd(receiptAmount)}, receipt amount`), confirm: true },
+        secondary: [exception(claim, claimed, `Approve ${formatUsd(claimed)} with card fees`, "currency gap above the 3% tolerance"), ask(claim)],
         more: [decline(), otherAmount()],
       };
     }
     case "possible_split":
       return {
-        recommended: { ...approve(claim, claimed, "Approve, they are separate workshops"), confirm: true },
+        recommended: { ...approve(claim, claimed, "Approve as separate workshops"), confirm: true },
         secondary: [{ id: "to_finance_both", label: "Send both to Finance", input: { id: "to_finance_both" }, confirm: true }, ask(claim)],
         more: [decline()],
       };
     case "receipt_missing_unresolved":
       return {
-        recommended: exception(claim, claimed, "Accept the card statement", "card statement instead of a receipt"),
-        secondary: [{ id: "hold", label: "Hold for a receipt", input: { id: "hold" }, confirm: true, askMessage: "hold" }, decline()],
+        recommended: exception(claim, claimed, "Approve with card statement", "card statement instead of a receipt"),
+        secondary: [{ id: "hold", label: "Hold until receipt arrives", input: { id: "hold" }, confirm: true, askMessage: "hold" }, decline()],
         more: [otherAmount()],
       };
     case "no_matching_rule":
@@ -101,9 +101,9 @@ export function recommendationFor(claim: LocalClaim): Recommendation {
       const cap = MEAL_CAP * people;
       const noWine = noWineAmount(claim);
       return {
-        recommended: { ...approve(claim, cap, `Pay ${formatUsd(cap)}, the cap`), confirm: true },
+        recommended: { ...approve(claim, cap, `Approve ${formatUsd(cap)}, the cap`), confirm: true },
         secondary: [exception(claim, claimed, `Approve ${formatUsd(claimed)} as an exception`, "over the meal cap"), ask(claim)],
-        more: [...(noWine ? [approve(claim, noWine, `Pay ${formatUsd(noWine)}, without the wine`)] : []), decline()],
+        more: [...(noWine ? [approve(claim, noWine, `Approve ${formatUsd(noWine)} without wine`)] : []), decline()],
       };
     }
     default:

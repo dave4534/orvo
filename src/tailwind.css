@@ -166,4 +166,15 @@
   html {
     @apply font-sans;
     }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"],
+  [role="menuitem"],
+  [role="separator"][aria-orientation="vertical"],
+  tr[tabindex] {
+    cursor: pointer;
+    }
+  [role="separator"][aria-orientation="vertical"] {
+    cursor: col-resize;
+    }
 }

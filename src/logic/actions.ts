@@ -42,7 +42,7 @@ export const firstName = (claim: LocalClaim): string => {
   return person ? displayName(person).split(" ")[0] : claim.employee_id;
 };
 
-const isoLocal = (d: Date) => {
+export const isoLocal = (d: Date) => {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 };
@@ -58,6 +58,11 @@ const setChain = (claim: LocalClaim, noa: string, finance: string) => {
 };
 
 const event = (at: string, type: LocalEvent["type"], text: string): LocalEvent => ({ at, actor: "noa", type, text });
+
+const addToThread = (claim: LocalClaim, at: string, text?: string) => {
+  if (!text?.trim()) return;
+  claim.local = { ...claim.local, thread: [...(claim.local?.thread ?? []), { at, from: "manager", text: text.trim() }] };
+};
 
 function approveClaim(claim: LocalClaim, amount: number, at: string, overrode: boolean, note: string) {
   const needsFinance = amount > FINANCE_LIMIT;
@@ -110,6 +115,7 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
       setChain(claim, "done", "skipped");
       claim.noa = { decision: "declined", decided_at: at, note: input.message ?? "", approved_amount_usd: 0, overrode_agent: wasAgent };
       claim.events.push(event(at, "noa_decision", `Declined ${formatUsd(claimed)}${input.message ? `: ${input.message}` : ""}`));
+      addToThread(claim, at, input.message);
       return { changed, summary: `Declined ${formatUsd(claimed)} for ${name}` };
     }
     case "ask":
@@ -120,6 +126,7 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
       claim.events.push(
         event(at, "noa_asked", input.id === "hold" ? `Asked for a receipt: ${input.message ?? ""}`.trim() : `Asked ${name}: ${input.message ?? ""}`.trim()),
       );
+      addToThread(claim, at, input.message);
       return { changed, summary: `Asked ${name}${input.id === "hold" ? " for a receipt" : ""}` };
     }
     case "to_finance":
@@ -159,7 +166,7 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
       claim.awaiting = "noa";
       setChain(claim, "waiting", claim.approval_chain.find((s) => s.step === "finance")?.state ?? "not_needed");
       claim.events.push(event(at, "noa_decision", "Decided by manager, chase stopped"));
-      return { changed, summary: `You took over ${name}'s claim` };
+      return { changed, summary: `Took over ${name}'s claim` };
     }
     case "confirm": {
       claim.local = { ...claim.local, spot_checked: true };
@@ -178,11 +185,13 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
         setChain(claim, "done", "skipped");
         claim.noa = { decision: "declined", decided_at: at, note: input.message ?? "", approved_amount_usd: 0, overrode_agent: wasAgent };
         claim.events.push(event(at, "noa_correction", `Corrected ${was} to a decline`));
+        addToThread(claim, at, input.message);
       } else {
         claim.status = "waiting_on_employee";
         claim.awaiting = "employee";
         setChain(claim, "waiting", "not_needed");
         claim.events.push(event(at, "noa_correction", `Reopened ${was} and asked ${name}: ${input.message ?? ""}`.trim()));
+        addToThread(claim, at, input.message);
       }
       if (input.feedback) {
         claim.local = {
@@ -224,15 +233,15 @@ export function actionPreview(claim: LocalClaim, input: ActionInput, all: LocalC
     case "exception":
     case "correct": {
       if (input.id === "correct" && input.to === "declined") {
-        return { pays: `Nothing. ${name} is not paid.`, tells: `${name}, on Slack, that the claim is declined`, finance: "Not needed" };
+        return { pays: `Nothing. ${name} is not paid.`, tells: `${name}, in the claim chat, that the claim is declined`, finance: "Not needed" };
       }
       if (input.id === "correct" && input.to === "ask") {
-        return { pays: "Nothing yet", tells: `${name}, on Slack, with the question`, finance: "Not involved yet" };
+        return { pays: "Nothing yet", tells: `${name}, in the claim chat, with the question`, finance: "Not involved yet" };
       }
       if (amount > FINANCE_LIMIT) {
         return {
           pays: `Nothing until Finance approves ${formatUsd(amount)}. ${name} is paid after that.`,
-          tells: `${name}, on Slack, that it was approved and is with Finance`,
+          tells: `${name}, in the claim chat, that it was approved and is with Finance`,
           finance: finance(amount),
         };
       }
@@ -244,21 +253,21 @@ export function actionPreview(claim: LocalClaim, input: ActionInput, all: LocalC
       const tells =
         amount < claimed
           ? input.id === "correct" && receiptTotal === amount
-            ? `${name}, on Slack, with the receipt total`
-            : `${name}, on Slack, the amount and why it differs`
+            ? `${name}, in the claim chat, with the receipt total`
+            : `${name}, in the claim chat, the amount and why it differs`
           : input.id === "exception"
-            ? `${name}, on Slack, that it is approved as an exception`
-            : `${name}, on Slack, that it is approved`;
+            ? `${name}, in the claim chat, that it is approved as an exception`
+            : `${name}, in the claim chat, that it is approved`;
       return { pays, tells, finance: finance(amount) };
     }
     case "decline":
-      return { pays: `Nothing. ${name} is not paid.`, tells: `${name}, on Slack, that the claim is declined${input.message ? ", with the note" : ""}`, finance: "Not needed" };
+      return { pays: `Nothing. ${name} is not paid.`, tells: `${name}, in the claim chat, that the claim is declined${input.message ? ", with the note" : ""}`, finance: "Not needed" };
     case "ask":
-      return { pays: "Nothing yet", tells: `${name}, on Slack, with the question`, finance: "Not involved yet" };
+      return { pays: "Nothing yet", tells: `${name}, in the claim chat, with the question`, finance: "Not involved yet" };
     case "hold":
-      return { pays: "Nothing until a receipt arrives", tells: `${name}, on Slack, asking for the receipt`, finance: "Not involved yet" };
+      return { pays: "Nothing until a receipt arrives", tells: `${name}, in the claim chat, asking for the receipt`, finance: "Not involved yet" };
     case "to_finance": {
-      return { pays: `Nothing until Finance approves ${formatUsd(claimed)}`, tells: `${name}, on Slack, that it is with Finance`, finance: "Involved, sending it" };
+      return { pays: `Nothing until Finance approves ${formatUsd(claimed)}`, tells: `${name}, in the claim chat, that it is with Finance`, finance: "Involved, sending it" };
     }
     case "to_finance_both": {
       const others = claim.agent.related_claim_ids
@@ -268,7 +277,7 @@ export function actionPreview(claim: LocalClaim, input: ActionInput, all: LocalC
       const total = claimed + others.reduce((s, c) => s + c.amount.usd_claimed, 0);
       return {
         pays: `Nothing until Finance approves ${formatUsd(total)} together`,
-        tells: `${name}, on Slack, that both claims are with Finance`,
+        tells: `${name}, in the claim chat, that both claims are with Finance`,
         finance: `Receives both ${claim.id} and ${list || "the linked claim"}`,
       };
     }
