@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, PartyPopper, SearchX, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ import {
 import { isSpotCheck } from "@/logic/local";
 import { recommendationFor } from "@/logic/recommendations";
 import { sectionsFor } from "@/logic/sections";
+import { buildChatContext } from "@/logic/chat-context";
 import { claimSummary } from "@/logic/summary";
 import { cn } from "@/lib/utils";
 import { track } from "@/logic/track";
@@ -45,7 +46,7 @@ const tabOfStatus = (status: Status): TabId =>
 
 export function ClaimsView() {
   const { claims, sessionIds, simulateError, setSimulateError, reset } = useClaims();
-  const { aiOpen, setAiOpen, addAiMessage, resetAi, runPrimaryAction } = useWorkspace();
+  const { aiOpen, setAiOpen, addAiMessage, resetAi, runPrimaryAction, setChatContext } = useWorkspace();
 
   const [tab, setTab] = useState<TabId>("needs_review");
   const [filters, setFilters] = useState<ClaimFilters>(DEFAULT_FILTERS);
@@ -56,6 +57,12 @@ export function ClaimsView() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [pastId, setPastId] = useState<string | null>(null);
   const [moreTab, setMoreTab] = useState<MoreTab>("overview");
+
+  // Tells the AI chat where the user is and what changed this session, each time a question is sent.
+  useEffect(() => {
+    setChatContext(() => buildChatContext(claims, { tab, openClaimId: openId, detailsOpen: openId !== null && detailsOpen, detailsTab: moreTab, search: filters.query }));
+    return () => setChatContext(null);
+  });
 
   const brief = useMemo(() => buildDailyBrief(claims), [claims]);
   const counts = useMemo(() => tabCounts(claims, filters), [claims, filters]);
@@ -87,12 +94,12 @@ export function ClaimsView() {
     const claim = claims.find((c) => c.id === id);
     if (openId === null) {
       setAiOpen(true);
-      addAiMessage({ role: "orvo", text: "Let's review the open claims." });
+      addAiMessage({ role: "assistant", text: "Let's review the open claims." });
     }
     if (claim) {
       const { heading, summary, recommendation } = claimSummary(claim);
-      addAiMessage({ role: "orvo", heading, text: summary });
-      if (recommendation) addAiMessage({ role: "orvo", text: recommendation });
+      addAiMessage({ role: "assistant", heading, text: summary });
+      if (recommendation) addAiMessage({ role: "assistant", text: recommendation });
     }
     setOpenId(id);
   }

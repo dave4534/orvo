@@ -1,48 +1,92 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport, type ChatStatus, type UIMessage } from "ai";
 
-export type AiMessage = {
-  id: number;
-  role: "user" | "orvo";
-  text: string;
+import type { ChatContext } from "@/logic/chat-context";
+
+export type AiMeta = {
   /** Small label above the message, naming the claim the summary is about. */
   heading?: string;
   action?: { label: string; kind: "overview" | "policy" };
 };
+export type AiMessage = UIMessage<AiMeta>;
+
+type NewMessage = { role: "user" | "assistant"; text: string } & AiMeta;
 
 type WorkspaceStore = {
   aiOpen: boolean;
   setAiOpen: (open: boolean) => void;
   aiMessages: AiMessage[];
-  addAiMessage: (message: Omit<AiMessage, "id">) => void;
+  aiStatus: ChatStatus;
+  /** Sends a question to the live model. */
+  askAi: (text: string) => void;
+  /** Adds a message without calling the model, for example the summary posted when a claim opens. */
+  addAiMessage: (message: NewMessage) => void;
   resetAi: () => void;
   /** The triage panel registers its recommended action so the AI chat can run it. */
   setPrimaryAction: (run: (() => void) | null) => void;
   runPrimaryAction: () => void;
+  /** The claims view tells the chat where the user is and what changed this session. */
+  setChatContext: (read: (() => ChatContext) | null) => void;
+  /** Called with the question when the live model can't answer, so scripted replies can step in. */
+  setAiFallback: (run: ((prompt: string) => void) | null) => void;
 };
 
 const Context = createContext<WorkspaceStore | null>(null);
 
-/** Holds the Ask Orvo AI panel state so it survives claim changes and is reachable from the top bar (PRD FR-AI-8). */
+/** Read by the chat transport on every send. Module level, so reading it is not tied to rendering. */
+const chatContextSource: { read: (() => ChatContext) | null } = { read: null };
+
+const EMPTY_CONTEXT: ChatContext = { ui: { tab: "needs_review", openClaimId: null, detailsOpen: false, detailsTab: "overview", search: "" }, overlay: [] };
+
+/** Holds the Ask Orvo AI chat so it survives claim changes and is reachable from the top bar (PRD FR-AI-8). */
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [aiOpen, setAiOpen] = useState(false);
-  const [aiMessages, setAiMessages] = useState<AiMessage[]>([]);
+  const fallbackRef = useRef<((prompt: string) => void) | null>(null);
+  const lastPrompt = useRef("");
+  const primary = useRef<(() => void) | null>(null);
 
-  const addAiMessage = useCallback(
-    (message: Omit<AiMessage, "id">) => setAiMessages((list) => [...list, { ...message, id: list.length + 1 }]),
+  const transport = useMemo(
+    () => new DefaultChatTransport<AiMessage>({ api: "/api/chat", body: () => ({ context: chatContextSource.read?.() ?? EMPTY_CONTEXT }) }),
     [],
   );
-  const resetAi = useCallback(() => setAiMessages([]), []);
-  const primary = useRef<(() => void) | null>(null);
+  const { messages, sendMessage, setMessages, status, clearError } = useChat<AiMessage>({
+    transport,
+    onError: () => {
+      clearError();
+      fallbackRef.current?.(lastPrompt.current);
+    },
+  });
+
+  const askAi = useCallback(
+    (text: string) => {
+      lastPrompt.current = text;
+      void sendMessage({ text });
+    },
+    [sendMessage],
+  );
+  const addAiMessage = useCallback(
+    ({ role, text, heading, action }: NewMessage) =>
+      setMessages((list) => [...list, { id: crypto.randomUUID(), role, parts: [{ type: "text", text }], metadata: { heading, action } }]),
+    [setMessages],
+  );
+  const resetAi = useCallback(() => setMessages([]), [setMessages]);
   const setPrimaryAction = useCallback((run: (() => void) | null) => {
     primary.current = run;
   }, []);
   const runPrimaryAction = useCallback(() => primary.current?.(), []);
+  const setChatContext = useCallback((read: (() => ChatContext) | null) => {
+    chatContextSource.read = read;
+  }, []);
+  const setAiFallback = useCallback((run: ((prompt: string) => void) | null) => {
+    fallbackRef.current = run;
+  }, []);
 
   const value = useMemo(
-    () => ({ aiOpen, setAiOpen, aiMessages, addAiMessage, resetAi, setPrimaryAction, runPrimaryAction }),
-    [aiOpen, aiMessages, addAiMessage, resetAi, setPrimaryAction, runPrimaryAction],
+    () => ({ aiOpen, setAiOpen, aiMessages: messages, aiStatus: status, askAi, addAiMessage, resetAi, setPrimaryAction, runPrimaryAction, setChatContext, setAiFallback }),
+    [aiOpen, messages, status, askAi, addAiMessage, resetAi, setPrimaryAction, runPrimaryAction, setChatContext, setAiFallback],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

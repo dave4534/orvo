@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import type { LocalClaim } from "@/logic/local";
 import { track } from "@/logic/track";
 import { replyTo, suggestedPrompts } from "@/mocks/ai-replies";
-import { useWorkspace } from "@/store/workspace-store";
+import { useWorkspace, type AiMessage } from "@/store/workspace-store";
 import type { MoreTab } from "./panel-types";
 
 type Props = {
@@ -21,27 +21,89 @@ type Props = {
   onOpenMore: (tab: MoreTab) => void;
 };
 
+/** Friendly line for a data lookup the model made, shown above its answer. */
+function lookupLabel(part: { type: string; input?: unknown }): string {
+  const input = (part.input ?? {}) as { id?: string; employee?: string };
+  switch (part.type) {
+    case "tool-getQueueSummary":
+      return "the queue";
+    case "tool-listClaims":
+      return "claims";
+    case "tool-getClaim":
+      return input.id ? `claim ${input.id}` : "a claim";
+    case "tool-getEmployeeHistory":
+      return input.employee ? `${input.employee}'s claims` : "an employee's claims";
+    case "tool-getPolicy":
+      return "the policy";
+    case "tool-getRecommendedAction":
+      return input.id ? `the recommendation for ${input.id}` : "the recommendation";
+    default:
+      return "the data";
+  }
+}
+
+function MessageBubble({ m, onOpenMore }: { m: AiMessage; onOpenMore: (tab: MoreTab) => void }) {
+  const text = m.parts
+    .filter((p) => p.type === "text")
+    .map((p) => (p as { text: string }).text)
+    .join("\n\n");
+  const lookups = m.parts.filter((p) => p.type.startsWith("tool-")) as { type: string; state?: string; input?: unknown }[];
+  const action = m.metadata?.action;
+  if (m.role === "user") {
+    return <div className="ml-8 self-end rounded-xl bg-primary px-3.5 py-2.5 text-sm whitespace-pre-wrap text-primary-foreground">{text}</div>;
+  }
+  if (!text && lookups.length === 0) return null;
+  return (
+    <div className="mr-8 flex flex-col gap-1.5">
+      {lookups.length > 0 ? (
+        <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+          {lookups.map((l, i) => (
+            <span key={i}>
+              {l.state === "output-available" ? "Checked" : "Checking"} {lookupLabel(l)}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      {text || action ? (
+        <div className="rounded-xl border bg-info px-3.5 py-2.5 text-sm text-info-foreground">
+          {m.metadata?.heading ? <div className="mb-1 text-xs font-semibold opacity-70">{m.metadata.heading}</div> : null}
+          <div className="whitespace-pre-wrap">{text}</div>
+          {action ? (
+            <Button variant="outline" size="sm" className="mt-2 block bg-card text-foreground" onClick={() => onOpenMore(action.kind)}>
+              {action.label}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function AiPanel({ claim, allClaims, primaryLabel, onPrimary, onClose, onOpenMore }: Props) {
-  const { aiMessages, addAiMessage } = useWorkspace();
+  const { aiMessages, aiStatus, askAi, addAiMessage, setAiFallback } = useWorkspace();
   const [draft, setDraft] = useState("");
-  const [thinking, setThinking] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const busy = aiStatus === "submitted" || aiStatus === "streaming";
+
+  // If the live model can't answer (no connection, limit reached), a scripted reply from the claim's data steps in.
+  useEffect(() => {
+    setAiFallback((prompt) => {
+      const reply = replyTo(prompt, claim, allClaims);
+      addAiMessage({ role: "assistant", text: reply.text, action: reply.action, heading: "Offline reply" });
+    });
+    return () => setAiFallback(null);
+  });
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
-  }, [aiMessages.length, thinking, primaryLabel]);
+  }, [aiMessages, aiStatus, primaryLabel]);
 
   function ask(prompt: string) {
     const text = prompt.trim();
-    if (!text || thinking) return;
+    if (!text || busy) return;
     track("ai_prompt_sent", { claim: claim?.id ?? null });
-    addAiMessage({ role: "user", text });
     setDraft("");
-    setThinking(true);
-    const reply = replyTo(text, claim, allClaims);
-    window.setTimeout(() => {
-      addAiMessage({ role: "orvo", text: reply.text, action: reply.action });
-      setThinking(false);
-    }, 500);
+    askAi(text);
   }
 
   return (
@@ -59,9 +121,7 @@ export function AiPanel({ claim, allClaims, primaryLabel, onPrimary, onClose, on
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5" aria-live="polite">
         {aiMessages.length === 0 ? (
           <div className="flex flex-col gap-3">
-            <p className="text-sm text-muted-foreground">
-              I can answer from the claim&apos;s own data. I won&apos;t change anything from here.
-            </p>
+            <p className="text-sm text-muted-foreground">Ask me anything about the claims, the history behind them, the policy, or how the product works. I read the data and never change anything from here.</p>
             <div className="flex flex-col items-start gap-2">
               {suggestedPrompts(claim).map((p) => (
                 <Button key={p} variant="outline" size="sm" onClick={() => ask(p)}>
@@ -71,20 +131,10 @@ export function AiPanel({ claim, allClaims, primaryLabel, onPrimary, onClose, on
             </div>
           </div>
         ) : (
-          aiMessages.map((m) => (
-            <div key={m.id} className={m.role === "user" ? "ml-8 self-end rounded-xl bg-primary px-3.5 py-2.5 text-sm text-primary-foreground" : "mr-8 rounded-xl border bg-info px-3.5 py-2.5 text-sm text-info-foreground"}>
-              {m.heading ? <div className="mb-1 text-xs font-semibold opacity-70">{m.heading}</div> : null}
-              {m.text}
-              {m.action ? (
-                <Button variant="outline" size="sm" className="mt-2 block bg-card text-foreground" onClick={() => onOpenMore(m.action!.kind)}>
-                  {m.action.label}
-                </Button>
-              ) : null}
-            </div>
-          ))
+          aiMessages.map((m) => <MessageBubble key={m.id} m={m} onOpenMore={onOpenMore} />)
         )}
-        {thinking ? <p className="text-sm text-muted-foreground">Checking the claim.</p> : null}
-        {primaryLabel && onPrimary ? (
+        {aiStatus === "submitted" ? <p className="text-sm text-muted-foreground">Thinking.</p> : null}
+        {primaryLabel && onPrimary && !busy ? (
           <Button size="lg" className="h-11 w-full bg-success text-success-foreground hover:bg-success/90" onClick={onPrimary}>
             {primaryLabel}
           </Button>
@@ -99,8 +149,8 @@ export function AiPanel({ claim, allClaims, primaryLabel, onPrimary, onClose, on
           ask(draft);
         }}
       >
-        <Input aria-label="Message to Ask Orvo AI" placeholder="Ask about this claim" value={draft} onChange={(e) => setDraft(e.target.value)} />
-        <Button type="submit" size="icon" aria-label="Send" disabled={!draft.trim() || thinking}>
+        <Input aria-label="Message to Ask Orvo AI" placeholder="Ask about claims, history or policy" value={draft} onChange={(e) => setDraft(e.target.value)} />
+        <Button type="submit" size="icon" aria-label="Send" disabled={!draft.trim() || busy}>
           <Send />
         </Button>
       </form>

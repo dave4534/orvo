@@ -2,7 +2,7 @@
 
 # Orvo claims triage (Noa's queue)
 
-A working prototype for the Melio product design home assignment "Clear the expense claims queue". It is for Noa, a manager of nine, who reviews expense claims after an AI agent (Orvo) has reviewed them first. The prototype serves only Noa. Desktop only, no login, no backend, no mobile.
+A working prototype for the Melio product design home assignment "Clear the expense claims queue". It is for Noa, a manager of nine, who reviews expense claims after an AI agent (Orvo) has reviewed them first. The prototype serves only Noa. Desktop only, no login, no mobile. No backend, with one exception: `src/app/api/chat/route.ts` calls Claude for the Ask Orvo AI chat (AI SDK, key in `ANTHROPIC_API_KEY`, read-only tools in `src/server/`, rate limited, scripted replies as fallback).
 
 Source documents (outside this folder, in `..`):
 - `../PRD.md` is the product spec. Where the PRD and the dataset disagree, the dataset wins for facts and the PRD wins for behavior.
