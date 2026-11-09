@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send, Sparkles, X } from "lucide-react";
+import { ArrowDown, Check, Copy, RotateCcw, Sparkles, SquarePen, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { LocalClaim } from "@/logic/local";
 import { track } from "@/logic/track";
 import { replyTo, suggestedPrompts } from "@/mocks/ai-replies";
 import { useWorkspace, type AiMessage } from "@/store/workspace-store";
+import { ChatComposer } from "./chat-composer";
 import { ChatMarkdown } from "./chat-markdown";
+import { isStepDone, stepLabel, ToolSteps, WorkingIndicator, type StepPart } from "./chat-steps";
 import type { MoreTab } from "./panel-types";
 
 type Props = {
@@ -22,57 +24,85 @@ type Props = {
   onOpenMore: (tab: MoreTab) => void;
 };
 
-/** Friendly line for a data lookup the model made, shown above its answer. */
-function lookupLabel(part: { type: string; input?: unknown }): string {
-  const input = (part.input ?? {}) as { id?: string; employee?: string };
-  switch (part.type) {
-    case "tool-getQueueSummary":
-      return "the queue";
-    case "tool-listClaims":
-      return "claims";
-    case "tool-getClaim":
-      return input.id ? `claim ${input.id}` : "a claim";
-    case "tool-getEmployeeHistory":
-      return input.employee ? `${input.employee}'s claims` : "an employee's claims";
-    case "tool-getPolicy":
-      return "the policy";
-    case "tool-getRecommendedAction":
-      return input.id ? `the recommendation for ${input.id}` : "the recommendation";
-    default:
-      return "the data";
-  }
-}
-
-function MessageBubble({ m, onOpenMore }: { m: AiMessage; onOpenMore: (tab: MoreTab) => void }) {
-  const text = m.parts
+const textOf = (m: AiMessage) =>
+  m.parts
     .filter((p) => p.type === "text")
     .map((p) => (p as { text: string }).text)
     .join("\n\n");
-  const lookups = m.parts.filter((p) => p.type.startsWith("tool-")) as { type: string; state?: string; input?: unknown }[];
-  const action = m.metadata?.action;
-  if (m.role === "user") {
-    return <div className="ml-8 self-end rounded-xl bg-primary px-3.5 py-2.5 text-sm whitespace-pre-wrap text-primary-foreground">{text}</div>;
-  }
-  if (!text && lookups.length === 0) return null;
+const stepsOf = (m: AiMessage) => m.parts.filter((p) => p.type.startsWith("tool-")) as StepPart[];
+
+function IconAction({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
   return (
-    <div className="mr-8 flex flex-col gap-1.5">
-      {lookups.length > 0 ? (
-        <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
-          {lookups.map((l, i) => (
-            <span key={i}>
-              {l.state === "output-available" ? "Checked" : "Checking"} {lookupLabel(l)}
-            </span>
-          ))}
-        </div>
-      ) : null}
-      {text || action ? (
-        <div className="rounded-xl border bg-info px-3.5 py-2.5 text-sm text-info-foreground">
-          {m.metadata?.heading ? <div className="mb-1 text-xs font-semibold opacity-70">{m.metadata.heading}</div> : null}
-          <ChatMarkdown>{text}</ChatMarkdown>
-          {action ? (
-            <Button variant="outline" size="sm" className="mt-2 block bg-card text-foreground" onClick={() => onOpenMore(action.kind)}>
-              {action.label}
-            </Button>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button variant="ghost" size="icon-xs" aria-label={label} onClick={onClick}>
+            {children}
+          </Button>
+        }
+      />
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/** What the model is doing right now, for the working indicator. */
+function workingLabel(last: AiMessage | undefined): string {
+  if (!last || last.role !== "assistant" || last.metadata?.note) return "Thinking";
+  const running = stepsOf(last).filter((s) => !isStepDone(s));
+  if (running.length > 0) return stepLabel(running[running.length - 1]);
+  return textOf(last) ? "Writing" : "Thinking";
+}
+
+function Message({ m, isLast, busy, onOpenMore, onRetry }: { m: AiMessage; isLast: boolean; busy: boolean; onOpenMore: (tab: MoreTab) => void; onRetry: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const text = textOf(m);
+  const steps = stepsOf(m);
+  const action = m.metadata?.action;
+  const enter = "animate-in fade-in-0 slide-in-from-bottom-1 duration-200";
+
+  if (m.role === "user") {
+    return <div className={`${enter} ml-8 max-w-[85%] self-end rounded-2xl bg-muted px-3.5 py-2 text-sm whitespace-pre-wrap`}>{text}</div>;
+  }
+
+  // Notes the app posts on its own (claim summary, recommendation, offline reply).
+  if (m.metadata?.note) {
+    return (
+      <div className={`${enter} rounded-xl border border-info-border bg-info px-3.5 py-2.5 text-sm text-info-foreground`}>
+        {m.metadata.heading ? <div className="mb-1 text-xs font-semibold opacity-70">{m.metadata.heading}</div> : null}
+        <div className="whitespace-pre-wrap">{text}</div>
+        {action ? (
+          <Button variant="outline" size="sm" className="mt-2 bg-card text-foreground" onClick={() => onOpenMore(action.kind)}>
+            {action.label}
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (!text && steps.length === 0) return null;
+  const stepsRunning = isLast && busy && steps.some((s) => !isStepDone(s));
+  const finished = !(isLast && busy);
+  return (
+    <div className={`${enter} flex flex-col gap-2 text-sm leading-relaxed`}>
+      {steps.length > 0 ? <ToolSteps steps={steps} running={stepsRunning} /> : null}
+      {text ? <ChatMarkdown>{text}</ChatMarkdown> : null}
+      {text && finished ? (
+        <div className="-ml-1.5 flex items-center gap-0.5 text-muted-foreground">
+          <IconAction
+            label={copied ? "Copied" : "Copy"}
+            onClick={() => {
+              void navigator.clipboard?.writeText(text);
+              setCopied(true);
+              window.setTimeout(() => setCopied(false), 1500);
+            }}
+          >
+            {copied ? <Check /> : <Copy />}
+          </IconAction>
+          {isLast ? (
+            <IconAction label="Try again" onClick={onRetry}>
+              <RotateCcw />
+            </IconAction>
           ) : null}
         </div>
       ) : null}
@@ -81,10 +111,11 @@ function MessageBubble({ m, onOpenMore }: { m: AiMessage; onOpenMore: (tab: More
 }
 
 export function AiPanel({ claim, allClaims, primaryLabel, onPrimary, onClose, onOpenMore }: Props) {
-  const { aiMessages, aiStatus, askAi, addAiMessage, setAiFallback } = useWorkspace();
-  const [draft, setDraft] = useState("");
-  const endRef = useRef<HTMLDivElement>(null);
+  const { aiMessages, aiStatus, askAi, stopAi, regenerateAi, resetAi, addAiMessage, setAiFallback } = useWorkspace();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [atBottom, setAtBottom] = useState(true);
   const busy = aiStatus === "submitted" || aiStatus === "streaming";
+  const last = aiMessages[aiMessages.length - 1];
 
   // If the live model can't answer (no connection, limit reached), a scripted reply from the claim's data steps in.
   useEffect(() => {
@@ -95,66 +126,87 @@ export function AiPanel({ claim, allClaims, primaryLabel, onPrimary, onClose, on
     return () => setAiFallback(null);
   });
 
+  // Stay at the bottom while the answer grows, unless the reader scrolled up.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
-  }, [aiMessages, aiStatus, primaryLabel]);
+    const el = scrollRef.current;
+    if (el && atBottom) el.scrollTop = el.scrollHeight;
+  }, [aiMessages, aiStatus, primaryLabel, atBottom]);
 
-  function ask(prompt: string) {
-    const text = prompt.trim();
-    if (!text || busy) return;
+  function send(text: string) {
     track("ai_prompt_sent", { claim: claim?.id ?? null });
-    setDraft("");
+    setAtBottom(true);
     askAi(text);
   }
 
   return (
     <aside aria-label="Ask Orvo AI" className="flex h-full min-h-0 w-full flex-col bg-card">
-      <div className="flex h-16 shrink-0 items-center justify-between border-b px-5">
+      <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
         <h2 className="flex items-center gap-2 text-base font-semibold">
           <Sparkles aria-hidden className="size-4 text-primary" />
           Ask Orvo AI
         </h2>
-        <Button variant="ghost" size="icon-sm" aria-label="Close Ask Orvo AI" onClick={onClose}>
-          <X />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" disabled={aiMessages.length === 0} onClick={resetAi}>
+            <SquarePen data-icon="inline-start" />
+            New chat
+          </Button>
+          <Button variant="ghost" size="icon-sm" aria-label="Close Ask Orvo AI" onClick={onClose}>
+            <X />
+          </Button>
+        </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5" aria-live="polite">
-        {aiMessages.length === 0 ? (
-          <div className="flex flex-col gap-3">
-            <p className="text-sm text-muted-foreground">Ask me anything about the claims, the history behind them, the policy, or how the product works. I read the data and never change anything from here.</p>
-            <div className="flex flex-col items-start gap-2">
-              {suggestedPrompts(claim).map((p) => (
-                <Button key={p} variant="outline" size="sm" onClick={() => ask(p)}>
-                  {p}
-                </Button>
-              ))}
+      <div className="relative min-h-0 flex-1">
+        <div
+          ref={scrollRef}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 48);
+          }}
+          className="flex h-full flex-col gap-4 overflow-y-auto p-4"
+          aria-live="polite"
+        >
+          {aiMessages.length === 0 ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+              <span aria-hidden className="flex size-11 items-center justify-center rounded-full bg-info text-primary">
+                <Sparkles className="size-5" />
+              </span>
+              <div>
+                <p className="text-base font-semibold">How can I help?</p>
+                <p className="mt-1 text-sm text-muted-foreground">Ask about the claims, the history behind them, the policy, or how the product works.</p>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                {suggestedPrompts(claim).map((p) => (
+                  <Button key={p} variant="outline" size="sm" onClick={() => send(p)}>
+                    {p}
+                  </Button>
+                ))}
+              </div>
             </div>
-          </div>
-        ) : (
-          aiMessages.map((m) => <MessageBubble key={m.id} m={m} onOpenMore={onOpenMore} />)
-        )}
-        {aiStatus === "submitted" ? <p className="text-sm text-muted-foreground">Thinking.</p> : null}
-        {primaryLabel && onPrimary && !busy ? (
-          <Button size="lg" className="h-11 w-full bg-success text-success-foreground hover:bg-success/90" onClick={onPrimary}>
-            {primaryLabel}
+          ) : (
+            aiMessages.map((m) => <Message key={m.id} m={m} isLast={m === last} busy={busy} onOpenMore={onOpenMore} onRetry={regenerateAi} />)
+          )}
+          {busy ? <WorkingIndicator label={workingLabel(last)} /> : null}
+          {primaryLabel && onPrimary && !busy ? (
+            <Button size="lg" className="h-11 w-full bg-success text-success-foreground hover:bg-success/90" onClick={onPrimary}>
+              {primaryLabel}
+            </Button>
+          ) : null}
+        </div>
+        {!atBottom && aiMessages.length > 0 ? (
+          <Button
+            variant="outline"
+            size="icon-sm"
+            aria-label="Scroll to latest"
+            className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-card shadow-md"
+            onClick={() => setAtBottom(true)}
+          >
+            <ArrowDown />
           </Button>
         ) : null}
-        <div ref={endRef} />
       </div>
 
-      <form
-        className="flex gap-2 border-t p-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          ask(draft);
-        }}
-      >
-        <Input aria-label="Message to Ask Orvo AI" placeholder="Ask about claims, history or policy" value={draft} onChange={(e) => setDraft(e.target.value)} />
-        <Button type="submit" size="icon" aria-label="Send" disabled={!draft.trim() || busy}>
-          <Send />
-        </Button>
-      </form>
+      <ChatComposer busy={busy} onSend={send} onStop={stopAi} />
     </aside>
   );
 }

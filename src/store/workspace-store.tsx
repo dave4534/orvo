@@ -7,6 +7,8 @@ import { DefaultChatTransport, type ChatStatus, type UIMessage } from "ai";
 import type { ChatContext } from "@/logic/chat-context";
 
 export type AiMeta = {
+  /** Posted by the app itself (claim summary, recommendation, offline reply), not by the model. */
+  note?: boolean;
   /** Small label above the message, naming the claim the summary is about. */
   heading?: string;
   action?: { label: string; kind: "overview" | "policy" };
@@ -22,6 +24,10 @@ type WorkspaceStore = {
   aiStatus: ChatStatus;
   /** Sends a question to the live model. */
   askAi: (text: string) => void;
+  /** Stops the answer that is being written. */
+  stopAi: () => void;
+  /** Writes the last answer again. */
+  regenerateAi: () => void;
   /** Adds a message without calling the model, for example the summary posted when a claim opens. */
   addAiMessage: (message: NewMessage) => void;
   resetAi: () => void;
@@ -52,7 +58,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     () => new DefaultChatTransport<AiMessage>({ api: "/api/chat", body: () => ({ context: chatContextSource.read?.() ?? EMPTY_CONTEXT }) }),
     [],
   );
-  const { messages, sendMessage, setMessages, status, clearError } = useChat<AiMessage>({
+  const { messages, sendMessage, setMessages, status, clearError, stop, regenerate } = useChat<AiMessage>({
     transport,
     onError: () => {
       clearError();
@@ -69,10 +75,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   );
   const addAiMessage = useCallback(
     ({ role, text, heading, action }: NewMessage) =>
-      setMessages((list) => [...list, { id: crypto.randomUUID(), role, parts: [{ type: "text", text }], metadata: { heading, action } }]),
+      setMessages((list) => [...list, { id: crypto.randomUUID(), role, parts: [{ type: "text", text }], metadata: { note: true, heading, action } }]),
     [setMessages],
   );
-  const resetAi = useCallback(() => setMessages([]), [setMessages]);
+  const resetAi = useCallback(() => {
+    void stop();
+    setMessages([]);
+  }, [stop, setMessages]);
+  const stopAi = useCallback(() => void stop(), [stop]);
+  const regenerateAi = useCallback(() => void regenerate(), [regenerate]);
   const setPrimaryAction = useCallback((run: (() => void) | null) => {
     primary.current = run;
   }, []);
@@ -85,8 +96,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ aiOpen, setAiOpen, aiMessages: messages, aiStatus: status, askAi, addAiMessage, resetAi, setPrimaryAction, runPrimaryAction, setChatContext, setAiFallback }),
-    [aiOpen, messages, status, askAi, addAiMessage, resetAi, setPrimaryAction, runPrimaryAction, setChatContext, setAiFallback],
+    () => ({ aiOpen, setAiOpen, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, addAiMessage, resetAi, setPrimaryAction, runPrimaryAction, setChatContext, setAiFallback }),
+    [aiOpen, messages, status, askAi, stopAi, regenerateAi, addAiMessage, resetAi, setPrimaryAction, runPrimaryAction, setChatContext, setAiFallback],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

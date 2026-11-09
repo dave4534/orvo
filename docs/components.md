@@ -35,3 +35,6 @@ Every component in `src/components` is listed here. Update this file every time 
 | `src/components/ui/sheet.tsx` | Overlay is `bg-foreground/35` with a 2px blur instead of `bg-black/10` | The review panels open over the list with a visibly dimmed layer |
 | `src/hooks/use-mobile.ts` | Rewritten with `useSyncExternalStore` | The stock hook fails the `react-hooks/set-state-in-effect` lint rule |
 | resizable | shadcn (stock, base-nova), react-resizable-panels | 2026-11-09 |
+| input-group | shadcn (stock, base-nova), used for the chat message box | 2026-11-09 |
+| collapsible | shadcn (stock, base-nova), used for the folding steps in the chat | 2026-11-09 |
+| spinner | shadcn (stock, base-nova), used for steps in progress | 2026-11-09 |
