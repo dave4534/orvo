@@ -15,9 +15,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { dataset } from "@/data";
 import type { Status } from "@/data/types";
-import { firstName, type ActionId, type ActionInput } from "@/logic/actions";
+import { actionPreview, firstName, type ActionId, type ActionInput } from "@/logic/actions";
 import { buildComparison, employeeName } from "@/logic/comparison";
 import { claimStatusLabel, formatUsd, initials } from "@/logic/format";
 import { isAgentDecided, isSpotCheck, type LocalClaim } from "@/logic/local";
@@ -44,6 +45,8 @@ type Props = {
   onOpenMore?: (tab?: MoreTab) => void;
   /** Wide spacing around the card stack. Off inside the past claim modal. */
   padded?: boolean;
+  /** No card surface and an editable decision: the past claim modal. The status bar becomes a dropdown and Save replaces "Edit decision". */
+  flat?: boolean;
   /** Registers the recommended action so the AI chat can run it. */
   primary?: boolean;
   onDecided: (claimId: string, status: Status, action: ActionId) => void;
@@ -63,6 +66,8 @@ const ACTION_ICON: Partial<Record<ActionId, LucideIcon>> = {
   correct: Pencil,
 };
 
+type Outcome = "keep" | "approved" | "declined";
+
 const formatDay = (ts: string) => dayFormat.format(new Date(ts)).replace(",", "");
 
 /** For a decided claim, the menu actions are corrections of that decision. */
@@ -78,12 +83,13 @@ function retarget(spec: ActionSpec, claim: LocalClaim): ActionSpec {
 }
 
 /** Triage column of the claims queue: the claim, its comparison and the decision actions (actions stay pinned at the bottom). */
-export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMore, padded = true, primary = true, onDecided, onReopen }: Props) {
+export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMore, padded = true, flat = false, primary = true, onDecided, onReopen }: Props) {
   const { perform } = useClaims();
   const { setPrimaryAction } = useWorkspace();
   const [pending, setPending] = useState<ActionSpec | null>(null);
   const [fixOpen, setFixOpen] = useState(false);
   const [error, setError] = useState<ActionInput | null>(null);
+  const [choice, setChoice] = useState<Outcome>("keep");
 
   const comparison = useMemo(() => buildComparison(claim, allClaims), [claim, allClaims]);
   const name = firstName(claim);
@@ -138,17 +144,32 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
 
   const chase = claim.agent.chase;
 
+  // Flat (modal) mode: the decision is edited in place with a dropdown, then saved.
+  const editable = flat && (agentDecided || decidedByNoa);
+  const currentOutcome: Outcome | null = claim.status.startsWith("approved") ? "approved" : claim.status.startsWith("declined") ? "declined" : null;
+  const decisionItems: Record<Outcome, string> = {
+    keep: claimStatusLabel(claim),
+    approved: "Approved",
+    declined: "Declined",
+  };
+  const decisionOptions = (["keep", "approved", "declined"] as const).filter((o) => o === "keep" || o !== currentOutcome);
+  const changed = editable && choice !== "keep";
+  const savedInput: ActionInput | null = changed
+    ? { id: "correct", to: choice === "approved" ? "approved" : "declined", amount: choice === "approved" ? claimed : undefined, feedback: null }
+    : null;
+  const savedPreview = savedInput ? actionPreview(claim, savedInput, allClaims) : null;
+
   return (
-    <section aria-label={`Claim ${claim.id}, ${full}`} className="@container flex min-h-0 min-w-0 flex-1 flex-col bg-background">
-      <div className={cn("flex min-h-0 flex-1 flex-col overflow-y-auto p-6", padded && "@3xl:px-[100px] @3xl:[@media(min-height:880px)]:py-[100px]")}>
-        <div className="relative flex flex-1 flex-col pb-5">
+    <section aria-label={`Claim ${claim.id}, ${full}`} className={cn("@container flex min-h-0 min-w-0 flex-1 flex-col", flat ? "bg-card" : "bg-background")}>
+      <div className={cn("flex min-h-0 flex-1 flex-col overflow-y-auto", flat ? "p-0" : "p-6", padded && "@3xl:px-[100px] @3xl:[@media(min-height:880px)]:py-[100px]")}>
+        <div className={cn("relative flex flex-1 flex-col", !flat && "pb-5")}>
           {stacked ? (
             <>
               <div aria-hidden className="absolute inset-x-7 bottom-0 h-10 rounded-[14px] border bg-card" />
               <div aria-hidden className="absolute inset-x-3.5 bottom-2.5 h-10 rounded-[14px] border bg-card" />
             </>
           ) : null}
-          <div className="relative flex flex-1 flex-col overflow-hidden rounded-2xl border bg-card shadow-md">
+          <div className={cn("relative flex flex-1 flex-col overflow-hidden", !flat && "rounded-2xl border bg-card shadow-md")}>
             <div className="flex items-center gap-3.5 border-b px-6 py-[18px]">
               <Avatar size="lg">
                 <AvatarFallback>{initials(full)}</AvatarFallback>
@@ -163,7 +184,22 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
             <div className="flex items-center justify-between gap-3 border-b bg-muted/40 px-6 py-2.5">
               <span className="inline-flex min-w-0 items-center gap-2 font-medium">
                 <Info aria-hidden className="size-4 shrink-0" />
-                <span className="truncate">{needsReview ? dataset.enums.reason_type[claim.agent.reason_type] : claimStatusLabel(claim)}</span>
+                {editable ? (
+                  <Select items={decisionItems} value={choice} onValueChange={(v) => setChoice(v as Outcome)}>
+                    <SelectTrigger aria-label="Decision" className="bg-card font-medium">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent alignItemWithTrigger={false} align="start">
+                      {decisionOptions.map((o) => (
+                        <SelectItem key={o} value={o}>
+                          {decisionItems[o]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <span className="truncate">{needsReview ? dataset.enums.reason_type[claim.agent.reason_type] : claimStatusLabel(claim)}</span>
+                )}
               </span>
               {onOpenDetails ? (
                 <Button variant="outline" size="sm" onClick={onOpenDetails}>
@@ -172,7 +208,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
               ) : null}
             </div>
 
-            <div className="mt-6 border-t">
+            <div className={cn("border-t", !flat && "mt-6")}>
               <ComparisonView comparison={comparison} />
             </div>
 
@@ -187,7 +223,25 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
         </div>
       </div>
 
-      <div className="flex shrink-0 flex-col gap-3 border-t bg-card px-6 py-4">
+      <div className={cn("flex shrink-0 flex-col gap-3 border-t px-6 py-4", "bg-card")}>
+        {editable ? (
+          <Alert>
+            <Info aria-hidden />
+            <AlertTitle>{changed ? "What happens when you save" : "Editing this decision"}</AlertTitle>
+            <AlertDescription>
+              {savedPreview ? (
+                <span className="flex flex-col gap-0.5">
+                  <span>Pays: {savedPreview.pays}</span>
+                  <span>Tells: {savedPreview.tells}</span>
+                  <span>Finance: {savedPreview.finance}</span>
+                </span>
+              ) : (
+                `Changing it updates what ${name} is paid and tells ${name} in the claim chat. Pick a different decision above to see what changes.`
+              )}
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
         {error ? (
           <Alert variant="destructive">
             <AlertTitle>Decision not saved</AlertTitle>
@@ -288,7 +342,22 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
               </Button>
             ) : null}
 
-            {agentDecided || decidedByNoa ? (
+            {editable ? (
+              changed && savedInput ? (
+                <>
+                  <Button variant="outline" size="lg" className="h-11" onClick={() => setChoice("keep")}>
+                    Cancel
+                  </Button>
+                  <Button size="lg" className="h-11" onClick={() => run(savedInput)}>
+                    Save
+                  </Button>
+                </>
+              ) : (
+                <Button variant="outline" size="lg" className="h-11" disabled>
+                  Save
+                </Button>
+              )
+            ) : agentDecided || decidedByNoa ? (
               <Button variant="outline" size="lg" className="h-11" onClick={() => setFixOpen(true)}>
                 <Pencil data-icon="inline-start" />
                 Edit decision

@@ -19,14 +19,14 @@ type Props = {
 export function PastClaimModal({ claim, allClaims, onClose, onDecided, onReopen }: Props) {
   return (
     <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
-      <DialogContent className="flex h-[85svh] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
+      <DialogContent className="flex h-[85svh] flex-col gap-0 overflow-hidden p-0 bg-card sm:max-w-3xl">
         <DialogHeader className="shrink-0 border-b px-6 py-4">
           <DialogTitle className="text-base">Past Claims</DialogTitle>
           <DialogDescription>
             {employeeName(claim)}, {claim.id}. Edit the decision here, then close to continue the review.
           </DialogDescription>
         </DialogHeader>
-        <TriagePanel key={claim.id} claim={claim} allClaims={allClaims} stacked={false} padded={false} primary={false} onDecided={onDecided} onReopen={onReopen} />
+        <TriagePanel key={claim.id} claim={claim} allClaims={allClaims} stacked={false} padded={false} flat primary={false} onDecided={onDecided} onReopen={onReopen} />
       </DialogContent>
     </Dialog>
   );
