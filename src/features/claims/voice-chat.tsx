@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Mic, MicOff, Square, X } from "lucide-react";
+import { Check, ChevronDown, Mic, MicOff, Square, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useVoices } from "@/hooks/use-voices";
 import { useSpeechInput } from "@/hooks/use-speech-input";
 import { cancelSpeech, plainForSpeech, speak } from "@/lib/speech";
 import { cn } from "@/lib/utils";
@@ -45,6 +47,7 @@ type Props = {
 export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
   const speech = useSpeechInput();
   const { setReplyListener } = useWorkspace();
+  const { voices, selected, choose } = useVoices();
   const [speaking, setSpeaking] = useState(false);
   const [muted, setMuted] = useState(false);
   const [heard, setHeard] = useState("");
@@ -187,6 +190,34 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
         </div>
       </div>
       {heard ? <p className="mt-2 text-sm text-muted-foreground italic">{heard}</p> : null}
+      {voices.length > 0 ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button variant="ghost" size="xs" className="mt-2 -ml-1.5 text-muted-foreground">
+                Voice: {selected ?? "Default"} <ChevronDown data-icon="inline-end" />
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="start" side="top" className="max-h-72 w-64 overflow-y-auto">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Spoken voice</DropdownMenuLabel>
+            {voices.slice(0, 12).map((v) => (
+              <DropdownMenuItem
+                key={v.name}
+                onClick={() => {
+                  choose(v.name);
+                  speak("Hi, this is how I sound.", {});
+                }}
+              >
+                <span className="flex-1">{v.name}</span>
+                {v.name === selected ? <Check /> : null}
+              </DropdownMenuItem>
+            ))}
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : null}
       {speech.error === "blocked" ? <p className="mt-2 text-xs text-destructive">Microphone access is blocked. Allow it in the browser&apos;s site settings.</p> : null}
       {speech.error === "unavailable" ? <p className="mt-2 text-xs text-destructive">Voice isn&apos;t available in this browser right now.</p> : null}
     </div>
