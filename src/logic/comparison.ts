@@ -26,7 +26,7 @@ export type Comparison = {
   sentence: string;
   /** True when the receipt and the approval agree. The view marks it with a green check. */
   matches?: boolean;
-  evidence: { label: string; value: string }[];
+  evidence: { label: string; value: string; differs?: boolean }[];
 };
 
 const SYMBOL: Record<string, string> = { USD: "$", EUR: "€", SEK: "SEK " };
@@ -83,10 +83,10 @@ function identityComparison(claim: LocalClaim, other: LocalClaim): Comparison {
     left: { label: "Earlier claim", tone: "neutral", text: other.id, sub: `${otherName}, ${formatSubmitted(other.submitted_at)}` },
     right: { label: "This claim", tone: "info", text: claim.id, sub: `${firstName(claim)}, ${formatSubmitted(claim.submitted_at)}` },
     sentence: sameRide
-      ? `Same ride ID on both claims, so this is the same trip claimed twice.`
-      : `Same fare and route as ${otherEmployee}, but a different ride ID and pickup.`,
+      ? `Declined as a possible duplicate of ${other.id}. Same ride ID on both claims, so it is the same trip claimed twice.`
+      : `Declined as a possible duplicate of ${other.id}. Same fare and route as ${otherEmployee}, but the ride ID and pickup differ, so these look like two rides.`,
     // The fields side by side, one line each: the earlier value, then this claim's value when it differs.
-    evidence: rows.map((r) => ({ label: r.label, value: r.differs ? `${r.left}, now ${r.right}` : r.left })),
+    evidence: rows.map((r) => ({ label: r.label, value: r.differs ? `${r.left}, now ${r.right}` : r.left, differs: r.differs })),
   };
 }
 

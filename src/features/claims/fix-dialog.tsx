@@ -64,10 +64,14 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
   let error: string | null = null;
   const feedback = tellOrvo && chosen ? { option: chosen.tag, text: option === "other" ? otherText.trim() || undefined : undefined } : null;
 
+  // The amount being corrected: what is approved now. A correction needs a different amount.
+  const approvedNow = claim.noa?.approved_amount_usd ?? claimed;
+  const unchanged = !Number.isNaN(typed) && Math.abs(typed - approvedNow) < 0.005;
+
   if (option === "amount" || option === "rate") {
     if (Number.isNaN(typed) || typed <= 0) error = "Enter an amount above $0.00.";
     else if (typed > claimed) error = `The amount can't be more than the ${formatUsd(claimed)} approved.`;
-    else input = { id: "correct", to: "approved", amount: typed, feedback };
+    else if (!unchanged) input = { id: "correct", to: "approved", amount: typed, feedback };
   } else if (option === "people") {
     input =
       peopleChoice === "cap"
@@ -81,7 +85,7 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
     if (otherText.trim() === "") error = "Describe what went wrong so it can be recorded.";
     else if (otherOutcome === "approved") {
       if (Number.isNaN(typed) || typed <= 0 || typed > claimed) error = `Enter an amount between $0.01 and ${formatUsd(claimed)}.`;
-      else input = { id: "correct", to: "approved", amount: typed, feedback };
+      else if (!unchanged) input = { id: "correct", to: "approved", amount: typed, feedback };
     } else if (otherOutcome === "declined") input = { id: "correct", to: "declined", feedback };
     else input = { id: "correct", to: "ask", message: otherText.trim(), feedback };
   }
@@ -222,7 +226,13 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
                 <Label htmlFor="fix-amount">New approved amount (USD)</Label>
                 <Input id="fix-amount" inputMode="decimal" value={amountText} aria-invalid={touched && Boolean(error)} onChange={(e) => { setAmountText(e.target.value); setTouched(true); }} />
                 <p className={touched && error ? "text-sm text-destructive" : "text-xs text-muted-foreground"}>
-                  {touched && error ? error : doc?.total != null && option === "amount" ? "Filled in from the receipt" : `Up to ${formatUsd(claimed)}`}
+                  {touched && error
+                    ? error
+                    : unchanged && (option === "amount" || option === "rate")
+                      ? "Same as the approved amount. Enter a different one to correct it."
+                      : doc?.total != null && option === "amount"
+                        ? "Filled in from the receipt"
+                        : `Up to ${formatUsd(claimed)}`}
                 </p>
               </div>
             ) : null}

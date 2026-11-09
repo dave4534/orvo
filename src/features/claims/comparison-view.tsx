@@ -63,8 +63,10 @@ function GapScale({ scale }: { scale: NonNullable<Comparison["scale"]> }) {
 export function ComparisonView({ comparison }: { comparison: Comparison }) {
   const lowIsLeft = (comparison.left.amount ?? 0) <= (comparison.right.amount ?? 0);
   const noGap = comparison.scale ? comparison.left.amount === comparison.right.amount : false;
-  const leftDot = comparison.scale ? (noGap || lowIsLeft ? SCALE_DOT.low : SCALE_DOT.high) : DOT[comparison.left.tone];
-  const rightDot = comparison.scale ? (noGap || !lowIsLeft ? SCALE_DOT.low : SCALE_DOT.high) : DOT[comparison.right.tone];
+  // Duplicates: the earlier claim is green (it was paid), this claim is red (it was declined).
+  const isDuplicate = comparison.kind === "identity";
+  const leftDot = isDuplicate ? SCALE_DOT.low : comparison.scale ? (noGap || lowIsLeft ? SCALE_DOT.low : SCALE_DOT.high) : DOT[comparison.left.tone];
+  const rightDot = isDuplicate ? SCALE_DOT.high : comparison.scale ? (noGap || !lowIsLeft ? SCALE_DOT.low : SCALE_DOT.high) : DOT[comparison.right.tone];
   return (
     <div>
       <div className="grid grid-cols-[1fr_1px_1fr] border-y">
@@ -86,7 +88,10 @@ export function ComparisonView({ comparison }: { comparison: Comparison }) {
           {comparison.evidence.map((e) => (
             <div key={`${e.label}-${e.value}`} className="grid grid-cols-[8.5rem_1fr] gap-3">
               <dt className="text-muted-foreground">{e.label}</dt>
-              <dd className="min-w-0 break-words">{e.value}</dd>
+              <dd className={cn("min-w-0 break-words", e.differs && "rounded bg-warning px-1 font-semibold text-warning-foreground")}>
+                {e.value}
+                {e.differs ? <span className="sr-only"> (differs)</span> : null}
+              </dd>
             </div>
           ))}
         </dl>
