@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     ],
     tools: buildChatTools(claims),
     stopWhen: isStepCount(6),
-    maxOutputTokens: 900,
+    maxOutputTokens: 700,
   });
 
   return createAgentUIStreamResponse({ agent, uiMessages, abortSignal: req.signal, timeout: 45_000 });

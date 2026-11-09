@@ -4,3 +4,4 @@ A custom component is allowed only when no shadcn component, Studio or reui bloc
 
 | Component | Reason no shadcn part fits | shadcn parts used |
 |---|---|---|
+| chat-markdown | No shadcn part renders markdown. Needed so the AI chat can show bold and short lists. | none (wraps react-markdown, only p, ul, ol, li, strong, em allowed) |

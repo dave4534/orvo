@@ -9,6 +9,7 @@ import type { LocalClaim } from "@/logic/local";
 import { track } from "@/logic/track";
 import { replyTo, suggestedPrompts } from "@/mocks/ai-replies";
 import { useWorkspace, type AiMessage } from "@/store/workspace-store";
+import { ChatMarkdown } from "./chat-markdown";
 import type { MoreTab } from "./panel-types";
 
 type Props = {
@@ -67,7 +68,7 @@ function MessageBubble({ m, onOpenMore }: { m: AiMessage; onOpenMore: (tab: More
       {text || action ? (
         <div className="rounded-xl border bg-info px-3.5 py-2.5 text-sm text-info-foreground">
           {m.metadata?.heading ? <div className="mb-1 text-xs font-semibold opacity-70">{m.metadata.heading}</div> : null}
-          <div className="whitespace-pre-wrap">{text}</div>
+          <ChatMarkdown>{text}</ChatMarkdown>
           {action ? (
             <Button variant="outline" size="sm" className="mt-2 block bg-card text-foreground" onClick={() => onOpenMore(action.kind)}>
               {action.label}
