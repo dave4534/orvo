@@ -5,13 +5,13 @@ import { z } from "zod";
 import { dataset } from "@/data";
 import { mergeOverlay, type ClaimOverlay } from "@/logic/chat-context";
 import type { LocalClaim } from "@/logic/local";
+import { AI_MODEL_ID } from "@/lib/ai-model";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { STATIC_INSTRUCTIONS, uiInstructions } from "@/server/chat-prompt";
 import { buildChatTools, buildSuggestActionTool } from "@/server/chat-tools";
 
 export const maxDuration = 60;
 
-const MODEL = "claude-sonnet-5-5";
 const MAX_BODY_CHARS = 250_000;
 const MAX_MESSAGES = 24;
 const MAX_TEXT_CHARS = 2_000;
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
 
   const openClaim = claims.find((c) => c.id === parsed.context.ui.openClaimId);
   const agent = new ToolLoopAgent({
-    model: anthropic(MODEL),
+    model: anthropic(AI_MODEL_ID),
     instructions: [
       { role: "system", content: STATIC_INSTRUCTIONS, providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } } },
       { role: "system", content: uiInstructions(parsed.context.ui, openClaim) },

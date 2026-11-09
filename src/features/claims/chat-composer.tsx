@@ -6,7 +6,9 @@ import { ArrowUp, AudioLines, Mic, Square } from "lucide-react";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from "@/components/ui/input-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSpeechInput } from "@/hooks/use-speech-input";
+import { AI_MODEL_LABEL } from "@/lib/ai-model";
 import { cn } from "@/lib/utils";
+import { ClaudeLogo } from "./claude-logo";
 
 type Props = {
   busy: boolean;
@@ -101,8 +103,17 @@ export function ChatComposer({ busy, onSend, onStop, onVoiceChat }: Props) {
           )}
         </InputGroupAddon>
       </InputGroup>
-      <p className="mt-2 text-center text-xs text-muted-foreground">
-        {speech.error === "blocked" ? "Microphone access is blocked. Allow it in the browser's site settings." : speech.error === "unavailable" ? "Voice isn't available in this browser right now." : "Orvo AI reads the claim data and can't change anything."}
+      <p className="mt-2 flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">
+        {speech.error === "blocked" ? (
+          "Microphone access is blocked. Allow it in the browser's site settings."
+        ) : speech.error === "unavailable" ? (
+          "Voice isn't available in this browser right now."
+        ) : (
+          <>
+            <ClaudeLogo className="size-3.5" />
+            Uses {AI_MODEL_LABEL}
+          </>
+        )}
       </p>
     </div>
   );

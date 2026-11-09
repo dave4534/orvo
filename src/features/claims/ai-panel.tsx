@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, Check, Copy, RotateCcw, Sparkles, SquarePen, X } from "lucide-react";
+import { ArrowDown, Check, Copy, RotateCcw, Sparkles, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -79,19 +79,16 @@ function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry }: { m: A
     return <div className={`${enter} ml-8 max-w-[85%] self-end rounded-2xl bg-muted px-3.5 py-2 text-sm whitespace-pre-wrap`}>{text}</div>;
   }
 
-  // Notes the app posts on its own (claim summary, recommendation, offline reply).
+  // Notes the app posts on its own (claim summary and recommendation, offline reply). Plain text like every other answer.
   if (m.metadata?.note) {
+    const noteSuggest = m.metadata.suggest && m.metadata.claimId && canAct(m.metadata.claimId, m.metadata.suggest) ? m.metadata.suggest : null;
     return (
-      <div className={`${enter} rounded-xl border border-info-border bg-info px-3.5 py-2.5 text-sm text-info-foreground`}>
-        {m.metadata.heading ? <div className="mb-1 text-xs font-semibold opacity-70">{m.metadata.heading}</div> : null}
-        <div className="whitespace-pre-wrap">{text}</div>
-        {m.metadata.suggest && m.metadata.claimId && canAct(m.metadata.claimId, m.metadata.suggest) ? (
-          <div className="mt-2 flex">
-            <SuggestedAction label={m.metadata.suggest} onAct={onAct} />
-          </div>
-        ) : null}
+      <div className={`${enter} flex flex-col gap-2 text-sm leading-relaxed`}>
+        {m.metadata.heading ? <div className="text-xs text-muted-foreground">{m.metadata.heading}</div> : null}
+        <ChatMarkdown>{text}</ChatMarkdown>
+        {noteSuggest ? <SuggestedAction label={noteSuggest} onAct={onAct} /> : null}
         {action ? (
-          <Button variant="outline" size="sm" className="mt-2 bg-card text-foreground" onClick={() => onOpenMore(action.kind)}>
+          <Button variant="outline" size="sm" className="self-start" onClick={() => onOpenMore(action.kind)}>
             {action.label}
           </Button>
         ) : null}
@@ -132,7 +129,7 @@ function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry }: { m: A
 }
 
 export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
-  const { aiMessages, aiStatus, askAi, stopAi, regenerateAi, resetAi, addAiMessage, setAiFallback, runAction } = useWorkspace();
+  const { aiMessages, aiStatus, askAi, stopAi, regenerateAi, addAiMessage, setAiFallback, runAction } = useWorkspace();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
   const [voice, setVoice] = useState(false);
@@ -146,9 +143,9 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
 
   // If the live model can't answer (no connection, limit reached), a scripted reply from the claim's data steps in.
   useEffect(() => {
-    setAiFallback((prompt) => {
+    setAiFallback((prompt, session) => {
       const reply = replyTo(prompt, claim, allClaims);
-      addAiMessage({ role: "assistant", text: reply.text, action: reply.action, heading: "Offline reply" });
+      addAiMessage(session, { role: "assistant", text: reply.text, action: reply.action, heading: "Offline reply" });
     });
     return () => setAiFallback(null);
   });
@@ -173,10 +170,6 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
           Ask Orvo AI
         </h2>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" disabled={aiMessages.length === 0} onClick={resetAi}>
-            <SquarePen data-icon="inline-start" />
-            New chat
-          </Button>
           <Button variant="ghost" size="icon-sm" aria-label="Close Ask Orvo AI" onClick={onClose}>
             <X />
           </Button>

@@ -30,7 +30,7 @@ import { claimSummary } from "@/logic/summary";
 import { cn } from "@/lib/utils";
 import { track } from "@/logic/track";
 import { useClaims } from "@/store/claims-store";
-import { useWorkspace } from "@/store/workspace-store";
+import { LIST_SESSION, useWorkspace } from "@/store/workspace-store";
 import { AiPanel } from "./ai-panel";
 import { ClaimsFilters } from "./claims-filters";
 import { ClaimsQueue } from "./claims-queue";
@@ -45,7 +45,7 @@ const tabOfStatus = (status: Status): TabId =>
 
 export function ClaimsView() {
   const { claims, sessionIds, simulateError, setSimulateError, reset } = useClaims();
-  const { aiOpen, setAiOpen, addAiMessage, resetAi, setChatContext } = useWorkspace();
+  const { aiOpen, setAiOpen, setAiSession, addAiMessage, hasAiMessages, resetAi, setChatContext } = useWorkspace();
 
   const [tab, setTab] = useState<TabId>("needs_review");
   const [filters, setFilters] = useState<ClaimFilters>(DEFAULT_FILTERS);
@@ -91,15 +91,15 @@ export function ClaimsView() {
   function openClaimById(id: string) {
     track("claim_opened", { claim: id });
     const claim = claims.find((c) => c.id === id);
-    if (openId === null) {
-      setAiOpen(true);
-      addAiMessage({ role: "assistant", text: "Let's review the open claims." });
+    const entering = openId === null;
+    // Every claim has its own chat. A new one starts with the summary and the recommendation, in one message.
+    if (claim && !hasAiMessages(id)) {
+      const { summary, recommendation, recommendationLabel } = claimSummary(claim);
+      const text = [entering ? "Let's review the open claims." : null, summary, recommendation].filter(Boolean).join("\n\n");
+      addAiMessage(id, { role: "assistant", text, claimId: claim.id, suggest: recommendationLabel ?? undefined });
     }
-    if (claim) {
-      const { heading, summary, recommendation, recommendationLabel } = claimSummary(claim);
-      addAiMessage({ role: "assistant", heading, text: summary });
-      if (recommendation) addAiMessage({ role: "assistant", text: recommendation, claimId: claim.id, suggest: recommendationLabel ?? undefined });
-    }
+    if (entering) setAiOpen(true);
+    setAiSession(id);
     setOpenId(id);
   }
 
@@ -107,6 +107,9 @@ export function ClaimsView() {
     setOpenId(null);
     setDetailsOpen(false);
     setPastId(null);
+    // Going back to the claims list closes the chat pane.
+    setAiOpen(false);
+    setAiSession(LIST_SESSION);
   }
 
   function openMore(nextTab: MoreTab = "overview") {
@@ -133,6 +136,7 @@ export function ClaimsView() {
   function onReopen(claimId: string) {
     const claim = claims.find((c) => c.id === claimId);
     setTab(tabOfStatus(claim?.status ?? "waiting_on_noa"));
+    setAiSession(claimId);
     setOpenId(claimId);
   }
 
@@ -332,6 +336,7 @@ export function ClaimsView() {
             <ResizableHandle />
             <ResizablePanel id="ai" defaultSize={352} minSize={280} maxSize={560} groupResizeBehavior="preserve-pixel-size" style={{ overflow: "hidden" }}>
               <AiPanel
+                key={openClaim?.id ?? LIST_SESSION}
                 claim={openClaim}
                 allClaims={claims}
                 onClose={() => setAiOpen(false)}
