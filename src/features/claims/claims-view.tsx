@@ -423,7 +423,6 @@ export function ClaimsView() {
             <ResizableHandle />
             <ResizablePanel id="ai" defaultSize={352} minSize={280} maxSize={560} groupResizeBehavior="preserve-pixel-size" style={{ overflow: "hidden" }}>
               <AiPanel
-                key={openClaim?.id ?? LIST_SESSION}
                 claim={openClaim}
                 allClaims={claims}
                 onClose={() => setAiOpen(false)}

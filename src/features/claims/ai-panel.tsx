@@ -36,10 +36,10 @@ function suggestionOf(m: AiMessage): { claimId: string; label: string } | null {
   return part?.input?.claimId && part.input.buttonLabel ? { claimId: part.input.claimId, label: part.input.buttonLabel } : null;
 }
 
-/** Small outlined button (border only, no fill) under a message that suggests an action. It runs the same action as the one in the action bar. */
+/** The default small outline button under a message that suggests an action. It runs the same action as the one in the action bar. */
 function SuggestedAction({ label, onAct }: { label: string; onAct: (label: string) => void }) {
   return (
-    <Button variant="outline" size="sm" className="self-start border-success bg-transparent text-success hover:bg-success/10 hover:text-success" onClick={() => onAct(label)}>
+    <Button variant="outline" size="sm" className="self-start" onClick={() => onAct(label)}>
       {label}
     </Button>
   );
@@ -132,6 +132,13 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
   const { aiMessages, aiStatus, askAi, stopAi, regenerateAi, addAiMessage, setAiFallback, runAction, voiceOpen, setVoiceOpen } = useWorkspace();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
+  const sessionKey = claim?.id ?? "list";
+  const [seenSession, setSeenSession] = useState(sessionKey);
+  if (seenSession !== sessionKey) {
+    // A different claim has its own chat: show it from the bottom.
+    setSeenSession(sessionKey);
+    setAtBottom(true);
+  }
   const busy = aiStatus === "submitted" || aiStatus === "streaming";
   const last = aiMessages[aiMessages.length - 1];
 
@@ -176,6 +183,7 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
 
       <div className="relative min-h-0 flex-1">
         <div
+          key={sessionKey}
           ref={scrollRef}
           onScroll={(e) => {
             const el = e.currentTarget;
@@ -222,7 +230,7 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
       {voiceOpen ? (
         <VoiceBar busy={busy} onAsk={send} onStopAnswer={stopAi} onEnd={() => setVoiceOpen(false)} />
       ) : (
-        <ChatComposer busy={busy} onSend={send} onStop={stopAi} onVoiceChat={() => setVoiceOpen(true)} />
+        <ChatComposer key={sessionKey} busy={busy} onSend={send} onStop={stopAi} onVoiceChat={() => setVoiceOpen(true)} />
       )}
 
     </aside>
