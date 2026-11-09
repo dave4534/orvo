@@ -12,7 +12,7 @@ import { replyTo, suggestedPrompts } from "@/mocks/ai-replies";
 import { useWorkspace, type AiMessage } from "@/store/workspace-store";
 import { ChatComposer } from "./chat-composer";
 import { ChatMarkdown } from "./chat-markdown";
-import { VoiceChat } from "./voice-chat";
+import { VoiceBar } from "./voice-chat";
 import { isStepDone, stepLabel, ToolSteps, WorkingIndicator, type StepPart } from "./chat-steps";
 import type { MoreTab } from "./panel-types";
 
@@ -129,13 +129,11 @@ function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry }: { m: A
 }
 
 export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
-  const { aiMessages, aiStatus, askAi, stopAi, regenerateAi, addAiMessage, setAiFallback, runAction } = useWorkspace();
+  const { aiMessages, aiStatus, askAi, stopAi, regenerateAi, addAiMessage, setAiFallback, runAction, voiceOpen, setVoiceOpen } = useWorkspace();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
-  const [voice, setVoice] = useState(false);
   const busy = aiStatus === "submitted" || aiStatus === "streaming";
   const last = aiMessages[aiMessages.length - 1];
-  const lastReply = last && last.role === "assistant" && !last.metadata?.note ? textOf(last) : null;
 
   // A suggested action only shows while that claim is open and still waiting for review.
   const availableLabels = claim && claim.status === "waiting_on_noa" ? allActionsFor(claim).map((s) => s.label) : [];
@@ -221,8 +219,12 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
         ) : null}
       </div>
 
-      <ChatComposer busy={busy} onSend={send} onStop={stopAi} onVoiceChat={() => setVoice(true)} />
-      {voice ? <VoiceChat busy={busy} reply={lastReply} onAsk={send} onStopAnswer={stopAi} onEnd={() => setVoice(false)} /> : null}
+      {voiceOpen ? (
+        <VoiceBar busy={busy} onAsk={send} onStopAnswer={stopAi} onEnd={() => setVoiceOpen(false)} />
+      ) : (
+        <ChatComposer busy={busy} onSend={send} onStop={stopAi} onVoiceChat={() => setVoiceOpen(true)} />
+      )}
+
     </aside>
   );
 }

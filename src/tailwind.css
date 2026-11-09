@@ -7,6 +7,11 @@
 /* Moving highlight on text while the assistant is working. */
 @theme {
     --animate-shimmer: shimmer 1.8s linear infinite;
+    --animate-wave: wave 1.1s ease-in-out infinite;
+    @keyframes wave {
+        0%, 100% { transform: scaleY(0.35); }
+        50% { transform: scaleY(1); }
+    }
     @keyframes shimmer {
         from { background-position: 200% 0; }
         to { background-position: -200% 0; }

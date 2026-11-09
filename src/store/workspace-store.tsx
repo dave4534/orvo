@@ -36,6 +36,11 @@ type WorkspaceStore = {
   aiStatus: ChatStatus;
   /** Sends a question to the live model, in the chat that is shown. */
   askAi: (text: string) => void;
+  /** Voice mode is on. Kept here, so moving between claims does not end it. */
+  voiceOpen: boolean;
+  setVoiceOpen: (open: boolean) => void;
+  /** The voice bar registers to hear every finished reply, wherever it was written. */
+  setReplyListener: (run: ((text: string) => void) | null) => void;
   /** Stops the answer that is being written. */
   stopAi: () => void;
   /** Writes the last answer again. */
@@ -67,7 +72,8 @@ const chatHooks: {
   fallback: ((prompt: string, session: string) => void) | null;
   lastPrompt: string;
   ui: ((name: string, input: Record<string, unknown>) => Record<string, unknown>) | null;
-} = { fallback: null, lastPrompt: "", ui: null };
+  reply: ((text: string) => void) | null;
+} = { fallback: null, lastPrompt: "", ui: null, reply: null };
 const transport = new DefaultChatTransport<AiMessage>({ api: "/api/chat", body: () => ({ context: chatContextSource.read?.() ?? EMPTY_CONTEXT }) });
 const chats = new Map<string, Chat<AiMessage>>();
 
@@ -87,6 +93,11 @@ function getChat(epoch: number, session: string): Chat<AiMessage> {
         // Not awaited, so the chat is not blocked while the result is recorded.
         void created.addToolOutput({ tool: toolCall.toolName as never, toolCallId: toolCall.toolCallId, output: output as never });
       },
+      // Each finished part of an answer is passed on, so voice mode can read it even if the view has moved to another claim.
+      onFinish: ({ message }) => {
+        const text = message.parts.filter((p) => p.type === "text").map((p) => (p as { text: string }).text).join("\n\n").trim();
+        if (text) chatHooks.reply?.(text);
+      },
       onError: () => {
         created.clearError();
         chatHooks.fallback?.(chatHooks.lastPrompt, session);
@@ -101,6 +112,7 @@ function getChat(epoch: number, session: string): Chat<AiMessage> {
 /** Holds the Ask Orvo AI chats so they survive panel changes and are reachable from the top bar (PRD FR-AI-8). Each claim has its own chat. */
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [aiOpen, setAiOpen] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const [aiSession, setAiSession] = useState(LIST_SESSION);
   const [epoch, setEpoch] = useState(0);
   const runner = useRef<((label: string) => boolean) | null>(null);
@@ -134,6 +146,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     runner.current = run;
   }, []);
   const runAction = useCallback((label: string) => runner.current?.(label) ?? false, []);
+  const setReplyListener = useCallback((run: ((text: string) => void) | null) => {
+    chatHooks.reply = run;
+  }, []);
   const setUiToolHandler = useCallback((run: ((name: string, input: Record<string, unknown>) => Record<string, unknown>) | null) => {
     chatHooks.ui = run;
   }, []);
@@ -145,8 +160,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ aiOpen, setAiOpen, aiSession, setAiSession, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setChatContext, setUiToolHandler, setAiFallback }),
-    [aiOpen, aiSession, messages, status, askAi, stopAi, regenerateAi, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setChatContext, setUiToolHandler, setAiFallback],
+    () => ({ aiOpen, setAiOpen, aiSession, setAiSession, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setChatContext, setUiToolHandler, setAiFallback }),
+    [aiOpen, aiSession, messages, status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setChatContext, setUiToolHandler, setAiFallback],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
