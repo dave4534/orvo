@@ -15,18 +15,20 @@ export const UI_TOOL_NAMES = [
   "showClaimsTab",
   "takeAction",
   "undoLastDecision",
+  "searchClaims",
+  "clearSearch",
 ] as const;
 
 export const CLAIM_TABS = ["needs_review", "waiting", "done", "all"] as const;
 export const DETAIL_TABS = ["overview", "policy", "past", "chat"] as const;
 
 /**
- * Builds the screen tools for one request. Button labels are limited to the buttons the open claim really has,
- * and only those that need no typed input. Decline is allowed without a note; Ask and Hold need a message, so they are left to the button.
+ * Builds the screen tools for one request. Button labels are limited to the buttons the open claim really has.
+ * Buttons that normally open a dialog take what the dialog would ask for: an amount, or the wording of a message.
  */
 export function buildUiTools(openClaim: LocalClaim | undefined, claims: LocalClaim[]): ToolSet {
   const ids = claims.map((c) => c.id) as [string, ...string[]];
-  const labels = openClaim && openClaim.status === "waiting_on_noa" ? allActionsFor(openClaim).filter((s) => !s.askAmount && (!s.askMessage || s.askMessage === "decline")).map((s) => s.label) : [];
+  const labels = openClaim && openClaim.status === "waiting_on_noa" ? allActionsFor(openClaim).map((s) => s.label) : [];
 
   const tools: ToolSet = {
     undoLastDecision: tool({
@@ -43,6 +45,14 @@ export function buildUiTools(openClaim: LocalClaim | undefined, claims: LocalCla
     }),
   };
 
+  if (!openClaim) {
+    tools.searchClaims = tool({
+      description: "Search the claims list, for example by employee, merchant or claim id.",
+      inputSchema: z.object({ query: z.string().max(80) }),
+    });
+    tools.clearSearch = tool({ description: "Clear the search and filters on the claims list.", inputSchema: z.object({}) });
+  }
+
   if (openClaim) {
     tools.nextClaim = tool({ description: "Move to the next claim in the queue.", inputSchema: z.object({}) });
     tools.previousClaim = tool({ description: "Move to the previous claim in the queue.", inputSchema: z.object({}) });
@@ -57,8 +67,12 @@ export function buildUiTools(openClaim: LocalClaim | undefined, claims: LocalCla
   if (labels.length > 0) {
     tools.takeAction = tool({
       description:
-        "Carry out one of the buttons on the open claim now. Only call it when Noa has asked for that decision or accepted your suggestion. The decision is applied at once, and Noa can undo it.",
-      inputSchema: z.object({ buttonLabel: z.enum(labels as [string, ...string[]]).describe("Exact label of the button") }),
+        "Carry out one of the buttons on the open claim now: approve, decline, hold for a receipt, ask the employee a question, send to Finance, approve a different amount. Only call it when Noa has asked for that decision or accepted your suggestion. The decision is applied at once, and Noa can undo it.",
+      inputSchema: z.object({
+        buttonLabel: z.enum(labels as [string, ...string[]]).describe("Exact label of the button"),
+        amount: z.number().positive().optional().describe('Only for "Approve a different amount": the amount in USD that Noa said. Required there.'),
+        message: z.string().max(300).optional().describe("For Hold, Ask and Decline: the wording Noa dictated for the employee, written as a short imperative with no \"you\", \"your\" or \"could you\" (for example: \"Resend the card statement as a PDF.\"). Leave out to send the standard wording (Hold and Ask) or no note (Decline)."),
+      }),
     });
   }
 

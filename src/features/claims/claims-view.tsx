@@ -111,8 +111,21 @@ export function ClaimsView() {
         }
         case "takeAction": {
           if (openClaim?.status !== "waiting_on_noa") return { ok: false, error: "This claim is not waiting for review." };
-          const done = runAction(String(input.buttonLabel ?? ""));
-          return done ? { ok: true, done: input.buttonLabel } : { ok: false, error: "That button is not available." };
+          const result = runAction(String(input.buttonLabel ?? ""), {
+            amount: typeof input.amount === "number" ? input.amount : undefined,
+            message: typeof input.message === "string" ? input.message : undefined,
+          });
+          return result.ok ? { ok: true, done: input.buttonLabel } : { ok: false, error: result.error ?? "That button is not available." };
+        }
+        case "searchClaims": {
+          if (openId !== null) return { ok: false, error: "A claim is open. Go back to claims first." };
+          changeFilters({ ...filters, query: String(input.query ?? "") });
+          return { ok: true, query: input.query };
+        }
+        case "clearSearch": {
+          if (openId !== null) return { ok: false, error: "A claim is open. Go back to claims first." };
+          changeFilters(DEFAULT_FILTERS);
+          return { ok: true };
         }
         default:
           return { ok: false, error: `Unknown screen action ${name}.` };

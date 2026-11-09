@@ -7,7 +7,7 @@ import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls, type
 import type { ChatContext } from "@/logic/chat-context";
 
 /** Screen tools the browser runs. Must match src/server/ui-tools.ts. */
-const UI_TOOLS = new Set(["openClaim", "nextClaim", "previousClaim", "backToClaims", "openDetails", "closeDetails", "showClaimsTab", "takeAction", "undoLastDecision"]);
+const UI_TOOLS = new Set(["openClaim", "nextClaim", "previousClaim", "backToClaims", "openDetails", "closeDetails", "showClaimsTab", "takeAction", "undoLastDecision", "searchClaims", "clearSearch"]);
 
 export type AiMeta = {
   /** Posted by the app itself (claim summary and recommendation, offline reply), not by the model. */
@@ -22,6 +22,10 @@ export type AiMeta = {
 export type AiMessage = UIMessage<AiMeta>;
 
 type NewMessage = { role: "user" | "assistant"; text: string } & AiMeta;
+
+/** What a spoken or typed command can add to a button: the wording of a message, or an amount. */
+export type ActionExtra = { message?: string; amount?: number; /** The button was clicked, so a missing amount opens the dialog instead of failing. */ interactive?: boolean };
+export type ActionRunResult = { ok: boolean; error?: string };
 
 /** Which chat is shown: one per claim, plus one for the claims list. */
 export const LIST_SESSION = "list";
@@ -52,8 +56,8 @@ type WorkspaceStore = {
   /** Clears every chat. */
   resetAi: () => void;
   /** The triage panel registers how to run its actions, so a button in the chat can run one by its label. Returns false if there is no such button. */
-  setActionRunner: (run: ((label: string) => boolean) | null) => void;
-  runAction: (label: string) => boolean;
+  setActionRunner: (run: ((label: string, extra?: ActionExtra) => ActionRunResult) | null) => void;
+  runAction: (label: string, extra?: ActionExtra) => ActionRunResult;
   /** The claims view tells the chat where the user is and what changed this session. */
   setChatContext: (read: (() => ChatContext) | null) => void;
   /** The claims view runs screen tools for the chat. Returns the result sent back to the model. */
@@ -120,7 +124,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [epoch, setEpoch] = useState(0);
   const [homeRequest, setHomeRequest] = useState(0);
   const goHome = useCallback(() => setHomeRequest((n) => n + 1), []);
-  const runner = useRef<((label: string) => boolean) | null>(null);
+  const runner = useRef<((label: string, extra?: ActionExtra) => ActionRunResult) | null>(null);
 
   const chat = useMemo(() => getChat(epoch, aiSession), [epoch, aiSession]);
   const { messages, sendMessage, status, stop, regenerate } = useChat<AiMessage>({ chat });
@@ -147,10 +151,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [stop]);
   const stopAi = useCallback(() => void stop(), [stop]);
   const regenerateAi = useCallback(() => void regenerate(), [regenerate]);
-  const setActionRunner = useCallback((run: ((label: string) => boolean) | null) => {
+  const setActionRunner = useCallback((run: ((label: string, extra?: ActionExtra) => ActionRunResult) | null) => {
     runner.current = run;
   }, []);
-  const runAction = useCallback((label: string) => runner.current?.(label) ?? false, []);
+  const runAction = useCallback((label: string, extra?: ActionExtra): ActionRunResult => runner.current?.(label, extra) ?? { ok: false, error: "No claim is open." }, []);
   const setReplyListener = useCallback((run: ((text: string) => void) | null) => {
     chatHooks.reply = run;
   }, []);

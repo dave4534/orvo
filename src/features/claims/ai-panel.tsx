@@ -210,7 +210,7 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
               </div>
             </div>
           ) : (
-            aiMessages.map((m) => <Message key={m.id} m={m} isLast={m === last} busy={busy} canAct={canAct} onAct={runAction} onOpenMore={onOpenMore} onRetry={regenerateAi} />)
+            aiMessages.map((m) => <Message key={m.id} m={m} isLast={m === last} busy={busy} canAct={canAct} onAct={(label) => runAction(label, { interactive: true })} onOpenMore={onOpenMore} onRetry={regenerateAi} />)
           )}
           {busy ? <WorkingIndicator label={workingLabel(last)} /> : null}
         </div>

@@ -29,7 +29,7 @@ import { track } from "@/logic/track";
 import { cn } from "@/lib/utils";
 import { useClaims } from "@/store/claims-store";
 import { useWorkspace } from "@/store/workspace-store";
-import { ActionDialog } from "./action-dialog";
+import { ActionDialog, defaultMessage } from "./action-dialog";
 import { ComparisonView } from "./comparison-view";
 import { FixDialog } from "./fix-dialog";
 import type { MoreTab } from "./panel-types";
@@ -133,13 +133,31 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
     // The AI chat runs a button by its label. Decisions are carried out at once; the toast offers Undo.
     setActionRunner(
       needsReview
-        ? (label) => {
+        ? (label, extra) => {
             const spec = allActionsFor(claim).find((s) => s.label === label);
-            if (!spec) return false;
+            if (!spec) return { ok: false, error: "That button is not available." };
             const target = retarget(spec, claim);
+            let input = target.input;
+            if (spec.askAmount) {
+              const amount = extra?.amount;
+              if (typeof amount !== "number" || !(amount > 0)) {
+                // A click with no amount opens the dialog to ask for it. A spoken command has to say the amount.
+                if (extra?.interactive) {
+                  choose(spec);
+                  return { ok: true };
+                }
+                return { ok: false, error: "An amount is needed. Ask Noa for it." };
+              }
+              if (amount > claimed) return { ok: false, error: `The amount can't be more than the ${formatUsd(claimed)} claimed.` };
+              input = { ...input, amount: Math.round(amount * 100) / 100 };
+            }
+            if (spec.askMessage) {
+              // Ask and Hold send the standard wording unless a message was given. Decline sends a note only if one was given.
+              const message = extra?.message?.trim() || (spec.askMessage === "decline" ? "" : defaultMessage(spec, claim));
+              if (message) input = { ...input, message };
+            }
             track("action_chosen", { claim: claim.id, action: target.id, recommended: rec?.recommended?.label === spec.label, via: "chat" });
-            run(target.input);
-            return true;
+            return run(input) ? { ok: true } : { ok: false, error: "The decision could not be saved. Nothing was sent." };
           }
         : null,
     );

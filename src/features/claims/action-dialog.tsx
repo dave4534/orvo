@@ -23,7 +23,7 @@ const ASK_BY_REASON: Record<string, string> = {
   unusual_amount: "Add more detail on why this was higher than usual.",
 };
 
-function defaultMessage(spec: ActionSpec, claim: LocalClaim): string {
+export function defaultMessage(spec: ActionSpec, claim: LocalClaim): string {
   if (spec.askMessage === "hold") return "Please send the receipt from the merchant, or a duplicate they can issue.";
   if (spec.askMessage === "ask") return ASK_BY_REASON[claim.agent.reason_type] ?? "Add a few details about this claim.";
   if (spec.askMessage === "decline") return claim.agent.headline;

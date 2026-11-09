@@ -25,6 +25,8 @@ const LABELS: Record<string, { running: (i: Input) => string; done: (i: Input) =
   "tool-closeDetails": { running: () => "Closing details", done: () => "Closed details" },
   "tool-showClaimsTab": { running: () => "Switching the tab", done: () => "Switched the tab" },
   "tool-takeAction": { running: (i) => `Carrying out ${i.buttonLabel ?? "the decision"}`, done: (i) => `Carried out ${i.buttonLabel ?? "the decision"}` },
+  "tool-searchClaims": { running: (i) => `Searching for ${(i as { query?: string }).query ?? "claims"}`, done: (i) => `Searched for ${(i as { query?: string }).query ?? "claims"}` },
+  "tool-clearSearch": { running: () => "Clearing the search", done: () => "Cleared the search" },
   "tool-undoLastDecision": { running: () => "Undoing the decision", done: () => "Undid the decision" },
   "tool-getRecommendedAction": { running: (i) => `Checking the recommendation for ${i.id ?? "the claim"}`, done: (i) => `Checked the recommendation for ${i.id ?? "the claim"}` },
 };
