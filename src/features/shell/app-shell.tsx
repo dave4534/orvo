@@ -7,9 +7,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
-import { notInPrototype } from "./not-in-prototype";
+import { useWorkspace } from "@/store/workspace-store";
 
 function TopBar() {
+  const { aiOpen, setAiOpen } = useWorkspace();
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b bg-background px-6">
       <div className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
@@ -17,7 +18,7 @@ function TopBar() {
         Orvo
       </div>
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="lg" onClick={() => notInPrototype("Ask Orvo AI")}>
+        <Button variant="outline" size="lg" aria-pressed={aiOpen} onClick={() => setAiOpen(!aiOpen)}>
           <Sparkles data-icon="inline-start" />
           Ask Orvo AI
         </Button>

@@ -27,7 +27,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider defaultTheme="light" enableSystem={false}>
           <TooltipProvider>{children}</TooltipProvider>
-          <Toaster />
+          <Toaster position="bottom-left" />
         </ThemeProvider>
       </body>
     </html>

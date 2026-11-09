@@ -1,4 +1,5 @@
-import type { Claim, ReasonType } from "@/data/types";
+import type { ReasonType } from "@/data/types";
+import type { LocalClaim } from "./local";
 import { NOW } from "@/data";
 
 // UI-layer fixture (PRD 9.1): reasons where Orvo's evidence points to a routine approval.
@@ -18,7 +19,7 @@ export type DailyBrief = {
 };
 
 /** Counts for the daily brief. Derived from the claims, never typed. */
-export function buildDailyBrief(claims: Claim[], now: Date = NOW): DailyBrief {
+export function buildDailyBrief(claims: LocalClaim[], now: Date = NOW): DailyBrief {
   const needs = claims.filter((c) => c.status === "waiting_on_noa");
   const quick = needs.filter((c) => QUICK_APPROVAL_REASONS.includes(c.agent.reason_type)).length;
   const chasing = claims.filter((c) => c.status === "waiting_on_employee");

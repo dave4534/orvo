@@ -77,6 +77,12 @@ Rules:
 
 ## Data
 
+**Rule: the data in this app must adhere to the data in `/Users/dave/Documents/daves-workspace/Work/Design Job Search/Interview Processes/Melio/Data Generation` (`../Data Generation`).**
+- That folder is the only source of truth. Never hardcode a fact, patch a value in the UI, or edit `src/data/` by hand.
+- Any change to the data (a claim, an amount, a label, a policy value, a person, an enum) is made in `../Data Generation` first: edit `_source/build.py`, then run `python3 _source/build.py && python3 _source/validate.py` there, and only then run `npm run prep:data` here to refresh `src/data/`.
+- If the app needs a field the dataset does not have, add it to the dataset (and `types.ts`) in `../Data Generation`, not as a local fixture. The only exception is the UI-layer fixtures PRD 9.1 explicitly allows (the recommendation table and AI mock replies).
+- If the app and the dataset disagree, the dataset wins. Tell the user about the conflict rather than silently changing either side.
+
 - Source of truth: `../Data Generation/data.json`. Rebuild with `python3 _source/build.py && python3 _source/validate.py` in that folder.
 - The runtime copy in `src/data/` must not contain `ground_truth`. A prep script in `scripts/` will produce it. Tests may read the original.
 - Data is immutable. Actions apply to a local copy and append events (PRD D7).

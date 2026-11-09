@@ -22,3 +22,15 @@ Every component in `src/components` is listed here. Update this file every time 
 | table | shadcn (stock, base-nova) | 2026-11-09 |
 | tabs | shadcn (stock, base-nova) | 2026-11-09 |
 | tooltip | shadcn (stock, base-nova) | 2026-11-09 |
+| dialog | shadcn (stock, base-nova) | 2026-11-09 |
+| label | shadcn (stock, base-nova) | 2026-11-09 |
+| radio-group | shadcn (stock, base-nova) | 2026-11-09 |
+| scroll-area | shadcn (stock, base-nova), installed, not used yet | 2026-11-09 |
+| textarea | shadcn (stock, base-nova) | 2026-11-09 |
+
+## Changes to stock files
+
+| File | Change | Why |
+|---|---|---|
+| `src/components/ui/sheet.tsx` | Overlay is `bg-foreground/35` with a 2px blur instead of `bg-black/10` | The review panels open over the list with a visibly dimmed layer |
+| `src/hooks/use-mobile.ts` | Rewritten with `useSyncExternalStore` | The stock hook fails the `react-hooks/set-state-in-effect` lint rule |

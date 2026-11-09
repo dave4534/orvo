@@ -45,4 +45,8 @@ export const STATUS_LABEL: Record<Status, string> = {
   declined_by_noa: "Declined by you",
 };
 
-export const claimStatusLabel = (claim: Pick<Claim, "status">) => STATUS_LABEL[claim.status];
+/** "Corrected by you" when Noa reversed or changed an agent decision (PRD 6.6). */
+export const claimStatusLabel = (claim: Pick<Claim, "status" | "noa">) =>
+  claim.noa?.overrode_agent && (claim.status === "approved_by_noa" || claim.status === "declined_by_noa")
+    ? "Corrected by you"
+    : STATUS_LABEL[claim.status];
