@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Info, Paperclip, X } from "lucide-react";
+import { Info, Paperclip, Sparkles, TriangleAlert, X } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { dataset } from "@/data";
-import type { CheckResult, ReceiptRead } from "@/data/types";
-import { formatSubmitted, formatUsd } from "@/logic/format";
+import type { CheckResult, ClaimEvent, ReceiptRead } from "@/data/types";
+import { employeeName } from "@/logic/comparison";
+import { formatSubmitted, formatUsd, initials } from "@/logic/format";
 import type { LocalClaim } from "@/logic/local";
 import { cn } from "@/lib/utils";
 import { ClaimChat } from "./claim-chat";
@@ -59,21 +61,46 @@ const READ_FIELDS: { key: keyof ReceiptRead; label: string; format: (v: unknown)
   { key: "covers", label: "Covers", format: (v) => (v == null ? "None" : String(v)) },
 ];
 
-/** One file with an icon on the left and a View action on the right. */
-function FileRow({ label, sub, onView }: { label: string; sub?: string; onView: () => void }) {
+/** One document listed under the transaction. The icon on the left can be a warning when the document is missing. */
+function DocumentRow({ icon, label, sub, onView }: { icon: React.ReactNode; label: string; sub?: string; onView?: () => void }) {
   return (
-    <li className="flex items-center gap-3 rounded-xl border p-3">
-      <span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-        <Paperclip className="size-4" />
-      </span>
+    <li className="flex items-center gap-3 p-3">
+      {icon}
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-semibold">{label}</div>
         {sub ? <div className="truncate text-xs text-muted-foreground">{sub}</div> : null}
       </div>
-      <Button variant="outline" size="sm" onClick={onView}>
-        View
-      </Button>
+      {onView ? (
+        <Button variant="outline" size="sm" onClick={onView}>
+          View
+        </Button>
+      ) : null}
     </li>
+  );
+}
+
+const DOC_ICON = "flex size-9 shrink-0 items-center justify-center rounded-lg";
+
+/** Marks an event: a sparkle for what Orvo did, a profile initial for what a person did. */
+function EventMarker({ actor, name }: { actor: ClaimEvent["actor"]; name: string }) {
+  if (actor === "agent") {
+    return (
+      <span aria-hidden className="flex size-6 shrink-0 items-center justify-center rounded-full border border-info-border bg-info text-info-foreground">
+        <Sparkles className="size-3.5" />
+      </span>
+    );
+  }
+  if (actor === "employee" || actor === "noa") {
+    return (
+      <Avatar size="sm" aria-hidden className="shrink-0">
+        <AvatarFallback className="text-[10px] font-semibold">{initials(name)}</AvatarFallback>
+      </Avatar>
+    );
+  }
+  return (
+    <span aria-hidden className="flex size-6 shrink-0 items-center justify-center">
+      <span className="size-2.5 rounded-full border-2 border-muted-foreground bg-card" />
+    </span>
   );
 }
 
@@ -85,7 +112,6 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
   const read = receipt.agent_read;
   const hasReceipt = receipt.status !== "missing" && receipt.status !== "unreadable" && Boolean(doc);
   const statement = receipt.attachments.find((a) => /statement/i.test(a.kind) || /statement/i.test(a.label));
-  const otherFiles = receipt.attachments.filter((a) => hasReceipt || a !== statement);
   const differing = read && doc ? READ_FIELDS.filter((f) => String(doc[f.key] ?? "") !== String(read[f.key] ?? "")) : [];
 
   const missingText =
@@ -100,23 +126,24 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
           .filter(Boolean)
           .join(" ");
 
+  const receiptIcon = hasReceipt ? (
+    <div aria-hidden className="flex h-10 w-8 shrink-0 flex-col gap-1 rounded border bg-muted/40 p-1.5">
+      <Skeleton className="h-1.5" />
+      <Skeleton className="h-1.5 w-[70%]" />
+      <Skeleton className="h-1.5" />
+    </div>
+  ) : (
+    <span aria-hidden className={cn(DOC_ICON, "bg-warning text-warning-foreground")}>
+      <TriangleAlert className="size-4" />
+    </span>
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <section>
         <SectionLabel>Transaction</SectionLabel>
-        <div className="flex items-center gap-3.5 rounded-xl border p-3">
-          {hasReceipt ? (
-            <div aria-hidden className="flex h-[72px] w-14 shrink-0 flex-col gap-1.5 rounded border bg-muted/40 p-2">
-              <Skeleton className="h-2.5" />
-              <Skeleton className="h-2.5 w-[70%]" />
-              <Skeleton className="h-2.5" />
-            </div>
-          ) : (
-            <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-              <FileText className="size-5" />
-            </span>
-          )}
-          <div className="min-w-0 flex-1">
+        <div className="overflow-hidden rounded-xl border">
+          <div className="p-3">
             <div className="truncate font-semibold">{claim.merchant}</div>
             <div className="text-xs text-muted-foreground">
               {dataset.enums.category[claim.category]}, submitted {formatSubmitted(claim.submitted_at)}
@@ -126,27 +153,39 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
               {claim.amount.original.currency !== "USD" ? `, ${claim.amount.original.currency} ${claim.amount.original.value.toFixed(2)}` : ""}
             </div>
           </div>
-          {hasReceipt ? (
-            <Button variant="outline" size="sm" onClick={() => onView({ kind: "receipt" })}>
-              View
-            </Button>
+
+          <ul className="divide-y border-t">
+            <DocumentRow
+              icon={receiptIcon}
+              label="Receipt"
+              sub={hasReceipt ? undefined : receipt.status === "unreadable" ? "Can't be read" : "Missing"}
+              onView={hasReceipt ? () => onView({ kind: "receipt" }) : undefined}
+            />
+            {receipt.attachments.map((a) => (
+              <DocumentRow
+                key={a.label}
+                icon={
+                  <span aria-hidden className={cn(DOC_ICON, "bg-muted text-muted-foreground")}>
+                    <Paperclip className="size-4" />
+                  </span>
+                }
+                label={a.label}
+                sub={a.shows}
+                onView={() => onView({ kind: "attachment", label: a.label, shows: a.shows })}
+              />
+            ))}
+          </ul>
+
+          {!hasReceipt ? (
+            <div className="p-3">
+              <Alert className="border-info-border bg-info text-info-foreground">
+                <Info />
+                <AlertTitle>{receipt.status === "unreadable" ? "Receipt can't be read" : "Receipt missing"}</AlertTitle>
+                <AlertDescription className="text-info-foreground/90">{missingText}</AlertDescription>
+              </Alert>
+            </div>
           ) : null}
         </div>
-
-        {!hasReceipt ? (
-          <>
-            {statement ? (
-              <ul className="mt-3">
-                <FileRow label={statement.label} sub={statement.shows} onView={() => onView({ kind: "attachment", label: statement.label, shows: statement.shows })} />
-              </ul>
-            ) : null}
-            <Alert className="mt-3 border-info-border bg-info text-info-foreground">
-              <Info />
-              <AlertTitle>{receipt.status === "unreadable" ? "Receipt can't be read" : "Receipt missing"}</AlertTitle>
-              <AlertDescription className="text-info-foreground/90">{missingText}</AlertDescription>
-            </Alert>
-          </>
-        ) : null}
 
         <dl className="mt-3 flex flex-col gap-1.5 text-sm">
           <div className="grid grid-cols-[7.5rem_1fr] gap-3">
@@ -191,33 +230,15 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
         </section>
       ) : null}
 
-      {otherFiles.length > 0 ? (
-        <section>
-          <SectionLabel>Attachments</SectionLabel>
-          <ul className="flex flex-col gap-2">
-            {otherFiles.map((a) => (
-              <FileRow key={a.label} label={a.label} sub={a.shows} onView={() => onView({ kind: "attachment", label: a.label, shows: a.shows })} />
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
-      <section>
+      <section className="mt-2">
         <SectionLabel>Activity</SectionLabel>
         <ol>
           {events.map((e, i) => (
-            <li key={`${e.at}-${i}`} className="relative flex gap-3 pb-3.5 last:pb-0">
-              {i < events.length - 1 ? <span aria-hidden className="absolute top-3.5 bottom-0 left-[5px] w-px bg-border" /> : null}
-              <span aria-hidden className="mt-1 size-[11px] shrink-0 rounded-full border-2 border-muted-foreground bg-card" />
-              <div className="min-w-0">
-                <div className="font-semibold">
-                  {e.text}
-                  {e.actor === "agent" ? (
-                    <Badge variant="outline" className="ml-1.5 border-info-border bg-info text-info-foreground">
-                      Automatic
-                    </Badge>
-                  ) : null}
-                </div>
+            <li key={`${e.at}-${i}`} className="relative flex gap-3 pb-4 last:pb-0">
+              {i < events.length - 1 ? <span aria-hidden className="absolute top-6 bottom-0 left-[11px] w-px bg-border" /> : null}
+              <EventMarker actor={e.actor} name={e.actor === "employee" ? employeeName(claim) : "Noa"} />
+              <div className="min-w-0 pt-0.5">
+                <div className="font-semibold">{e.text}</div>
                 <div className="text-xs text-muted-foreground">{formatSubmitted(e.at)}</div>
               </div>
             </li>
@@ -230,48 +251,32 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
 
 function Policy({ claim }: { claim: LocalClaim }) {
   const rules = dataset.policy.rules;
-  const cited = claim.agent.cited_rule_ids.map((id) => rules.find((r) => r.id === id)).filter((r) => Boolean(r));
   return (
-    <div className="flex flex-col gap-6">
-      <section>
-        <SectionLabel>Checks run</SectionLabel>
-        <Table className="table-fixed">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[34%]">Check</TableHead>
-              <TableHead>Policy</TableHead>
-              <TableHead className="w-24 text-right">Passed</TableHead>
+    <section>
+      <SectionLabel>Checks run</SectionLabel>
+      <Table className="table-fixed">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[34%] pl-0 text-left">Check</TableHead>
+            <TableHead className="text-left">Policy</TableHead>
+            <TableHead className="w-24 text-left">Passed</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {claim.agent.checks.map((c) => (
+            <TableRow key={c.id}>
+              <TableCell className="pl-0 font-medium whitespace-normal">{c.label}</TableCell>
+              <TableCell className="whitespace-normal text-left text-muted-foreground">{rules.find((r) => r.id === c.rule_id)?.text ?? "No policy number"}</TableCell>
+              <TableCell className="text-left">
+                <Badge variant="outline" className={cn("bg-card", CHECK_STYLE[c.result])}>
+                  {PASSED_LABEL[c.result]}
+                </Badge>
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {claim.agent.checks.map((c) => (
-              <TableRow key={c.id}>
-                <TableCell className="font-medium whitespace-normal">{c.label}</TableCell>
-                <TableCell className="whitespace-normal text-muted-foreground">{rules.find((r) => r.id === c.rule_id)?.text ?? "No policy number"}</TableCell>
-                <TableCell className="text-right">
-                  <Badge variant="outline" className={cn("bg-card", CHECK_STYLE[c.result])}>
-                    {PASSED_LABEL[c.result]}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </section>
-      {cited.length > 0 ? (
-        <section>
-          <SectionLabel>Rules cited</SectionLabel>
-          <ul className="flex flex-col gap-1.5 text-sm">
-            {cited.map((r) => (
-              <li key={r!.id}>{r!.text}</li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-      <p className="text-xs text-muted-foreground">
-        Policy version {claim.agent.policy_version}. Decided {formatSubmitted(claim.agent.decided_at)}.
-      </p>
-    </div>
+          ))}
+        </TableBody>
+      </Table>
+    </section>
   );
 }
 
