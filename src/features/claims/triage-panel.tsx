@@ -6,6 +6,7 @@ import { ArrowRight, Ban, Check, ChevronDown, CircleDollarSign, Clock, Info, Lan
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -163,6 +164,11 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
   const savedInput: ActionInput | null = changed
     ? { id: "correct", to: choice === "approved" ? "approved" : "declined", amount: choice === "approved" ? claimed : undefined, feedback: null }
     : null;
+  const decidedSummary = agentDecided
+    ? `${claim.status === "approved_by_agent" ? "Approved" : "Declined"} automatically by Orvo on ${formatDay(claim.agent.decided_at)}.`
+    : decidedByNoa && claim.noa
+      ? `${claim.noa.overrode_agent ? "Corrected" : claim.noa.decision === "declined" ? "Declined" : "Approved"} by you on ${formatDay(claim.noa.decided_at)}.`
+      : "";
   const savedPreview = savedInput ? actionPreview(claim, savedInput, allClaims) : null;
 
   return (
@@ -182,31 +188,39 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
               </Avatar>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[1.375rem] leading-7 font-semibold">{full}</div>
-                <div className="text-xs text-muted-foreground">{subtitle}</div>
+                {flat ? null : <div className="text-xs text-muted-foreground">{subtitle}</div>}
               </div>
               <div className="text-right text-3xl leading-9 font-semibold tabular-nums">{formatUsd(claimed)}</div>
             </div>
 
             <div className="flex items-center justify-between gap-3 border-b bg-muted/40 px-6 py-2.5">
-              <span className="inline-flex min-w-0 items-center gap-2 font-medium">
-                <Info aria-hidden className="size-4 shrink-0" />
-                {editable ? (
-                  <Select items={decisionItems} value={choice} onValueChange={(v) => setChoice(v as Outcome)}>
-                    <SelectTrigger aria-label="Decision" className="bg-card font-medium">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent alignItemWithTrigger={false} align="start">
-                      {decisionOptions.map((o) => (
-                        <SelectItem key={o} value={o}>
-                          {decisionItems[o]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
+              {editable ? (
+                <>
+                  <p className="min-w-0 text-sm text-muted-foreground">{decidedSummary}</p>
+                  <div className="flex shrink-0 flex-col items-end gap-1.5">
+                    <Label htmlFor="decision-select" className="text-xs text-muted-foreground">
+                      Status
+                    </Label>
+                    <Select items={decisionItems} value={choice} onValueChange={(v) => setChoice(v as Outcome)}>
+                      <SelectTrigger id="decision-select" className="bg-card font-medium">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent alignItemWithTrigger={false} align="end">
+                        {decisionOptions.map((o) => (
+                          <SelectItem key={o} value={o}>
+                            {decisionItems[o]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              ) : (
+                <span className="inline-flex min-w-0 items-center gap-2 font-medium">
+                  <Info aria-hidden className="size-4 shrink-0" />
                   <span className="truncate">{needsReview ? dataset.enums.reason_type[claim.agent.reason_type] : claimStatusLabel(claim)}</span>
-                )}
-              </span>
+                </span>
+              )}
               {onOpenDetails ? (
                 <Button variant="outline" size="sm" onClick={onOpenDetails}>
                   View details <ArrowRight data-icon="inline-end" />
@@ -230,10 +244,10 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
       </div>
 
       <div className={cn("flex shrink-0 flex-col gap-3 border-t px-6 py-4", "bg-card")}>
-        {editable ? (
+        {changed ? (
           <Alert>
             <Info aria-hidden />
-            <AlertTitle>{changed ? "What happens when you save" : "Editing this decision"}</AlertTitle>
+            <AlertTitle>What happens when you save</AlertTitle>
             <AlertDescription>
               {savedPreview ? (
                 <span className="flex flex-col gap-0.5">
@@ -241,9 +255,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                   <span>Tells: {savedPreview.tells}</span>
                   <span>Finance: {savedPreview.finance}</span>
                 </span>
-              ) : (
-                `Changing it updates what ${name} is paid and tells ${name} in the claim chat. Pick a different decision above to see what changes.`
-              )}
+              ) : null}
             </AlertDescription>
           </Alert>
         ) : null}
