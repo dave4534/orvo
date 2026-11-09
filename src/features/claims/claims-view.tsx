@@ -11,7 +11,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Status } from "@/data/types";
 import type { ActionId } from "@/logic/actions";
-import { buildDailyBrief } from "@/logic/brief";
+import { buildDailyBrief, buildDoneBrief, briefSentence, doneBriefSentence } from "@/logic/brief";
 import {
   applyFilters,
   DEFAULT_FILTERS,
@@ -37,7 +37,7 @@ import { ClaimsQueue } from "./claims-queue";
 import { MoreInfoPanel } from "./more-info-panel";
 import { PastClaimModal } from "./past-claim-modal";
 import { ClaimsTable } from "./claims-table";
-import { DailyBriefBanner } from "./daily-brief";
+import { AiBriefBanner } from "./daily-brief";
 import type { MoreTab } from "./panel-types";
 
 const tabOfStatus = (status: Status): TabId =>
@@ -49,7 +49,7 @@ export function ClaimsView() {
 
   const [tab, setTab] = useState<TabId>("needs_review");
   const [filters, setFilters] = useState<ClaimFilters>(DEFAULT_FILTERS);
-  const [briefDismissed, setBriefDismissed] = useState(false);
+  const [briefDismissed, setBriefDismissed] = useState<Set<TabId>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [openId, setOpenId] = useState<string | null>(null);
@@ -109,6 +109,7 @@ export function ClaimsView() {
   });
 
   const brief = useMemo(() => buildDailyBrief(claims), [claims]);
+  const doneBrief = useMemo(() => buildDoneBrief(claims), [claims]);
   const counts = useMemo(() => tabCounts(claims, filters), [claims, filters]);
   const rows = useMemo(() => sortForTab(inTab(applyFilters(claims, filters), tab), tab), [claims, filters, tab]);
   const approvedTotal = claims.filter((c) => c.status === "approved_by_agent").length;
@@ -196,6 +197,15 @@ export function ClaimsView() {
     if (first) openClaimById(first.id);
   }
 
+  // The Done brief's review opens the Done queue, newest first.
+  function reviewDone() {
+    setTab("done");
+    const first = sortForTab(inTab(applyFilters(claims, DEFAULT_FILTERS), "done"), "done")[0];
+    if (first) openClaimById(first.id);
+  }
+
+  const dismissBrief = (id: TabId) => setBriefDismissed((prev) => new Set(prev).add(id));
+
   function toggleOne(id: string, checked: boolean) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -228,6 +238,7 @@ export function ClaimsView() {
             <ClaimsQueue
               claim={openClaim}
               allClaims={claims}
+              queueTitle={tab === "done" ? "Done Queue" : "Claims Queue"}
               position={position}
               onPrev={scopeIndex > 0 ? () => step(-1) : undefined}
               onNext={scopeIndex < scopeIds.length - 1 ? () => step(1) : undefined}
@@ -262,7 +273,7 @@ export function ClaimsView() {
                   setTab("needs_review");
                   setFilters(DEFAULT_FILTERS);
                   setSelectedIds(new Set());
-                  setBriefDismissed(false);
+                  setBriefDismissed(new Set());
                 }}
               >
                 Reset demo
@@ -271,7 +282,24 @@ export function ClaimsView() {
           </DropdownMenu>
         </div>
 
-        {!briefDismissed ? <DailyBriefBanner brief={brief} onDismiss={() => setBriefDismissed(true)} onReviewAll={reviewAll} /> : null}
+        {tab === "needs_review" && !briefDismissed.has("needs_review") ? (
+          <AiBriefBanner
+            title={`Daily brief, ${brief.dateLabel}`}
+            text={briefSentence(brief)}
+            reviewCount={brief.needsYou}
+            onDismiss={() => dismissBrief("needs_review")}
+            onReviewAll={reviewAll}
+          />
+        ) : null}
+        {tab === "done" && !briefDismissed.has("done") ? (
+          <AiBriefBanner
+            title={`Done brief, ${doneBrief.dateLabel}`}
+            text={doneBriefSentence(doneBrief)}
+            reviewCount={doneBrief.done}
+            onDismiss={() => dismissBrief("done")}
+            onReviewAll={reviewDone}
+          />
+        ) : null}
 
         <Tabs
           value={tab}

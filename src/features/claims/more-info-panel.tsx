@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { dataset } from "@/data";
-import type { CheckResult, ClaimEvent, ReceiptRead } from "@/data/types";
+import type { CheckResult, ClaimEvent } from "@/data/types";
 import { employeeName } from "@/logic/comparison";
 import { formatSubmitted, formatUsd, initials } from "@/logic/format";
 import type { LocalClaim } from "@/logic/local";
@@ -50,16 +50,6 @@ const PASSED_LABEL: Record<CheckResult, string> = {
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <h3 className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">{children}</h3>;
 }
-
-const READ_FIELDS: { key: keyof ReceiptRead; label: string; format: (v: unknown) => string }[] = [
-  { key: "merchant", label: "Merchant", format: (v) => String(v ?? "None") },
-  { key: "date", label: "Date", format: (v) => String(v ?? "None") },
-  { key: "subtotal", label: "Subtotal", format: (v) => (typeof v === "number" ? formatUsd(v) : "None") },
-  { key: "tax", label: "Tax", format: (v) => (typeof v === "number" ? formatUsd(v) : "None") },
-  { key: "tip", label: "Tip", format: (v) => (typeof v === "number" ? formatUsd(v) : "None") },
-  { key: "total", label: "Total", format: (v) => (typeof v === "number" ? formatUsd(v) : "None") },
-  { key: "covers", label: "Covers", format: (v) => (v == null ? "None" : String(v)) },
-];
 
 /** One document listed under the transaction. The icon on the left can be a warning when the document is missing. */
 function DocumentRow({
@@ -124,10 +114,8 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
   const { receipt } = claim;
   const chase = claim.agent.chase;
   const doc = receipt.document;
-  const read = receipt.agent_read;
   const hasReceipt = receipt.status !== "missing" && receipt.status !== "unreadable" && Boolean(doc);
   const statement = receipt.attachments.find((a) => /statement/i.test(a.kind) || /statement/i.test(a.label));
-  const differing = read && doc ? READ_FIELDS.filter((f) => String(doc[f.key] ?? "") !== String(read[f.key] ?? "")) : [];
 
   const missingText =
     receipt.status === "unreadable"
@@ -155,6 +143,11 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
 
   return (
     <div className="flex flex-col gap-6">
+      <section>
+        <SectionLabel>Claim Number</SectionLabel>
+        <p className="font-semibold tabular-nums">{claim.id}</p>
+      </section>
+
       <section>
         <SectionLabel>Transaction</SectionLabel>
         <div className="overflow-hidden rounded-xl border">
@@ -211,37 +204,6 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
           </div>
         </dl>
       </section>
-
-      {hasReceipt && read && doc ? (
-        <section>
-          <SectionLabel>What was read</SectionLabel>
-          {differing.length === 0 ? (
-            <p className="text-sm text-muted-foreground">The reading matches the receipt on every field.</p>
-          ) : (
-            <Table className="table-fixed">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Field</TableHead>
-                  <TableHead>Receipt</TableHead>
-                  <TableHead>Read value</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {differing.map((f) => (
-                  <TableRow key={f.label}>
-                    <TableCell>{f.label}</TableCell>
-                    <TableCell>{f.format(doc[f.key])}</TableCell>
-                    <TableCell className="bg-warning font-semibold text-warning-foreground">
-                      {f.format(read[f.key])}
-                      <span className="sr-only"> (differs)</span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </section>
-      ) : null}
 
       <section className="mt-2">
         <SectionLabel>Activity</SectionLabel>

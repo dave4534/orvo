@@ -37,6 +37,36 @@ export function buildDailyBrief(claims: LocalClaim[], now: Date = NOW): DailyBri
   };
 }
 
+export type DoneBrief = {
+  dateLabel: string;
+  done: number;
+  approvedByOrvo: number;
+  declinedByOrvo: number;
+  decidedByYou: number;
+};
+
+/** Counts for the Done brief. Derived from the claims, never typed. */
+export function buildDoneBrief(claims: LocalClaim[], now: Date = NOW): DoneBrief {
+  const done = claims.filter((c) =>
+    ["approved_by_agent", "approved_by_noa", "declined_by_agent", "declined_by_noa"].includes(c.status),
+  );
+  const dateLabel = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" })
+    .format(now)
+    .replace(",", "");
+  return {
+    dateLabel,
+    done: done.length,
+    approvedByOrvo: done.filter((c) => c.status === "approved_by_agent").length,
+    declinedByOrvo: done.filter((c) => c.status === "declined_by_agent").length,
+    decidedByYou: done.filter((c) => c.status === "approved_by_noa" || c.status === "declined_by_noa").length,
+  };
+}
+
+export function doneBriefSentence(b: DoneBrief): string {
+  if (b.done === 0) return "Nothing is done yet.";
+  return `${b.done} ${b.done === 1 ? "claim is" : "claims are"} done. I approved ${b.approvedByOrvo} on my own and declined ${b.declinedByOrvo} automatically, and ${b.decidedByYou} ${b.decidedByYou === 1 ? "was" : "were"} decided by hand.`;
+}
+
 export function briefSentence(b: DailyBrief): string {
   const parts: string[] = [];
   if (b.needsYou === 0) {

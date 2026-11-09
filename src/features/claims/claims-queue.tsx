@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, ChevronLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronLeft, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { Status } from "@/data/types";
@@ -12,6 +12,8 @@ import { TriagePanel, type TriagePosition } from "./triage-panel";
 type Props = {
   claim: LocalClaim;
   allClaims: LocalClaim[];
+  /** "Claims Queue" for review, "Done Queue" when the claim was opened from Done. */
+  queueTitle: "Claims Queue" | "Done Queue";
   position: TriagePosition;
   onPrev?: () => void;
   onNext?: () => void;
@@ -34,7 +36,10 @@ export function ClaimsQueue(props: Props) {
             Back to claims
           </Button>
           <div>
-            <h2 className="text-base leading-5 font-semibold whitespace-nowrap">Claims Queue</h2>
+            <h2 className="flex items-center gap-2 text-base leading-5 font-semibold whitespace-nowrap">
+              {props.queueTitle === "Done Queue" ? <Sparkles aria-hidden className="size-4 text-primary" /> : null}
+              {props.queueTitle}
+            </h2>
             <p className="text-xs whitespace-nowrap text-muted-foreground" aria-live="polite">
               {position.index + 1} of {position.total} {position.noun}
             </p>

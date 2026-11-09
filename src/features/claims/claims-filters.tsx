@@ -53,7 +53,7 @@ export function ClaimsFilters({ filters, onChange, onReset, canReset, showStatus
         items={RANGE_ITEMS}
         onValueChange={(value) => onChange({ ...filters, range: value as RangeId })}
       >
-        <SelectTrigger aria-label="Date range" className="h-10 bg-card px-3">
+        <SelectTrigger aria-label="Date range" className="h-10! bg-card px-3">
           <span className="text-muted-foreground">Date range:</span>
           <SelectValue />
         </SelectTrigger>

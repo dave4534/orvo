@@ -148,11 +148,12 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
       ? moreOptionsFor(claim, [])
       : [];
 
-  const subtitle = agentDecided
+  const detail = agentDecided
     ? `${category}, ${claim.status === "approved_by_agent" ? "approved" : "declined"} automatically ${formatDay(claim.agent.decided_at)}`
     : decidedByNoa && claim.noa
       ? `${category}, ${claim.noa.overrode_agent ? "corrected" : claim.noa.decision} ${formatDay(claim.noa.decided_at)}`
       : `${category}, submitted ${formatDay(claim.submitted_at)}`;
+  const subtitle = `${claim.id}, ${detail}`;
 
   const chase = claim.agent.chase;
 
