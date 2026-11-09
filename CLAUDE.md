@@ -17,7 +17,6 @@ Source documents (outside this folder, in `..`):
 - Tier 1 of PRD section 1.1 comes first. No min or max widths until the user decides.
 - Wireframes will be supplied by the user. Do not invent layout before they arrive.
 - `ground_truth` in the data is the answer key for the planted agent mistakes. Never render it, never read it for logic. Strip it from the runtime data (see Data below).
-- Nothing is pushed or deployed to Vercel unless the user says so.
 
 ## The rule
 
