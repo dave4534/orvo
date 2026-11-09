@@ -5,7 +5,6 @@ import { ChevronDown, Sparkles } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,7 +19,7 @@ import { dataset } from "@/data";
 import type { Status } from "@/data/types";
 import { firstName, type ActionId, type ActionInput } from "@/logic/actions";
 import { buildComparison, employeeName } from "@/logic/comparison";
-import { claimStatusLabel, formatUsd, initials } from "@/logic/format";
+import { formatUsd, initials } from "@/logic/format";
 import { isAgentDecided, isSpotCheck, type LocalClaim } from "@/logic/local";
 import { moreOptionsFor, recommendationFor, type ActionSpec } from "@/logic/recommendations";
 import { track } from "@/logic/track";
@@ -35,7 +34,6 @@ export type TriagePosition = { index: number; total: number; noun: string };
 type Props = {
   claim: LocalClaim;
   allClaims: LocalClaim[];
-  spotCheckPosition?: { index: number; total: number } | null;
   onOpenMore: (tab?: MoreTab) => void;
   onDecided: (claimId: string, status: Status, action: ActionId) => void;
   onReopen: (claimId: string) => void;
@@ -57,7 +55,7 @@ function retarget(spec: ActionSpec, claim: LocalClaim): ActionSpec {
 }
 
 /** Triage column of the claims queue: the claim, its comparison and the decision actions (actions stay pinned at the bottom). */
-export function TriagePanel({ claim, allClaims, spotCheckPosition, onOpenMore, onDecided, onReopen }: Props) {
+export function TriagePanel({ claim, allClaims, onOpenMore, onDecided, onReopen }: Props) {
   const { perform } = useClaims();
   const [pending, setPending] = useState<ActionSpec | null>(null);
   const [fixOpen, setFixOpen] = useState(false);
@@ -105,21 +103,21 @@ export function TriagePanel({ claim, allClaims, spotCheckPosition, onOpenMore, o
   const claimedAmount = claim.amount.usd_claimed;
   const title =
     decidedByNoa && claim.noa
-      ? `You ${claim.noa.decision} ${formatUsd(claim.noa.decision === "approved" ? claim.noa.approved_amount_usd : claimedAmount)}`
+      ? `${claim.noa.decision === "approved" ? "Approved" : "Declined"} ${formatUsd(claim.noa.decision === "approved" ? claim.noa.approved_amount_usd : claimedAmount)}`
       : agentDecided
-        ? `Orvo ${claim.status === "approved_by_agent" ? "approved" : "declined"} ${formatUsd(claimed)}`
+        ? `${claim.status === "approved_by_agent" ? "Approved" : "Declined"} ${formatUsd(claimed)} automatically`
         : claim.agent.headline;
   const body =
     decidedByNoa && claim.noa
-      ? `${lastEvent?.text ?? ""}${claim.noa.note ? `. Your note: ${claim.noa.note}` : ""}. Orvo's review said: ${claim.agent.headline}`
+      ? `${lastEvent?.text ?? ""}${claim.noa.note ? `. Note: ${claim.noa.note}` : ""}. Review said: ${claim.agent.headline}`
       : needsReview && claim.agent.needs_from_noa
-        ? `${claim.agent.explanation} Orvo asks: ${claim.agent.needs_from_noa}`
+        ? `${claim.agent.explanation} Next: ${claim.agent.needs_from_noa}`
         : claim.agent.explanation;
 
   const subtitle = agentDecided
-    ? `${category}, ${claim.status === "approved_by_agent" ? "approved" : "declined"} by Orvo ${formatDay(claim.agent.decided_at)}`
+    ? `${category}, ${claim.status === "approved_by_agent" ? "approved" : "declined"} automatically ${formatDay(claim.agent.decided_at)}`
     : decidedByNoa && claim.noa
-      ? `${category}, ${claim.noa.overrode_agent ? "corrected" : claim.noa.decision} by you ${formatDay(claim.noa.decided_at)}`
+      ? `${category}, ${claim.noa.overrode_agent ? "corrected" : claim.noa.decision} ${formatDay(claim.noa.decided_at)}`
       : `${category}, submitted ${formatDay(claim.submitted_at)}`;
 
   const chase = claim.agent.chase;
@@ -135,7 +133,7 @@ export function TriagePanel({ claim, allClaims, spotCheckPosition, onOpenMore, o
           <p className="text-sm leading-relaxed">{body}</p>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border bg-card">
+        <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border bg-card">
           <div className="flex items-center gap-3.5 border-b px-6 py-[18px]">
             <Avatar size="lg">
               <AvatarFallback>{initials(full)}</AvatarFallback>
@@ -147,22 +145,6 @@ export function TriagePanel({ claim, allClaims, spotCheckPosition, onOpenMore, o
             <div className="text-right text-3xl leading-9 font-semibold tabular-nums">{formatUsd(claimed)}</div>
           </div>
 
-          <div className="flex items-center border-b bg-muted/40 px-6 py-2.5">
-            {spotCheckPosition && isSpotCheck(claim) ? (
-              <Badge variant="outline" className="border-warning-border bg-warning text-warning-foreground">
-                Spot check, {spotCheckPosition.index + 1} of {spotCheckPosition.total}
-              </Badge>
-            ) : (
-              <Badge
-                variant="outline"
-                className={needsReview ? "border-warning-border bg-warning text-warning-foreground" : "bg-card text-muted-foreground"}
-              >
-                {claimStatusLabel(claim)}
-                {needsReview ? `, ${dataset.enums.reason_type[claim.agent.reason_type]}` : ""}
-              </Badge>
-            )}
-          </div>
-
           <div className="mt-6 border-t">
             <ComparisonView comparison={comparison} />
           </div>
@@ -171,7 +153,7 @@ export function TriagePanel({ claim, allClaims, spotCheckPosition, onOpenMore, o
             <p className="mx-6 mb-4 rounded-lg bg-muted/60 p-3 text-sm">
               Waiting on {name}. {chase.attempts.length} of {chase.max_attempts} requests sent.{" "}
               {chase.next_attempt_at ? `Next request ${formatDay(chase.next_attempt_at)}. ` : "No requests left. "}
-              Passes to you {formatDay(chase.escalates_at)}.
+              Passes to review {formatDay(chase.escalates_at)}.
             </p>
           ) : null}
         </div>
@@ -202,7 +184,7 @@ export function TriagePanel({ claim, allClaims, spotCheckPosition, onOpenMore, o
                 {rec.recommended.label}
               </Button>
             ) : (
-              <p className="text-sm text-muted-foreground">Orvo has no recommendation here. {claim.agent.unsure ? "It could not judge this one." : ""}</p>
+              <p className="text-sm text-muted-foreground">No recommendation for this claim. {claim.agent.unsure ? "It could not be judged." : ""}</p>
             )}
             {rec.secondary.map((spec) => (
               <Button key={spec.label} variant="outline" size="lg" className="h-10 w-full" onClick={() => choose(spec)}>
@@ -231,7 +213,7 @@ export function TriagePanel({ claim, allClaims, spotCheckPosition, onOpenMore, o
         ) : null}
 
         {claim.status === "waiting_on_finance" ? (
-          <p className="text-sm text-muted-foreground">With Finance since {claim.noa ? formatDay(claim.noa.decided_at) : "today"}. There is nothing for you to do until they decide.</p>
+          <p className="text-sm text-muted-foreground">With Finance since {claim.noa ? formatDay(claim.noa.decided_at) : "today"}. No action is needed until Finance decides.</p>
         ) : null}
 
         <DropdownMenu>
@@ -257,16 +239,16 @@ export function TriagePanel({ claim, allClaims, spotCheckPosition, onOpenMore, o
               </>
             ) : null}
             <DropdownMenuGroup>
-              <DropdownMenuLabel>ABOUT ORVO&apos;S WORK</DropdownMenuLabel>
+              <DropdownMenuLabel>ABOUT AUTOMATIC DECISIONS</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => setFixOpen(true)}>
                 <span className="flex flex-col">
-                  <span>Fix Orvo&apos;s mistake</span>
-                  <span className="text-xs text-muted-foreground">Tell Orvo where it went wrong</span>
+                  <span>Correct an automatic decision</span>
+                  <span className="text-xs text-muted-foreground">Record what went wrong</span>
                 </span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onOpenMore("policy")}>
                 <span className="flex flex-col">
-                  <span>See how Orvo decided</span>
+                  <span>See how the decision was made</span>
                   <span className="text-xs text-muted-foreground">Evidence and checks it ran</span>
                 </span>
               </DropdownMenuItem>

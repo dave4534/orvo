@@ -40,13 +40,13 @@ export function buildDailyBrief(claims: LocalClaim[], now: Date = NOW): DailyBri
 export function briefSentence(b: DailyBrief): string {
   const parts: string[] = [];
   if (b.needsYou === 0) {
-    parts.push("Nothing needs you.");
+    parts.push("Nothing needs review.");
   } else {
     const split =
       b.quick > 0 && b.judgment > 0
         ? `: ${b.quick} quick ${b.quick === 1 ? "approval" : "approvals"} and ${b.judgment} judgment ${b.judgment === 1 ? "call" : "calls"}`
         : "";
-    parts.push(`${b.needsYou} ${b.needsYou === 1 ? "claim needs" : "claims need"} you${split}.`);
+    parts.push(`${b.needsYou} ${b.needsYou === 1 ? "claim needs" : "claims need"} review${split}.`);
   }
   const did = `I approved ${b.approvedByOrvo} on my own`;
   const chase = b.chasing > 0 ? ` and am chasing ${b.chasing} ${b.chasingReceipts ? "receipts" : "claims"}` : "";

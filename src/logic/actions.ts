@@ -24,7 +24,7 @@ export type ActionInput = {
   message?: string;
   /** Correction outcome, for "correct". */
   to?: "approved" | "declined" | "ask";
-  /** What went wrong, for "correct". Null means Noa opted out of telling Orvo. */
+  /** What went wrong, for "correct". Null means the manager opted out of recording it. */
   feedback?: { option: string; text?: string } | null;
   /** Short description for the event log, for example the cited rule when approving an exception. */
   reason?: string;
@@ -145,7 +145,7 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
             approved_amount_usd: copy.amount.usd_claimed,
             overrode_agent: isAgentDecided(other),
           };
-          copy.events.push(event(at, "noa_correction", `Reopened Orvo's approval and sent ${formatUsd(copy.amount.usd_claimed)} to Finance with ${claim.id}`));
+          copy.events.push(event(at, "noa_correction", `Reopened the automatic approval and sent ${formatUsd(copy.amount.usd_claimed)} to Finance with ${claim.id}`));
           changed.push(copy);
         }
       }
@@ -158,17 +158,17 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
       claim.status = "waiting_on_noa";
       claim.awaiting = "noa";
       setChain(claim, "waiting", claim.approval_chain.find((s) => s.step === "finance")?.state ?? "not_needed");
-      claim.events.push(event(at, "noa_decision", "Noa took over and stopped the chase"));
+      claim.events.push(event(at, "noa_decision", "Decided by manager, chase stopped"));
       return { changed, summary: `You took over ${name}'s claim` };
     }
     case "confirm": {
       claim.local = { ...claim.local, spot_checked: true };
-      return { changed, summary: `Confirmed Orvo's decision for ${name}` };
+      return { changed, summary: `Confirmed the automatic decision for ${name}` };
     }
     case "correct": {
       const outcome = input.to ?? "approved";
       const amount = input.amount ?? claimed;
-      const was = claim.status === "declined_by_agent" ? "Orvo's decline" : wasAgent ? `Orvo's approval of ${formatUsd(claimed)}` : "your decision";
+      const was = claim.status === "declined_by_agent" ? "the automatic decline" : wasAgent ? `the automatic approval of ${formatUsd(claimed)}` : "the decision";
       if (outcome === "approved") {
         const toFinance = approveClaim(claim, amount, at, wasAgent, input.reason ?? "");
         claim.events.push(event(at, "noa_correction", `Corrected ${was} to ${formatUsd(amount)}${toFinance ? ". Sent to Finance." : ""}`));
@@ -189,7 +189,7 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
           ...claim.local,
           feedback: [...(claim.local?.feedback ?? []), { ...input.feedback, at }],
         };
-        claim.events.push(event(at, "agent_feedback", `Told Orvo what went wrong: ${input.feedback.option}${input.feedback.text ? `. ${input.feedback.text}` : ""}`));
+        claim.events.push(event(at, "agent_feedback", `Recorded what went wrong: ${input.feedback.option}${input.feedback.text ? `. ${input.feedback.text}` : ""}`));
       }
       return {
         changed,
@@ -227,12 +227,12 @@ export function actionPreview(claim: LocalClaim, input: ActionInput, all: LocalC
         return { pays: `Nothing. ${name} is not paid.`, tells: `${name}, on Slack, that the claim is declined`, finance: "Not needed" };
       }
       if (input.id === "correct" && input.to === "ask") {
-        return { pays: "Nothing yet", tells: `${name}, on Slack, with your question`, finance: "Not involved yet" };
+        return { pays: "Nothing yet", tells: `${name}, on Slack, with the question`, finance: "Not involved yet" };
       }
       if (amount > FINANCE_LIMIT) {
         return {
           pays: `Nothing until Finance approves ${formatUsd(amount)}. ${name} is paid after that.`,
-          tells: `${name}, on Slack, that you approved it and it is with Finance`,
+          tells: `${name}, on Slack, that it was approved and is with Finance`,
           finance: finance(amount),
         };
       }
@@ -252,19 +252,19 @@ export function actionPreview(claim: LocalClaim, input: ActionInput, all: LocalC
       return { pays, tells, finance: finance(amount) };
     }
     case "decline":
-      return { pays: `Nothing. ${name} is not paid.`, tells: `${name}, on Slack, that the claim is declined${input.message ? ", with your note" : ""}`, finance: "Not needed" };
+      return { pays: `Nothing. ${name} is not paid.`, tells: `${name}, on Slack, that the claim is declined${input.message ? ", with the note" : ""}`, finance: "Not needed" };
     case "ask":
-      return { pays: "Nothing yet", tells: `${name}, on Slack, with your question`, finance: "Not involved yet" };
+      return { pays: "Nothing yet", tells: `${name}, on Slack, with the question`, finance: "Not involved yet" };
     case "hold":
       return { pays: "Nothing until a receipt arrives", tells: `${name}, on Slack, asking for the receipt`, finance: "Not involved yet" };
     case "to_finance": {
-      return { pays: `Nothing until Finance approves ${formatUsd(claimed)}`, tells: `${name}, on Slack, that it is with Finance`, finance: "Involved, you are sending it" };
+      return { pays: `Nothing until Finance approves ${formatUsd(claimed)}`, tells: `${name}, on Slack, that it is with Finance`, finance: "Involved, sending it" };
     }
     case "to_finance_both": {
       const others = claim.agent.related_claim_ids
         .map((id) => all.find((c) => c.id === id))
         .filter((c): c is LocalClaim => Boolean(c));
-      const list = others.map((c) => `${c.id} (${formatUsd(c.amount.usd_claimed)}, ${c.status === "approved_by_agent" ? "approved by Orvo, not paid" : c.status})`).join(", ");
+      const list = others.map((c) => `${c.id} (${formatUsd(c.amount.usd_claimed)}, ${c.status === "approved_by_agent" ? "approved automatically, not paid" : c.status})`).join(", ");
       const total = claimed + others.reduce((s, c) => s + c.amount.usd_claimed, 0);
       return {
         pays: `Nothing until Finance approves ${formatUsd(total)} together`,

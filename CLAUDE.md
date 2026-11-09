@@ -72,7 +72,17 @@ Rules:
 - Logic and reducers are pure and unit-tested (Vitest). Every derived value (age, counts, gaps) is a selector, never stored.
 - "Now" is `meta.now` from the data. Never read the real clock.
 - Keep files small and named for what they do. Prefer many small modules to one large one.
-- Copy and microcopy: plain language, no em dashes, "Orvo" for the agent in claim copy, USD with two decimals (PRD 16.2).
+- Copy and microcopy: plain language, no em dashes, USD with two decimals (PRD 16.2).
+
+## Copy rules
+
+- **No second person.** Do not write "you", "your", "yours" or "could you" in product copy, including messages to employees and AI replies.
+- **No third person for the agent or the manager.** Do not write "Orvo can't confirm it", "Orvo asks", "Noa approved" or "Orvo's review said". State the fact neutrally instead: "can't be confirmed", "Next: ...", "Approved automatically", "Review said". Names of employees are fine.
+- **Imperatives are allowed** for next actions ("Approve it for Finance, or decline").
+- **Brand names are exempt:** "Orvo" as the product name, "Ask Orvo AI", and the Orvo logo text.
+- **AI summary** (the box at the top of the triage panel) is at most 170 characters and 35 words. It says: the gap, why the claim was escalated and could not be decided automatically, and the next action. It has no "Orvo asks:" label. Its title is a short headline of the gap.
+- **Buttons and header controls** have a text label, not an icon alone, except the Close control.
+- Run the second- and third-person check before reporting copy as done: search the src and Data Generation copy for "you", "your", "Orvo" and "Noa" used as actors.
 
 ## Data
 

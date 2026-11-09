@@ -14,7 +14,6 @@ type Props = {
   claim: LocalClaim;
   allClaims: LocalClaim[];
   position: TriagePosition;
-  spotCheckPosition: { index: number; total: number } | null;
   moreTab: MoreTab;
   onPrev?: () => void;
   onNext?: () => void;
@@ -29,7 +28,7 @@ type Props = {
 
 /** One queue panel: a header aligned with the Orvo bar, then triage and More info side by side. */
 export function ClaimsQueue(props: Props) {
-  const { claim, allClaims, position, spotCheckPosition, moreTab, onPrev, onNext, onClose, onAskAi } = props;
+  const { claim, allClaims, position, moreTab, onPrev, onNext, onClose, onAskAi } = props;
   return (
     <section aria-label="Claims queue" className="flex h-full min-h-0 min-w-0 flex-col bg-card">
       <div className="flex h-16 shrink-0 items-center justify-between gap-4 border-b px-6">
@@ -40,14 +39,17 @@ export function ClaimsQueue(props: Props) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="icon-sm" aria-label="Ask Orvo AI about this claim" onClick={onAskAi}>
-            <Sparkles />
+          <Button variant="outline" size="sm" onClick={onAskAi}>
+            <Sparkles data-icon="inline-start" />
+            Ask Orvo AI
           </Button>
-          <Button variant="outline" size="icon-sm" aria-label="Previous claim" disabled={!onPrev} onClick={onPrev}>
-            <ArrowLeft />
+          <Button variant="outline" size="sm" disabled={!onPrev} onClick={onPrev}>
+            <ArrowLeft data-icon="inline-start" />
+            Previous
           </Button>
-          <Button variant="outline" size="icon-sm" aria-label="Next claim" disabled={!onNext} onClick={onNext}>
-            <ArrowRight />
+          <Button variant="outline" size="sm" disabled={!onNext} onClick={onNext}>
+            Next
+            <ArrowRight data-icon="inline-end" />
           </Button>
           <Button variant="ghost" size="icon-sm" aria-label="Close" onClick={onClose}>
             <X />
@@ -59,7 +61,6 @@ export function ClaimsQueue(props: Props) {
           key={claim.id}
           claim={claim}
           allClaims={allClaims}
-          spotCheckPosition={spotCheckPosition}
           onOpenMore={props.onOpenMore}
           onDecided={props.onDecided}
           onReopen={props.onReopen}

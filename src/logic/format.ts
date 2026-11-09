@@ -39,14 +39,14 @@ export const STATUS_LABEL: Record<Status, string> = {
   waiting_on_noa: "Needs review",
   waiting_on_employee: "Waiting on employee",
   waiting_on_finance: "Waiting on Finance",
-  approved_by_agent: "Approved by Orvo",
-  declined_by_agent: "Declined by Orvo",
-  approved_by_noa: "Approved by you",
-  declined_by_noa: "Declined by you",
+  approved_by_agent: "Approved automatically",
+  declined_by_agent: "Declined automatically",
+  approved_by_noa: "Approved",
+  declined_by_noa: "Declined",
 };
 
-/** "Corrected by you" when Noa reversed or changed an agent decision (PRD 6.6). */
+/** "Corrected" when the manager reversed or changed an agent decision (PRD 6.6). */
 export const claimStatusLabel = (claim: Pick<Claim, "status" | "noa">) =>
   claim.noa?.overrode_agent && (claim.status === "approved_by_noa" || claim.status === "declined_by_noa")
-    ? "Corrected by you"
+    ? "Corrected"
     : STATUS_LABEL[claim.status];

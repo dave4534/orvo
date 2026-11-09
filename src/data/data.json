@@ -169,11 +169,11 @@
     },
     "status": {
       "approved_by_agent": "Approved by agent",
-      "approved_by_noa": "Approved by Noa",
+      "approved_by_noa": "Approved",
       "declined_by_agent": "Declined by agent",
-      "declined_by_noa": "Declined by Noa",
+      "declined_by_noa": "Declined",
       "waiting_on_employee": "Waiting on employee",
-      "waiting_on_noa": "Waiting on Noa",
+      "waiting_on_noa": "Waiting for review",
       "waiting_on_finance": "Waiting on Finance"
     },
     "reason_type": {
@@ -355,7 +355,7 @@
           "at": "2026-11-09T09:13:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -502,7 +502,7 @@
           "at": "2026-11-09T10:06:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -659,7 +659,7 @@
           "at": "2026-11-09T11:21:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -806,7 +806,7 @@
           "at": "2026-11-09T15:11:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -955,7 +955,7 @@
           "at": "2026-11-10T08:41:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -1121,7 +1121,7 @@
           "at": "2026-11-10T13:49:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -1280,7 +1280,7 @@
           "at": "2026-11-10T14:06:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -1451,7 +1451,7 @@
           "at": "2026-11-10T16:31:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -1600,7 +1600,7 @@
           "at": "2026-11-10T17:03:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -1781,13 +1781,13 @@
           "at": "2026-11-10T21:37:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent sent it to Noa: $4.00 per person over the meal cap."
+          "text": "Sent for review: $4.00 per person over the meal cap."
         },
         {
           "at": "2026-11-11T14:10:00",
           "actor": "noa",
           "type": "noa_decision",
-          "text": "Noa approved. Note: Closing dinner with the Meridian team. Fine once."
+          "text": "Approved. Note: Closing dinner with the Meridian team. Fine once."
         }
       ]
     },
@@ -1936,7 +1936,7 @@
           "at": "2026-11-11T09:16:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -2085,7 +2085,7 @@
           "at": "2026-11-11T10:41:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -2234,7 +2234,7 @@
           "at": "2026-11-11T12:51:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -2306,7 +2306,7 @@
         "outcome": "escalated",
         "reason_type": "unusual_pattern",
         "headline": "Second monitor claimed in 34 days",
-        "explanation": "In policy, but Shiv claimed another monitor ($579.00) on 8 Oct. The agent can't tell whether a second one is intended.",
+        "explanation": "In policy, but Shiv claimed another monitor ($579.00) on 8 Oct. It can't be confirmed whether a second one is intended.",
         "cited_rule_ids": [],
         "facts": [
           {
@@ -2396,13 +2396,13 @@
           "at": "2026-11-11T16:24:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent sent it to Noa: a second monitor in 34 days."
+          "text": "Sent for review: a second monitor in 34 days."
         },
         {
           "at": "2026-11-12T08:55:00",
           "actor": "noa",
           "type": "noa_decision",
-          "text": "Noa declined. Note: You already have one from last month. Please use that or ask IT."
+          "text": "Declined. Note: One was already issued last month. Use that one, or raise it with IT."
         }
       ]
     },
@@ -2567,7 +2567,7 @@
           "at": "2026-11-11T18:21:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -2740,7 +2740,7 @@
           "at": "2026-11-12T21:19:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -2913,7 +2913,7 @@
           "at": "2026-11-12T22:03:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -3034,7 +3034,7 @@
             },
             {
               "sent_at": "2026-11-13T07:42:00",
-              "message": "A card statement can't replace a receipt. Bayline Taxi can email a trip receipt. Can you request one?",
+              "message": "A card statement can't replace a receipt. Bayline Taxi can email a trip receipt. Request one by email.",
               "reply": null
             }
           ]
@@ -3069,7 +3069,7 @@
           "at": "2026-11-12T22:11:00",
           "actor": "agent",
           "type": "chase_sent",
-          "text": "Agent asked Wei for a receipt (request 1 of 2)."
+          "text": "Receipt requested from Wei (request 1 of 2)."
         },
         {
           "at": "2026-11-13T07:40:00",
@@ -3081,13 +3081,13 @@
           "at": "2026-11-13T07:42:00",
           "actor": "agent",
           "type": "chase_sent",
-          "text": "Agent asked Wei to request a trip receipt from the taxi company (request 2 of 2)."
+          "text": "Trip receipt requested from the taxi company (request 2 of 2)."
         },
         {
           "at": "2026-11-14T08:01:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "No reply after 24 hours. Agent sent it to Noa."
+          "text": "No reply after 24 hours. Sent for review."
         }
       ]
     },
@@ -3183,7 +3183,7 @@
         "outcome": "escalated",
         "reason_type": "over_finance_threshold",
         "headline": "$224.53 over the $1,000.00 Finance limit",
-        "explanation": "Over $1,000.00 needs Finance after you, so Orvo can't finish it.",
+        "explanation": "Over $1,000.00 needs Finance after this decision.",
         "cited_rule_ids": [
           "finance_over_1000"
         ],
@@ -3277,7 +3277,7 @@
           "at": "2026-11-13T07:52:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent sent it to Noa: over $1,000, so Finance approves after her."
+          "text": "Sent for review: over $1,000, so Finance approves after the manager."
         }
       ]
     },
@@ -3377,7 +3377,7 @@
         "outcome": "escalated",
         "reason_type": "unusual_amount",
         "headline": "Ride is 3.6x the usual fare this week",
-        "explanation": "No policy limit applies. The 3.2x surge fits Fatima's note, but Orvo can't confirm it.",
+        "explanation": "No policy limit applies. The 3.2x surge fits Fatima's note, but it can't be confirmed.",
         "cited_rule_ids": [],
         "facts": [
           {
@@ -3465,7 +3465,7 @@
           "at": "2026-11-13T08:12:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent sent it to Noa: 3.6 times the usual airport fare."
+          "text": "Sent for review: 3.6 times the usual airport fare."
         }
       ]
     },
@@ -3618,7 +3618,7 @@
           "at": "2026-11-13T08:31:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -3771,7 +3771,7 @@
           "at": "2026-11-13T08:45:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -3928,7 +3928,7 @@
           "at": "2026-11-13T09:42:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -4120,7 +4120,7 @@
           "at": "2026-11-13T10:03:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -4316,7 +4316,7 @@
           "at": "2026-11-13T10:17:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent sent it to Noa: the claim is 7.3% above the converted receipt."
+          "text": "Sent for review: the claim is 7.3% above the converted receipt."
         }
       ]
     },
@@ -4469,7 +4469,7 @@
           "at": "2026-11-13T12:05:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -4545,7 +4545,7 @@
         "outcome": "escalated",
         "reason_type": "possible_split",
         "headline": "$1,038.00 together, over the $1,000.00 limit",
-        "explanation": "Each is under $1,000.00, and Orvo can't tell if it was split.",
+        "explanation": "Each is under $1,000.00. It can't be confirmed whether it was split.",
         "cited_rule_ids": [
           "finance_over_1000"
         ],
@@ -4641,7 +4641,7 @@
           "at": "2026-11-13T12:17:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent sent it to Noa: together with an earlier claim it is $1,038.00."
+          "text": "Sent for review: together with an earlier claim it is $1,038.00."
         }
       ]
     },
@@ -4798,7 +4798,7 @@
           "at": "2026-11-13T13:16:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -4966,7 +4966,7 @@
           "at": "2026-11-13T14:21:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -5141,7 +5141,7 @@
           "at": "2026-11-13T18:53:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -5239,7 +5239,7 @@
         "outcome": "auto_declined",
         "reason_type": "possible_duplicate",
         "headline": "Same ride was already claimed",
-        "explanation": "Ride HR-77213 was claimed by Wei Chen at 18:52 for the same $38.60. It is the same trip receipt, so the agent declined this one as a duplicate payment.",
+        "explanation": "Ride HR-77213 was claimed by Wei Chen at 18:52 for the same $38.60. It is the same trip receipt, so this one was declined as a duplicate payment.",
         "cited_rule_ids": [],
         "facts": [
           {
@@ -5315,7 +5315,7 @@
           "at": "2026-11-13T19:06:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent declined: the same ride was claimed by Wei at 18:52."
+          "text": "Declined automatically: the same ride was claimed by Wei at 18:52."
         }
       ]
     },
@@ -5355,7 +5355,7 @@
         "outcome": "chasing",
         "reason_type": "receipt_missing",
         "headline": "Waiting for a receipt",
-        "explanation": "$31.20 is over the $25 receipt limit and nothing is attached. The agent has asked twice. It passes this to Noa if there is no reply by Mon 16 Nov, 13:41.",
+        "explanation": "$31.20 is over the $25 receipt limit and nothing is attached. Two requests have been sent. It passes to review if there is no reply by Mon 16 Nov, 13:41.",
         "cited_rule_ids": [
           "receipt_required"
         ],
@@ -5403,7 +5403,7 @@
             },
             {
               "sent_at": "2026-11-15T13:41:00",
-              "message": "Reminder: this claim is still missing a receipt. If you can't find it, reply with what you have and your manager will see it.",
+              "message": "Reminder: this claim is still missing a receipt. If none can be found, reply with what is available. The reply goes to the manager.",
               "reply": null
             }
           ],
@@ -5440,13 +5440,13 @@
           "at": "2026-11-14T13:41:00",
           "actor": "agent",
           "type": "chase_sent",
-          "text": "Agent asked Fatima for a receipt (request 1 of 2)."
+          "text": "Receipt requested from Fatima (request 1 of 2)."
         },
         {
           "at": "2026-11-15T13:41:00",
           "actor": "agent",
           "type": "chase_sent",
-          "text": "Agent asked Fatima for a receipt (request 2 of 2)."
+          "text": "Receipt requested from Fatima (request 2 of 2)."
         }
       ]
     },
@@ -5619,7 +5619,7 @@
           "at": "2026-11-14T17:31:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -5795,7 +5795,7 @@
           "at": "2026-11-14T17:56:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -5894,7 +5894,7 @@
         "outcome": "auto_declined",
         "reason_type": "possible_duplicate",
         "headline": "Looks like Kwame's ride",
-        "explanation": "Same route (The Midway to Harbor Street Hotel) and the same fare ($41.20) as Kwame Mensah's ride, 9 minutes apart. The agent declined it as a likely duplicate.",
+        "explanation": "Same route (The Midway to Harbor Street Hotel) and the same fare ($41.20) as Kwame Mensah's ride, 9 minutes apart. It was declined as a likely duplicate.",
         "cited_rule_ids": [],
         "facts": [
           {
@@ -5970,7 +5970,7 @@
           "at": "2026-11-14T18:04:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent declined: looks like a duplicate of Kwame's ride."
+          "text": "Declined automatically: looks like a duplicate of Kwame's ride."
         }
       ]
     },
@@ -6127,7 +6127,7 @@
           "at": "2026-11-15T08:21:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent approved. All checks passed."
+          "text": "Approved automatically. All checks passed."
         }
       ]
     },
@@ -6225,7 +6225,7 @@
         "outcome": "escalated",
         "reason_type": "no_matching_rule",
         "headline": "Concert tickets: no policy covers this",
-        "explanation": "No rule covers entertainment, and Orvo can't confirm it was a team event.",
+        "explanation": "No rule covers entertainment, and it can't be confirmed as a team event.",
         "cited_rule_ids": [],
         "facts": [
           {
@@ -6325,7 +6325,7 @@
           "at": "2026-11-15T08:54:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent sent it to Noa: no rule covers entertainment."
+          "text": "Sent for review: no rule covers entertainment."
         }
       ]
     },
@@ -6389,7 +6389,7 @@
         "outcome": "chasing",
         "reason_type": "receipt_unreadable",
         "headline": "Waiting for a clearer receipt photo",
-        "explanation": "The photo cuts off the total, so the agent can't confirm $26.40. It asked for a clearer photo once. A second request goes out Mon 16 Nov at 08:59.",
+        "explanation": "The photo cuts off the total, so $26.40 can't be confirmed. A clearer photo was requested once. A second request goes out Mon 16 Nov at 08:59.",
         "cited_rule_ids": [
           "receipt_required"
         ],
@@ -6469,7 +6469,7 @@
           "at": "2026-11-15T08:59:00",
           "actor": "agent",
           "type": "chase_sent",
-          "text": "Agent asked Marco for a receipt (request 1 of 2)."
+          "text": "Receipt requested from Marco (request 1 of 2)."
         }
       ]
     },
@@ -6509,7 +6509,7 @@
         "outcome": "chasing",
         "reason_type": "receipt_missing",
         "headline": "Waiting for a receipt",
-        "explanation": "$64.00 is over the $25 receipt limit and nothing is attached. The agent asked once. A second request goes out Mon 16 Nov at 17:31.",
+        "explanation": "$64.00 is over the $25 receipt limit and nothing is attached. One request has been sent. A second request goes out Mon 16 Nov at 17:31.",
         "cited_rule_ids": [
           "receipt_required"
         ],
@@ -6589,7 +6589,7 @@
           "at": "2026-11-15T17:31:00",
           "actor": "agent",
           "type": "chase_sent",
-          "text": "Agent asked Dima for a receipt (request 1 of 2)."
+          "text": "Receipt requested from Dima (request 1 of 2)."
         }
       ]
     },
@@ -6705,7 +6705,7 @@
         "outcome": "escalated",
         "reason_type": "over_meal_cap",
         "headline": "Dinner is $5.00 each over the meal cap",
-        "explanation": "Over the cap, so Orvo can't approve it. Without the wine, $54.87 each.",
+        "explanation": "Over the cap, so it needs review. Without the wine, $54.87 each.",
         "cited_rule_ids": [
           "meal_cap"
         ],
@@ -6811,7 +6811,7 @@
           "at": "2026-11-15T21:42:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Agent sent it to Noa: $5.00 per person over the meal cap, uneven split."
+          "text": "Sent for review: $5.00 per person over the meal cap, uneven split."
         }
       ]
     }

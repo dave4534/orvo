@@ -84,7 +84,7 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
             </div>
           ))
         )}
-        {thinking ? <p className="text-sm text-muted-foreground">Orvo is checking the claim.</p> : null}
+        {thinking ? <p className="text-sm text-muted-foreground">Checking the claim.</p> : null}
       </div>
 
       <form
@@ -94,7 +94,7 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
           ask(draft);
         }}
       >
-        <Input aria-label="Message to Orvo AI" placeholder="Ask about this claim" value={draft} onChange={(e) => setDraft(e.target.value)} />
+        <Input aria-label="Message to Ask Orvo AI" placeholder="Ask about this claim" value={draft} onChange={(e) => setDraft(e.target.value)} />
         <Button type="submit" size="icon" aria-label="Send" disabled={!draft.trim() || thinking}>
           <Send />
         </Button>

@@ -24,7 +24,7 @@ const OPTIONS: { id: OptionId; title: string; description: string; tag: string }
   { id: "declined_valid", title: "Declined a valid claim", description: "It isn't a duplicate or a rule break", tag: "false duplicate" },
   { id: "linked", title: "Missed a linked claim", description: "Two claims belong together", tag: "missed link" },
   { id: "rate", title: "Used the wrong rate or limit", description: "Currency, category or policy cap", tag: "wrong rate or limit" },
-  { id: "other", title: "Something else", description: "Describe it, and Orvo learns from it", tag: "other" },
+  { id: "other", title: "Something else", description: "Describe it, and it is recorded", tag: "other" },
 ];
 
 const FINDING_TO_OPTION: Record<Finding, OptionId> = { amount: "amount", people: "people", declined_valid: "declined_valid" };
@@ -72,13 +72,13 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
     input =
       peopleChoice === "cap"
         ? { id: "correct", to: "approved", amount: Math.min(capAmount, claimed), feedback }
-        : { id: "correct", to: "ask", message: `The receipt shows ${covers} diners but the claim lists ${claim.attendees.count}. Could you explain the difference?`, feedback };
+        : { id: "correct", to: "ask", message: `The receipt shows ${covers} diners but the claim lists ${claim.attendees.count}. Explain the difference.`, feedback };
   } else if (option === "declined_valid") {
     input = reverseChoice === "reverse" ? { id: "correct", to: "approved", amount: claimed, feedback } : null;
   } else if (option === "linked") {
     input = { id: "to_finance_both" };
   } else if (option === "other") {
-    if (otherText.trim() === "") error = "Describe what went wrong so Orvo can record it.";
+    if (otherText.trim() === "") error = "Describe what went wrong so it can be recorded.";
     else if (otherOutcome === "approved") {
       if (Number.isNaN(typed) || typed <= 0 || typed > claimed) error = `Enter an amount between $0.01 and ${formatUsd(claimed)}.`;
       else input = { id: "correct", to: "approved", amount: typed, feedback };
@@ -104,9 +104,9 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="sm:max-w-xl" aria-label="Fix Orvo's mistake">
+      <DialogContent className="sm:max-w-xl" aria-label="Correct an automatic decision">
         <DialogHeader>
-          <DialogTitle>Fix Orvo&apos;s mistake</DialogTitle>
+          <DialogTitle>Correct an automatic decision</DialogTitle>
           <DialogDescription>
             {employeeName(claim)}, {claim.id}. Step {step} of 2
           </DialogDescription>
@@ -119,7 +119,7 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
 
         {step === 1 ? (
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1 text-sm font-semibold text-muted-foreground">Where did Orvo go wrong?</legend>
+            <legend className="mb-1 text-sm font-semibold text-muted-foreground">What went wrong?</legend>
             <RadioGroup value={option ?? ""} onValueChange={(v) => setOption(v as OptionId)} className="gap-2">
               {OPTIONS.map((o) => (
                 <Label
@@ -155,7 +155,7 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
                   <div className="text-2xl font-semibold tabular-nums">{doc.total != null ? formatUsd(doc.total) : "Unreadable"}</div>
                 </div>
                 <div className="border-l p-4">
-                  <div className="text-xs text-muted-foreground">Orvo approved</div>
+                  <div className="text-xs text-muted-foreground">Approved automatically</div>
                   <div className="text-2xl font-semibold tabular-nums">{formatUsd(claimed)}</div>
                 </div>
               </div>
@@ -245,13 +245,13 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
               </div>
             ) : null}
 
-            {preview ? <PreviewList preview={preview} title="What happens when you confirm" /> : null}
+            {preview ? <PreviewList preview={preview} title="What happens when confirmed" /> : null}
 
             {option !== "linked" ? (
               <div className="flex items-start gap-3">
                 <Checkbox id="fix-tell-orvo" checked={tellOrvo} onCheckedChange={(c) => setTellOrvo(c)} className="mt-0.5" />
                 <Label htmlFor="fix-tell-orvo" className="flex flex-col items-start gap-0.5 font-normal">
-                  <span className="font-semibold">Tell Orvo AI what went wrong</span>
+                  <span className="font-semibold">Record what went wrong</span>
                   <span className="text-xs text-muted-foreground">Recorded as &quot;{chosen?.tag}&quot; on this claim, so the pattern is on file.</span>
                 </Label>
               </div>

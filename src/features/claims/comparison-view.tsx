@@ -10,7 +10,7 @@ const DOT: Record<Half["tone"], string> = {
 };
 
 /** Same colors as the scale bar: the lower value is the green part, the higher one is the red gap. */
-const SCALE_DOT = { low: "bg-success/50", high: "bg-danger-border/70" };
+const SCALE_DOT = { low: "bg-success", high: "bg-gap" };
 
 function HalfView({ half, dot }: { half: Half; dot: string }) {
   return (
@@ -42,8 +42,8 @@ function GapScale({ scale }: { scale: NonNullable<Comparison["scale"]> }) {
   return (
     <div aria-hidden className="mx-6 mt-11">
       <div className="relative h-3.5 rounded-full bg-muted">
-        <div className="absolute inset-y-0 left-0 rounded-l-full bg-success/50" style={{ width: pct(lo) }} />
-        <div className="absolute inset-y-0 bg-danger-border/70" style={{ left: pct(lo), width: `${((hi - lo) / scale.max) * 100}%` }} />
+        <div className="absolute inset-y-0 left-0 rounded-l-full bg-success" style={{ width: pct(lo) }} />
+        <div className="absolute inset-y-0 bg-gap" style={{ left: pct(lo), width: `${((hi - lo) / scale.max) * 100}%` }} />
         <div className="absolute -inset-y-2 w-0.5 bg-foreground" style={{ left: pct(lo) }} />
         <div className="absolute -inset-y-2 w-0.5 bg-foreground" style={{ left: pct(hi) }} />
         <div className="absolute -top-7 -translate-x-1/2 text-xs font-semibold whitespace-nowrap" style={{ left: pct(lo) }}>

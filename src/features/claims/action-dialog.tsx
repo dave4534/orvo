@@ -15,17 +15,17 @@ import { employeeName } from "@/logic/comparison";
 import { PreviewList } from "./preview-list";
 
 const ASK_BY_REASON: Record<string, string> = {
-  currency_mismatch: "Could you send the card fee line, or confirm the amount from your statement?",
+  currency_mismatch: "Add the card fee line, or confirm the amount from the statement.",
   possible_split: "Were these two separate purchases? Please add the invoice details.",
   no_matching_rule: "Was this team event approved in advance? Please add who agreed to it.",
-  over_meal_cap: "Could you cover the part over the cap, or tell me more about the bill?",
-  over_finance_threshold: "Could you add why this fare was needed?",
-  unusual_amount: "Could you add more detail on why this was higher than usual?",
+  over_meal_cap: "Add the part over the cap, or give more detail about the bill.",
+  over_finance_threshold: "Add why this fare was needed.",
+  unusual_amount: "Add more detail on why this was higher than usual.",
 };
 
 function defaultMessage(spec: ActionSpec, claim: LocalClaim): string {
   if (spec.askMessage === "hold") return "Please send the receipt from the merchant, or a duplicate they can issue.";
-  if (spec.askMessage === "ask") return ASK_BY_REASON[claim.agent.reason_type] ?? "Could you add a few details about this claim?";
+  if (spec.askMessage === "ask") return ASK_BY_REASON[claim.agent.reason_type] ?? "Add a few details about this claim.";
   if (spec.askMessage === "decline") return claim.agent.headline;
   return "";
 }
@@ -104,7 +104,7 @@ export function ActionDialog({ claim, allClaims, spec, onConfirm, onCancel }: Pr
           </div>
         ) : null}
 
-        <PreviewList preview={preview} title="What happens when you confirm" />
+        <PreviewList preview={preview} title="What happens when confirmed" />
 
         <DialogFooter>
           <Button variant="outline" onClick={onCancel}>

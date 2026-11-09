@@ -13,7 +13,6 @@ type Props = {
   claim: LocalClaim | null;
   allClaims: LocalClaim[];
   position: TriagePosition | null;
-  spotCheckPosition: { index: number; total: number } | null;
   moreTab: MoreTab;
   aiOpen: boolean;
   onPrev?: () => void;
@@ -47,14 +46,13 @@ export function ClaimsWorkspace(props: Props) {
       >
         <SheetHeader className="sr-only">
           <SheetTitle>Review claim</SheetTitle>
-          <SheetDescription>The claim, its evidence and your decision options.</SheetDescription>
+          <SheetDescription>The claim, its evidence and decision options.</SheetDescription>
         </SheetHeader>
         {claim && position ? (
           <ClaimsQueue
             claim={claim}
             allClaims={props.allClaims}
             position={position}
-            spotCheckPosition={props.spotCheckPosition}
             moreTab={props.moreTab}
             onPrev={props.onPrev}
             onNext={props.onNext}

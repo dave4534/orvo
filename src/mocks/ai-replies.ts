@@ -11,10 +11,10 @@ export type AiReply = { text: string; action?: { label: string; kind: "documents
  * never call a decision a mistake, and never act on a claim from chat.
  */
 export function suggestedPrompts(claim: LocalClaim | null): string[] {
-  if (!claim) return ["What needs me today?", "What did you approve on your own?"];
+  if (!claim) return ["What needs me today?", "What was approved automatically?"];
   const base = ["Why did this reach me?", "Show the receipt"];
-  if (claim.status === "waiting_on_noa") return [...base, "What would you recommend?"];
-  return [...base, "How did you decide this?"];
+  if (claim.status === "waiting_on_noa") return [...base, "What is recommended here?"];
+  return [...base, "How was this decided?"];
 }
 
 export function replyTo(prompt: string, claim: LocalClaim | null, all: LocalClaim[]): AiReply {
@@ -25,8 +25,8 @@ export function replyTo(prompt: string, claim: LocalClaim | null, all: LocalClai
     if (/need|today|queue|waiting/.test(q)) {
       return {
         text: waiting.length
-          ? `${waiting.length} ${waiting.length === 1 ? "claim needs" : "claims need"} you. The oldest is ${waiting[0].id} from ${employeeName(waiting[0])}: ${waiting[0].agent.headline}`
-          : "Nothing needs you right now.",
+          ? `${waiting.length} ${waiting.length === 1 ? "claim needs" : "claims need"} review. The oldest is ${waiting[0].id} from ${employeeName(waiting[0])}: ${waiting[0].agent.headline}`
+          : "Nothing needs review right now.",
       };
     }
     if (/approv|own/.test(q)) {
@@ -51,11 +51,11 @@ export function replyTo(prompt: string, claim: LocalClaim | null, all: LocalClai
     };
   }
   if (/recommend|should|what would/.test(q)) {
-    if (claim.status !== "waiting_on_noa") return { text: "This claim is not waiting on you, so I have nothing to recommend." };
+    if (claim.status !== "waiting_on_noa") return { text: "This claim is not waiting for review, so there is nothing to recommend." };
     const rec = recommendationFor(claim).recommended;
     return {
       text: rec
-        ? `I would choose "${rec.label}". ${claim.agent.needs_from_noa ?? ""} It is your decision, and you can pick any of the other options.`
+        ? `I would choose "${rec.label}". ${claim.agent.needs_from_noa ?? ""} The decision is open, and any of the other options can be chosen.`
         : `I can't recommend one here. ${claim.agent.explanation}`,
     };
   }
@@ -64,7 +64,7 @@ export function replyTo(prompt: string, claim: LocalClaim | null, all: LocalClai
     return { text: `${checks}.`, action: { label: "See the checks I ran", kind: "policy" } };
   }
   if (/pay|approve|decline|send/.test(q)) {
-    return { text: `I can't change ${who}'s claim from chat in this prototype. Use the buttons in the claim panel and I will show you what each one does first.` };
+    return { text: `I can't change ${who}'s claim from chat in this prototype. Use the buttons in the claim panel. Each one shows what it does before it is applied.` };
   }
-  return { text: "I can only answer from this claim's data: why it reached you, the receipt, and the checks I ran." };
+  return { text: "I can only answer from this claim's data: why it was escalated, the receipt, and the checks I ran." };
 }

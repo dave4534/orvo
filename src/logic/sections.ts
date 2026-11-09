@@ -35,12 +35,12 @@ export function sectionsFor(tab: TabId, rows: LocalClaim[], approvedByOrvoTotal:
                   claims: spot,
                 };
               })(),
-              { id: "declined", label: "DECLINED BY ORVO", noun: "declined by Orvo", claims: where((c) => c.status === "declined_by_agent") },
-              { id: "decided", label: "DECIDED BY YOU", noun: "decided by you", claims: where((c) => c.status === "approved_by_noa" || c.status === "declined_by_noa") },
+              { id: "declined", label: "DECLINED AUTOMATICALLY", noun: "declined automatically", claims: where((c) => c.status === "declined_by_agent") },
+              { id: "decided", label: "DECIDED", noun: "decided", claims: where((c) => c.status === "approved_by_noa" || c.status === "declined_by_noa") },
               {
                 id: "approved",
                 label: "APPROVED BY ORVO",
-                noun: "approved by Orvo",
+                noun: "approved automatically",
                 claims: where((c) => c.status === "approved_by_agent" && !isSpotCheck(c)),
                 collapsible: true,
               },

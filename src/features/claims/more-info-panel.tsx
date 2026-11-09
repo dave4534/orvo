@@ -78,7 +78,7 @@ function Overview({ claim, onTab }: { claim: LocalClaim; onTab: (t: MoreTab) => 
                 <div className="font-semibold">
                   {e.text}
                   {e.actor === "agent" ? (
-                    <Badge variant="outline" className="ml-1.5 border-info-border bg-info text-info-foreground">Orvo AI</Badge>
+                    <Badge variant="outline" className="ml-1.5 border-info-border bg-info text-info-foreground">Automatic</Badge>
                   ) : null}
                 </div>
                 <div className="text-xs text-muted-foreground">{formatSubmitted(e.at)}</div>
@@ -112,9 +112,9 @@ function Documents({ claim }: { claim: LocalClaim }) {
       <section>
         <SectionLabel>Receipt</SectionLabel>
         {receipt.status === "missing" ? (
-          <p className="rounded-xl border p-4 text-sm">No receipt. {chase ? `Orvo asked ${chase.attempts.length} of ${chase.max_attempts} times.` : ""}</p>
+          <p className="rounded-xl border p-4 text-sm">No receipt. {chase ? `Requests sent: ${chase.attempts.length} of ${chase.max_attempts}.` : ""}</p>
         ) : receipt.status === "unreadable" || !doc ? (
-          <p className="rounded-xl border p-4 text-sm">The attached image can&apos;t be read, so Orvo has no totals for it.</p>
+          <p className="rounded-xl border p-4 text-sm">The attached image can&apos;t be read, so there are no totals for it.</p>
         ) : (
           <div className="rounded-xl border p-4 text-sm">
             <div className="font-semibold">{doc.merchant}</div>
@@ -143,18 +143,18 @@ function Documents({ claim }: { claim: LocalClaim }) {
       </section>
 
       <section>
-        <SectionLabel>What Orvo read</SectionLabel>
+        <SectionLabel>What was read</SectionLabel>
         {!read || !doc ? (
-          <p className="text-sm text-muted-foreground">Orvo has nothing to show because there is no readable receipt.</p>
+          <p className="text-sm text-muted-foreground">Nothing to show: there is no readable receipt.</p>
         ) : (
           (() => {
             const differing = READ_FIELDS.filter((f) => String(doc[f.key] ?? "") !== String(read[f.key] ?? ""));
             return differing.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Orvo&apos;s reading matches the receipt on every field.</p>
+              <p className="text-sm text-muted-foreground">The reading matches the receipt on every field.</p>
             ) : (
               <Table className="table-fixed">
                 <TableHeader>
-                  <TableRow><TableHead>Field</TableHead><TableHead>Receipt</TableHead><TableHead>Orvo read</TableHead></TableRow>
+                  <TableRow><TableHead>Field</TableHead><TableHead>Receipt</TableHead><TableHead>Read value</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
                   {differing.map((f) => (
@@ -209,7 +209,7 @@ function Policy({ claim }: { claim: LocalClaim }) {
   return (
     <div className="flex flex-col gap-6">
       <section>
-        <SectionLabel>Checks Orvo ran</SectionLabel>
+        <SectionLabel>Checks run</SectionLabel>
         <Table className="table-fixed">
           <TableHeader>
             <TableRow>
@@ -278,7 +278,7 @@ function PastClaims({ claim, allClaims, onOpenClaim }: { claim: LocalClaim; allC
       {related.length > 0 ? (
         <section>
           <SectionLabel>Related to this claim</SectionLabel>
-          <ul>{related.map((c) => row(c, "Linked by Orvo"))}</ul>
+          <ul>{related.map((c) => row(c, "Linked automatically"))}</ul>
         </section>
       ) : null}
       <section>
@@ -293,7 +293,7 @@ function PastClaims({ claim, allClaims, onOpenClaim }: { claim: LocalClaim; allC
 export function MoreInfoPanel({ claim, allClaims, tab, onTab, onOpenClaim }: Props) {
   return (
     <aside aria-label="More info" className="flex min-h-0 w-[30rem] max-w-full shrink-0 flex-col border-l">
-      <Tabs value={tab} onValueChange={(v) => onTab(v as MoreTab)} className="min-h-0 flex-1 gap-0">
+      <Tabs value={tab} onValueChange={(v) => onTab(v as MoreTab)} className="min-h-0 flex-1 gap-0 pt-6">
         <TabsList variant="line" className="h-11 w-full justify-start border-b px-6">
           <TabsTrigger value="overview" className="flex-none px-1 mr-5">Overview</TabsTrigger>
           <TabsTrigger value="documents" className="flex-none px-1 mr-5">Documents</TabsTrigger>

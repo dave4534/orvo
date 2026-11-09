@@ -65,7 +65,6 @@ export function ClaimsView() {
   const scopeIds = section ? section.claims.map((c) => c.id) : openClaim ? [openClaim.id] : [];
   const scopeIndex = openClaim ? Math.max(0, scopeIds.indexOf(openClaim.id)) : 0;
   const position = openClaim ? { index: scopeIndex, total: scopeIds.length, noun: section?.noun ?? "claims" } : null;
-  const spotCheckPosition = section?.id === "spot" ? { index: scopeIndex, total: scopeIds.length } : null;
 
   function changeFilters(next: ClaimFilters) {
     setFilters(next);
@@ -133,7 +132,7 @@ export function ClaimsView() {
 
   const dockOpen = aiOpen && openId === null;
 
-  // Cleared-queue summary from what Noa did this session (PRD EMP-1).
+  // Cleared-queue summary from what was decided this session (PRD EMP-1).
   const sessionClaims = claims.filter((c) => sessionIds.includes(c.id));
   const decidedCount = sessionClaims.filter((c) => c.status === "approved_by_noa" || c.status === "declined_by_noa").length;
   const financeCount = sessionClaims.filter((c) => c.status === "waiting_on_finance").length;
@@ -228,21 +227,21 @@ export function ClaimsView() {
           <Empty className="rounded-xl border bg-card py-16">
             <EmptyHeader>
               <EmptyMedia variant="icon">{sessionIds.length > 0 ? <PartyPopper /> : <Sparkles />}</EmptyMedia>
-              <EmptyTitle>{sessionIds.length > 0 ? "Queue cleared" : "Orvo handled everything"}</EmptyTitle>
+              <EmptyTitle>{sessionIds.length > 0 ? "Queue cleared" : "Nothing needs review"}</EmptyTitle>
               <EmptyDescription>
                 {sessionIds.length > 0
-                  ? `You decided ${decidedCount}, sent ${financeCount} to Finance and have ${waitingCount} waiting on employees.`
-                  : `Orvo approved ${brief.approvedByOrvo} claims on its own and nothing needs you.`}
+                  ? `Decided ${decidedCount}, sent ${financeCount} to Finance, ${waitingCount} waiting on employees.`
+                  : `${brief.approvedByOrvo} claims were approved automatically. Nothing needs review.`}
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent className="flex-row justify-center">
               {hasSpotChecks ? (
                 <Button variant="outline" onClick={() => setTab("done")}>
-                  Spot check Orvo&apos;s approvals
+                  Spot check automatic approvals
                 </Button>
               ) : (
                 <Button variant="outline" onClick={() => setTab("done")}>
-                  Look through Orvo&apos;s work
+                  Look through automatic approvals
                 </Button>
               )}
               <Button variant="outline" onClick={() => setTab("waiting")}>
@@ -280,7 +279,6 @@ export function ClaimsView() {
         claim={openClaim}
         allClaims={claims}
         position={position}
-        spotCheckPosition={spotCheckPosition}
         moreTab={moreTab}
         aiOpen={aiOpen}
         onPrev={scopeIndex > 0 ? () => step(-1) : undefined}
