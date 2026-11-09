@@ -69,7 +69,7 @@ export function ChatComposer({ busy, onSend, onStop, onVoiceChat }: Props) {
                   render={
                     <InputGroupButton
                       size="icon-sm"
-                      className={cn("rounded-full", speech.listening && "animate-pulse bg-destructive/15 text-destructive hover:bg-destructive/20")}
+                      className={cn("rounded-full text-foreground hover:text-foreground", speech.listening && "animate-pulse bg-destructive/15 text-destructive hover:bg-destructive/20 hover:text-destructive")}
                       aria-label={speech.listening ? "Stop dictating" : "Dictate"}
                       aria-pressed={speech.listening}
                       onClick={toggleMic}
@@ -83,7 +83,7 @@ export function ChatComposer({ busy, onSend, onStop, onVoiceChat }: Props) {
               <Tooltip>
                 <TooltipTrigger
                   render={
-                    <InputGroupButton size="icon-sm" className="rounded-full" aria-label="Start voice chat" onClick={onVoiceChat}>
+                    <InputGroupButton size="icon-sm" className="rounded-full text-foreground hover:text-foreground" aria-label="Start voice chat" onClick={onVoiceChat}>
                       <AudioLines />
                     </InputGroupButton>
                   }

@@ -36,10 +36,10 @@ function suggestionOf(m: AiMessage): { claimId: string; label: string } | null {
   return part?.input?.claimId && part.input.buttonLabel ? { claimId: part.input.claimId, label: part.input.buttonLabel } : null;
 }
 
-/** Small ghost button under a message that suggests an action. It runs the same action as the one in the action bar. */
+/** Small outlined button (border only, no fill) under a message that suggests an action. It runs the same action as the one in the action bar. */
 function SuggestedAction({ label, onAct }: { label: string; onAct: (label: string) => void }) {
   return (
-    <Button variant="ghost" size="sm" className="-ml-2.5 self-start text-success hover:text-success" onClick={() => onAct(label)}>
+    <Button variant="outline" size="sm" className="self-start border-success bg-transparent text-success hover:bg-success/10 hover:text-success" onClick={() => onAct(label)}>
       {label}
     </Button>
   );

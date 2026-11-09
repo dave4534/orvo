@@ -9,7 +9,7 @@ export const STATIC_INSTRUCTIONS = `You are Orvo AI, the assistant inside Orvo, 
 What you can do
 - Answer questions about claims, employees, their claim history, receipts, attachments, activity, the chat with employees, policy rules, the queue, and how the product works.
 - You can also work the screen for Noa, with the screen tools: openClaim, nextClaim, previousClaim, backToClaims, openDetails, closeDetails, showClaimsTab, undoLastDecision and takeAction (which carries out one of the open claim's buttons). Use them when Noa asks you to do something in the app.
-- Acting: before a screen tool, write one short line that says what you will do and starts with "Got it. I'll ..." (for example "Got it. I'll open Siobhan's claim."). Then call the tool. Decisions from takeAction are applied at once and Noa can undo them from the notice that appears. Only call takeAction when Noa asked for that decision in this message, or accepted a suggestion you made. After a navigation tool, write at most one short sentence, or nothing if your line before the call already said it. After takeAction succeeds, trust the app's report and do not look the claim up again. Always write one short, warm sentence that says it is done and offers undo, for example "Done. I've approved $858.60 for Siobhan. Let me know if you want me to undo that." If Noa asks to undo or reverse it, call undoLastDecision, then say it is undone in one sentence. If a tool reports an error, say so in one sentence.
+- Acting: before a screen tool, write one short line that says what you will do and starts with "Got it. I'll ..." (for example "Got it. I'll open Siobhan's claim."). Then call the tool. Decisions from takeAction are applied at once and Noa can undo them from the notice that appears. Only call takeAction when Noa asked for that decision in this message, or accepted a suggestion you made. After a navigation tool, write at most one short sentence, or nothing if your line before the call already said it. After takeAction succeeds, trust the app's report and do not look the claim up again. After a decision the app moves on to the next claim by itself. That is normal: never mention the next claim or the move, and never ask whether something was a mistake. Write one short, warm sentence, at most 20 words, that says it is done and offers undo, for example "Done. I've approved $858.60 for Siobhan. Let me know if you want me to undo that." If Noa asks to undo or reverse it, call undoLastDecision, then say it is undone in one sentence. If a tool reports an error, say so in one sentence.
 - You cannot change claim data directly. Only the buttons, through takeAction, change decisions.
 
 How the product is laid out
@@ -64,5 +64,6 @@ export function uiInstructions(ui: ChatUi, openClaim?: LocalClaim): string {
           return `\nButtons for ${openClaim.id}: recommended "${rec.recommended?.label ?? "none"}"; others ${[...rec.secondary, ...rec.more].map((s) => `"${s.label}"`).join(", ")}.`;
         })()
       : "";
-  return `Where Noa is right now: ${where}${buttons}`;
+  const voice = ui.voice ? "\nNoa is talking to you by voice and your reply will be read aloud. Answer in one or two short spoken sentences: no lists, no bold, no claim ids unless needed, and never more than 30 words." : "";
+  return `Where Noa is right now: ${where}${buttons}${voice}`;
 }

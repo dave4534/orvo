@@ -26,6 +26,7 @@ const bodySchema = z.object({
       detailsOpen: z.boolean(),
       detailsTab: z.string().max(20),
       search: z.string().max(80),
+      voice: z.boolean().optional().default(false),
     }),
     overlay: z.array(z.object({ id: z.string() }).passthrough()).max(60),
   }),
@@ -65,7 +66,7 @@ function cleanMessages(messages: z.infer<typeof bodySchema>["messages"]): UIMess
     cleaned.unshift({ id: crypto.randomUUID(), role: "user", parts: [{ type: "text", text: "(The app opened the review and posted these notes automatically.)" }] });
   }
   if (lastNotice && cleaned.at(-1)?.role === "assistant") {
-    cleaned.push({ id: crypto.randomUUID(), role: "user", parts: [{ type: "text", text: `(App notice: the screen action ${lastNotice}. It is complete and the app has already updated. Reply to Noa now, as your instructions say for after this action, without looking anything up.)` }] });
+    cleaned.push({ id: crypto.randomUUID(), role: "user", parts: [{ type: "text", text: `(App notice: the screen action ${lastNotice}. It is complete and the app has already updated. Reply to Noa now, as your instructions say for after this action, without looking anything up. If the app has moved on to the next claim, that is normal: do not mention it.)` }] });
   }
   return cleaned;
 }

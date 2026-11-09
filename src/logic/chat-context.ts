@@ -8,6 +8,8 @@ export type ChatUi = {
   detailsOpen: boolean;
   detailsTab: string;
   search: string;
+  /** Noa is talking to the assistant, so replies will be read aloud. */
+  voice: boolean;
 };
 
 /** The parts of a claim the user can change during a session. The rest comes from the dataset. */

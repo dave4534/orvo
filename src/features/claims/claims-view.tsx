@@ -45,7 +45,7 @@ const tabOfStatus = (status: Status): TabId =>
 
 export function ClaimsView() {
   const { claims, sessionIds, simulateError, setSimulateError, reset, undoLast } = useClaims();
-  const { aiOpen, setAiOpen, setAiSession, addAiMessage, hasAiMessages, resetAi, setChatContext, setUiToolHandler, runAction } = useWorkspace();
+  const { aiOpen, setAiOpen, setAiSession, addAiMessage, hasAiMessages, resetAi, setChatContext, setUiToolHandler, runAction, voiceOpen } = useWorkspace();
 
   const [tab, setTab] = useState<TabId>("needs_review");
   const [filters, setFilters] = useState<ClaimFilters>(DEFAULT_FILTERS);
@@ -59,7 +59,7 @@ export function ClaimsView() {
 
   // Tells the AI chat where the user is and what changed this session, each time a question is sent.
   useEffect(() => {
-    setChatContext(() => buildChatContext(claims, { tab, openClaimId: openId, detailsOpen: openId !== null && detailsOpen, detailsTab: moreTab, search: filters.query }));
+    setChatContext(() => buildChatContext(claims, { tab, openClaimId: openId, detailsOpen: openId !== null && detailsOpen, detailsTab: moreTab, search: filters.query, voice: voiceOpen }));
     return () => setChatContext(null);
   });
 

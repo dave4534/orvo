@@ -64,7 +64,7 @@ type WorkspaceStore = {
 
 const Context = createContext<WorkspaceStore | null>(null);
 
-const EMPTY_CONTEXT: ChatContext = { ui: { tab: "needs_review", openClaimId: null, detailsOpen: false, detailsTab: "overview", search: "" }, overlay: [] };
+const EMPTY_CONTEXT: ChatContext = { ui: { tab: "needs_review", openClaimId: null, detailsOpen: false, detailsTab: "overview", search: "", voice: false }, overlay: [] };
 
 // Module level, so the chat transport and the chats do not depend on rendering.
 const chatContextSource: { read: (() => ChatContext) | null } = { read: null };
