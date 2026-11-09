@@ -14,6 +14,7 @@ export const UI_TOOL_NAMES = [
   "closeDetails",
   "showClaimsTab",
   "takeAction",
+  "undoLastDecision",
 ] as const;
 
 export const CLAIM_TABS = ["needs_review", "waiting", "done", "all"] as const;
@@ -28,6 +29,10 @@ export function buildUiTools(openClaim: LocalClaim | undefined, claims: LocalCla
   const labels = openClaim && openClaim.status === "waiting_on_noa" ? allActionsFor(openClaim).filter((s) => !s.askAmount && (!s.askMessage || s.askMessage === "decline")).map((s) => s.label) : [];
 
   const tools: ToolSet = {
+    undoLastDecision: tool({
+      description: "Undo the most recent decision, the same as the Undo button. Use when Noa asks to undo or reverse what was just done.",
+      inputSchema: z.object({}),
+    }),
     openClaim: tool({
       description: "Open a claim for review. Use the claim id, such as C-1019.",
       inputSchema: z.object({ claimId: z.enum(ids) }),

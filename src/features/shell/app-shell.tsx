@@ -5,6 +5,8 @@ import { Sparkles } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 import { useWorkspace } from "@/store/workspace-store";
@@ -18,10 +20,23 @@ function TopBar() {
         Orvo
       </div>
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="lg" aria-pressed={aiOpen} onClick={() => setAiOpen(!aiOpen)}>
-          <Sparkles data-icon="inline-start" />
-          Ask Orvo AI
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="outline"
+                size="icon-lg"
+                aria-label="Ask Orvo AI"
+                aria-pressed={aiOpen}
+                className={cn(aiOpen && "border-primary bg-info text-primary hover:bg-info hover:text-primary")}
+                onClick={() => setAiOpen(!aiOpen)}
+              >
+                <Sparkles />
+              </Button>
+            }
+          />
+          <TooltipContent>Ask Orvo AI</TooltipContent>
+        </Tooltip>
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">Noa Levi</span>
           <Avatar>

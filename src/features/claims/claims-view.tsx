@@ -44,7 +44,7 @@ const tabOfStatus = (status: Status): TabId =>
   TABS.find((t) => t.statuses?.includes(status))?.id ?? "all";
 
 export function ClaimsView() {
-  const { claims, sessionIds, simulateError, setSimulateError, reset } = useClaims();
+  const { claims, sessionIds, simulateError, setSimulateError, reset, undoLast } = useClaims();
   const { aiOpen, setAiOpen, setAiSession, addAiMessage, hasAiMessages, resetAi, setChatContext, setUiToolHandler, runAction } = useWorkspace();
 
   const [tab, setTab] = useState<TabId>("needs_review");
@@ -96,6 +96,10 @@ export function ClaimsView() {
         case "closeDetails":
           setDetailsOpen(false);
           return { ok: true };
+        case "undoLastDecision": {
+          const id = undoLast(onReopen);
+          return id ? { ok: true, undone: id } : { ok: false, error: "There is nothing to undo." };
+        }
         case "takeAction": {
           if (openClaim?.status !== "waiting_on_noa") return { ok: false, error: "This claim is not waiting for review." };
           const done = runAction(String(input.buttonLabel ?? ""));

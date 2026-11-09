@@ -7,7 +7,7 @@ import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls, type
 import type { ChatContext } from "@/logic/chat-context";
 
 /** Screen tools the browser runs. Must match src/server/ui-tools.ts. */
-const UI_TOOLS = new Set(["openClaim", "nextClaim", "previousClaim", "backToClaims", "openDetails", "closeDetails", "showClaimsTab", "takeAction"]);
+const UI_TOOLS = new Set(["openClaim", "nextClaim", "previousClaim", "backToClaims", "openDetails", "closeDetails", "showClaimsTab", "takeAction", "undoLastDecision"]);
 
 export type AiMeta = {
   /** Posted by the app itself (claim summary and recommendation, offline reply), not by the model. */

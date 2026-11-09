@@ -33,20 +33,39 @@ const bodySchema = z.object({
 
 const json = (body: unknown, status: number, headers?: Record<string, string>) => Response.json(body, { status, headers });
 
-/** Keeps only plain text from earlier turns, so the model looks facts up again and nothing forged can pass as a tool result. */
+const UI_TOOLS = ["openClaim", "nextClaim", "previousClaim", "backToClaims", "openDetails", "closeDetails", "showClaimsTab", "takeAction", "undoLastDecision"];
+
+/**
+ * Keeps the text of earlier turns. Lookups are left out (the model asks again if it needs them). Finished screen actions are kept
+ * as a short bracketed note in the assistant's message, so the model knows they happened. The original tool call is not passed on,
+ * because the screen may have changed since (a decision moves on to the next claim) and it could no longer be checked against the
+ * buttons of the claim that is open now. If the last thing that happened was a screen action, a notice from the app asks the model
+ * to reply, since otherwise the conversation would end on the assistant's own message.
+ */
 function cleanMessages(messages: z.infer<typeof bodySchema>["messages"]): UIMessage[] {
   const cleaned: UIMessage[] = [];
+  let lastNotice: string | null = null;
   for (const m of messages.slice(-MAX_MESSAGES)) {
-    const text = m.parts
-      .filter((p): p is { type: "text"; text: string } => p.type === "text" && typeof (p as { text?: unknown }).text === "string")
-      .map((p) => p.text.slice(0, MAX_TEXT_CHARS))
-      .join("\n\n")
-      .trim();
-    if (text) cleaned.push({ id: m.id ?? crypto.randomUUID(), role: m.role, parts: [{ type: "text", text }] });
+    const texts: string[] = [];
+    const notices: string[] = [];
+    for (const p of m.parts) {
+      if (p.type === "text" && typeof (p as { text?: unknown }).text === "string") {
+        texts.push(((p as unknown as { text: string }).text).slice(0, MAX_TEXT_CHARS));
+      } else if (p.type.startsWith("tool-") && UI_TOOLS.includes(p.type.slice(5)) && (p as { state?: unknown }).state === "output-available") {
+        const q = p as { input?: unknown; output?: unknown };
+        notices.push(`${p.type.slice(5)} ${JSON.stringify(q.input ?? {})} finished: ${JSON.stringify(q.output ?? {})}`.slice(0, 400));
+      }
+    }
+    const body = [texts.join("\n\n").trim(), ...notices.map((n) => `[Done on screen: ${n}]`)].filter(Boolean).join("\n\n");
+    if (body) cleaned.push({ id: m.id ?? crypto.randomUUID(), role: m.role, parts: [{ type: "text", text: body }] });
+    lastNotice = m.role === "assistant" && notices.length > 0 ? notices[notices.length - 1] : null;
   }
   // The conversation has to start with the user. Notes the app posted on its own come first, so say so.
   if (cleaned[0]?.role === "assistant") {
     cleaned.unshift({ id: crypto.randomUUID(), role: "user", parts: [{ type: "text", text: "(The app opened the review and posted these notes automatically.)" }] });
+  }
+  if (lastNotice && cleaned.at(-1)?.role === "assistant") {
+    cleaned.push({ id: crypto.randomUUID(), role: "user", parts: [{ type: "text", text: `(App notice: the screen action ${lastNotice}. It is complete and the app has already updated. Reply to Noa now, as your instructions say for after this action, without looking anything up.)` }] });
   }
   return cleaned;
 }

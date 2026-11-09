@@ -43,7 +43,7 @@ export function ChatComposer({ busy, onSend, onStop, onVoiceChat }: Props) {
 
   return (
     <div className="shrink-0 px-4 pt-2 pb-3">
-      <InputGroup className="rounded-2xl bg-card shadow-sm">
+      <InputGroup className="rounded-2xl bg-card shadow-sm has-disabled:bg-card has-disabled:opacity-100 dark:has-disabled:bg-card">
         <InputGroupTextarea
           aria-label="Message to Ask Orvo AI"
           placeholder={speech.listening ? "Listening" : "Ask about claims, history or policy"}

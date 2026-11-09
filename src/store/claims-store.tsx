@@ -28,6 +28,8 @@ type ClaimsStore = {
   simulateError: boolean;
   setSimulateError: (on: boolean) => void;
   perform: (claimId: string, input: ActionInput, options?: PerformOptions) => PerformResult;
+  /** Undoes the most recent decision, the same as the Undo button in the notice. Returns the claim id, or null if there is nothing to undo. */
+  undoLast: (onUndo?: (claimId: string) => void) => string | null;
   /** Adds a message from the manager to the claim chat. Local only. */
   sendMessage: (claimId: string, text: string) => void;
   reset: () => void;
@@ -91,6 +93,16 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const undoLast = useCallback(
+    (onUndo?: (claimId: string) => void) => {
+      const entry = undoStack.current[undoStack.current.length - 1];
+      if (!entry) return null;
+      undo(entry.id, onUndo);
+      return entry.claimId;
+    },
+    [undo],
+  );
+
   const reset = useCallback(() => {
     setClaims(initialClaims());
     setSessionIds([]);
@@ -100,8 +112,8 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<ClaimsStore>(
-    () => ({ claims, sessionIds, simulateError, setSimulateError, perform, sendMessage, reset }),
-    [claims, sessionIds, simulateError, perform, sendMessage, reset],
+    () => ({ claims, sessionIds, simulateError, setSimulateError, perform, undoLast, sendMessage, reset }),
+    [claims, sessionIds, simulateError, perform, undoLast, sendMessage, reset],
   );
 
   return <Context.Provider value={value}>{children}</Context.Provider>;
