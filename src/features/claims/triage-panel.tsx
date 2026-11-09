@@ -234,7 +234,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
               ) : null}
             </div>
 
-            <div className={cn("border-t", !flat && "mt-6")}>
+            <div>
               <ComparisonView comparison={comparison} />
             </div>
 
