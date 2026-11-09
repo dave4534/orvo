@@ -8,6 +8,7 @@ import type { Status } from "@/data/types";
 import { applyAction, isoLocal, type ActionInput } from "@/logic/actions";
 import { initialClaims, type LocalClaim } from "@/logic/local";
 import { track } from "@/logic/track";
+import { UNDO_MS, UndoToast } from "@/components/undo-toast";
 
 type UndoEntry = { id: number; previous: LocalClaim[]; claimId: string };
 
@@ -73,10 +74,7 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
       track("decision_made", { claim: claimId, action: input.id, amount: input.amount });
 
       if (!options?.silent) {
-        toast(result.summary, {
-          duration: 10_000,
-          action: { label: "Undo", onClick: () => undo(entry.id, options?.onUndo) },
-        });
+        toast.custom((id) => <UndoToast id={id} message={result.summary} onUndo={() => undo(entry.id, options?.onUndo)} />, { duration: UNDO_MS });
       }
       return { ok: true, summary: result.summary, changedIds: result.changed.map((c) => c.id), status: result.changed[0].status };
     },

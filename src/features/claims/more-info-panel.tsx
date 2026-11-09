@@ -62,19 +62,34 @@ const READ_FIELDS: { key: keyof ReceiptRead; label: string; format: (v: unknown)
 ];
 
 /** One document listed under the transaction. The icon on the left can be a warning when the document is missing. */
-function DocumentRow({ icon, label, sub, onView }: { icon: React.ReactNode; label: string; sub?: string; onView?: () => void }) {
+function DocumentRow({
+  icon,
+  label,
+  sub,
+  onView,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  sub?: string;
+  onView?: () => void;
+  children?: React.ReactNode;
+}) {
   return (
-    <li className="flex items-center gap-3 p-3">
-      {icon}
-      <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-semibold">{label}</div>
-        {sub ? <div className="truncate text-xs text-muted-foreground">{sub}</div> : null}
+    <li className="p-3">
+      <div className="flex items-center gap-3">
+        {icon}
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold">{label}</div>
+          {sub ? <div className="truncate text-xs text-muted-foreground">{sub}</div> : null}
+        </div>
+        {onView ? (
+          <Button variant="outline" size="sm" onClick={onView}>
+            View
+          </Button>
+        ) : null}
       </div>
-      {onView ? (
-        <Button variant="outline" size="sm" onClick={onView}>
-          View
-        </Button>
-      ) : null}
+      {children ? <div className="mt-3">{children}</div> : null}
     </li>
   );
 }
@@ -160,7 +175,15 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
               label="Receipt"
               sub={hasReceipt ? undefined : receipt.status === "unreadable" ? "Can't be read" : "Missing"}
               onView={hasReceipt ? () => onView({ kind: "receipt" }) : undefined}
-            />
+            >
+              {!hasReceipt ? (
+                <Alert className="border-info-border bg-info text-info-foreground">
+                  <Info />
+                  <AlertTitle>{receipt.status === "unreadable" ? "Receipt can't be read" : "Receipt missing"}</AlertTitle>
+                  <AlertDescription className="text-info-foreground/90">{missingText}</AlertDescription>
+                </Alert>
+              ) : null}
+            </DocumentRow>
             {receipt.attachments.map((a) => (
               <DocumentRow
                 key={a.label}
@@ -175,16 +198,6 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
               />
             ))}
           </ul>
-
-          {!hasReceipt ? (
-            <div className="p-3">
-              <Alert className="border-info-border bg-info text-info-foreground">
-                <Info />
-                <AlertTitle>{receipt.status === "unreadable" ? "Receipt can't be read" : "Receipt missing"}</AlertTitle>
-                <AlertDescription className="text-info-foreground/90">{missingText}</AlertDescription>
-              </Alert>
-            </div>
-          ) : null}
         </div>
 
         <dl className="mt-3 flex flex-col gap-1.5 text-sm">

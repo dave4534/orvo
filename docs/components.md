@@ -19,6 +19,7 @@ Every component in `src/components` is listed here. Update this file every time 
 | sidebar | shadcn (stock, base-nova) | 2026-11-09 |
 | skeleton | shadcn (pulled in by sidebar) | 2026-11-09 |
 | sonner | shadcn (stock, base-nova) | 2026-11-09 |
+| undo-toast | Composition of sonner (toast.custom) and button (stock), drains the Undo button over 10 s | 2026-11-10 |
 | table | shadcn (stock, base-nova) | 2026-11-09 |
 | tabs | shadcn (stock, base-nova) | 2026-11-09 |
 | tooltip | shadcn (stock, base-nova) | 2026-11-09 |
