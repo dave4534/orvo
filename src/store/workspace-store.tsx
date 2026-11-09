@@ -9,6 +9,9 @@ import type { ChatContext } from "@/logic/chat-context";
 export type AiMeta = {
   /** Posted by the app itself (claim summary, recommendation, offline reply), not by the model. */
   note?: boolean;
+  /** For a recommendation note: the claim it is about and the button it suggests. */
+  claimId?: string;
+  suggest?: string;
   /** Small label above the message, naming the claim the summary is about. */
   heading?: string;
   action?: { label: string; kind: "overview" | "policy" };
@@ -31,9 +34,9 @@ type WorkspaceStore = {
   /** Adds a message without calling the model, for example the summary posted when a claim opens. */
   addAiMessage: (message: NewMessage) => void;
   resetAi: () => void;
-  /** The triage panel registers its recommended action so the AI chat can run it. */
-  setPrimaryAction: (run: (() => void) | null) => void;
-  runPrimaryAction: () => void;
+  /** The triage panel registers how to run its actions, so a button in the chat can run one by its label. */
+  setActionRunner: (run: ((label: string) => void) | null) => void;
+  runAction: (label: string) => void;
   /** The claims view tells the chat where the user is and what changed this session. */
   setChatContext: (read: (() => ChatContext) | null) => void;
   /** Called with the question when the live model can't answer, so scripted replies can step in. */
@@ -52,7 +55,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [aiOpen, setAiOpen] = useState(false);
   const fallbackRef = useRef<((prompt: string) => void) | null>(null);
   const lastPrompt = useRef("");
-  const primary = useRef<(() => void) | null>(null);
+  const runner = useRef<((label: string) => void) | null>(null);
 
   const transport = useMemo(
     () => new DefaultChatTransport<AiMessage>({ api: "/api/chat", body: () => ({ context: chatContextSource.read?.() ?? EMPTY_CONTEXT }) }),
@@ -74,8 +77,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     [sendMessage],
   );
   const addAiMessage = useCallback(
-    ({ role, text, heading, action }: NewMessage) =>
-      setMessages((list) => [...list, { id: crypto.randomUUID(), role, parts: [{ type: "text", text }], metadata: { note: true, heading, action } }]),
+    ({ role, text, heading, action, claimId, suggest }: NewMessage) =>
+      setMessages((list) => [...list, { id: crypto.randomUUID(), role, parts: [{ type: "text", text }], metadata: { note: true, heading, action, claimId, suggest } }]),
     [setMessages],
   );
   const resetAi = useCallback(() => {
@@ -84,10 +87,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [stop, setMessages]);
   const stopAi = useCallback(() => void stop(), [stop]);
   const regenerateAi = useCallback(() => void regenerate(), [regenerate]);
-  const setPrimaryAction = useCallback((run: (() => void) | null) => {
-    primary.current = run;
+  const setActionRunner = useCallback((run: ((label: string) => void) | null) => {
+    runner.current = run;
   }, []);
-  const runPrimaryAction = useCallback(() => primary.current?.(), []);
+  const runAction = useCallback((label: string) => runner.current?.(label), []);
   const setChatContext = useCallback((read: (() => ChatContext) | null) => {
     chatContextSource.read = read;
   }, []);
@@ -96,8 +99,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ aiOpen, setAiOpen, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, addAiMessage, resetAi, setPrimaryAction, runPrimaryAction, setChatContext, setAiFallback }),
-    [aiOpen, messages, status, askAi, stopAi, regenerateAi, addAiMessage, resetAi, setPrimaryAction, runPrimaryAction, setChatContext, setAiFallback],
+    () => ({ aiOpen, setAiOpen, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, addAiMessage, resetAi, setActionRunner, runAction, setChatContext, setAiFallback }),
+    [aiOpen, messages, status, askAi, stopAi, regenerateAi, addAiMessage, resetAi, setActionRunner, runAction, setChatContext, setAiFallback],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

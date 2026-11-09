@@ -22,7 +22,7 @@ import { actionPreview, firstName, type ActionId, type ActionInput } from "@/log
 import { buildComparison, employeeName } from "@/logic/comparison";
 import { claimStatusLabel, formatUsd, initials } from "@/logic/format";
 import { isAgentDecided, isSpotCheck, type LocalClaim } from "@/logic/local";
-import { moreOptionsFor, recommendationFor, type ActionSpec } from "@/logic/recommendations";
+import { allActionsFor, moreOptionsFor, recommendationFor, type ActionSpec } from "@/logic/recommendations";
 import { track } from "@/logic/track";
 import { cn } from "@/lib/utils";
 import { useClaims } from "@/store/claims-store";
@@ -47,7 +47,7 @@ type Props = {
   padded?: boolean;
   /** No card surface and an editable decision: the past claim modal. The status bar becomes a dropdown and Save replaces "Edit decision". */
   flat?: boolean;
-  /** Registers the recommended action so the AI chat can run it. */
+  /** Registers the actions so a button in the AI chat can run one. */
   primary?: boolean;
   onDecided: (claimId: string, status: Status, action: ActionId) => void;
   onReopen: (claimId: string) => void;
@@ -85,7 +85,7 @@ function retarget(spec: ActionSpec, claim: LocalClaim): ActionSpec {
 /** Triage column of the claims queue: the claim, its comparison and the decision actions (actions stay pinned at the bottom). */
 export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMore, padded = true, flat = false, primary = true, onDecided, onReopen }: Props) {
   const { perform } = useClaims();
-  const { setPrimaryAction } = useWorkspace();
+  const { setActionRunner } = useWorkspace();
   const [pending, setPending] = useState<ActionSpec | null>(null);
   const [fixOpen, setFixOpen] = useState(false);
   const [error, setError] = useState<ActionInput | null>(null);
@@ -123,9 +123,15 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
 
   useEffect(() => {
     if (!primary) return;
-    const recommended = rec?.recommended;
-    setPrimaryAction(recommended ? () => choose(recommended) : null);
-    return () => setPrimaryAction(null);
+    setActionRunner(
+      needsReview
+        ? (label) => {
+            const spec = allActionsFor(claim).find((s) => s.label === label);
+            if (spec) choose(spec);
+          }
+        : null,
+    );
+    return () => setActionRunner(null);
   });
 
   // Menu: decision actions not already shown as buttons, then actions about Orvo's work.

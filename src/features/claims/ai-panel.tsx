@@ -7,18 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { LocalClaim } from "@/logic/local";
 import { track } from "@/logic/track";
+import { allActionsFor } from "@/logic/recommendations";
 import { replyTo, suggestedPrompts } from "@/mocks/ai-replies";
 import { useWorkspace, type AiMessage } from "@/store/workspace-store";
 import { ChatComposer } from "./chat-composer";
 import { ChatMarkdown } from "./chat-markdown";
+import { VoiceChat } from "./voice-chat";
 import { isStepDone, stepLabel, ToolSteps, WorkingIndicator, type StepPart } from "./chat-steps";
 import type { MoreTab } from "./panel-types";
 
 type Props = {
   claim: LocalClaim | null;
-  /** Label of the recommended action for the open claim. Shown as a primary button after the latest message. */
-  primaryLabel?: string | null;
-  onPrimary?: () => void;
   allClaims: LocalClaim[];
   onClose: () => void;
   onOpenMore: (tab: MoreTab) => void;
@@ -29,7 +28,22 @@ const textOf = (m: AiMessage) =>
     .filter((p) => p.type === "text")
     .map((p) => (p as { text: string }).text)
     .join("\n\n");
-const stepsOf = (m: AiMessage) => m.parts.filter((p) => p.type.startsWith("tool-")) as StepPart[];
+const stepsOf = (m: AiMessage) => m.parts.filter((p) => p.type.startsWith("tool-") && p.type !== "tool-suggestAction") as StepPart[];
+
+/** The action the model suggested in this message, if any. */
+function suggestionOf(m: AiMessage): { claimId: string; label: string } | null {
+  const part = m.parts.find((p) => p.type === "tool-suggestAction") as { input?: { claimId?: string; buttonLabel?: string } } | undefined;
+  return part?.input?.claimId && part.input.buttonLabel ? { claimId: part.input.claimId, label: part.input.buttonLabel } : null;
+}
+
+/** Small green button under a message that suggests an action. It runs the same action as the one in the action bar. */
+function SuggestedAction({ label, onAct }: { label: string; onAct: (label: string) => void }) {
+  return (
+    <Button size="sm" className="self-start bg-success text-success-foreground hover:bg-success/90" onClick={() => onAct(label)}>
+      {label}
+    </Button>
+  );
+}
 
 function IconAction({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
   return (
@@ -54,7 +68,7 @@ function workingLabel(last: AiMessage | undefined): string {
   return textOf(last) ? "Writing" : "Thinking";
 }
 
-function Message({ m, isLast, busy, onOpenMore, onRetry }: { m: AiMessage; isLast: boolean; busy: boolean; onOpenMore: (tab: MoreTab) => void; onRetry: () => void }) {
+function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry }: { m: AiMessage; isLast: boolean; busy: boolean; canAct: (claimId: string, label: string) => boolean; onAct: (label: string) => void; onOpenMore: (tab: MoreTab) => void; onRetry: () => void }) {
   const [copied, setCopied] = useState(false);
   const text = textOf(m);
   const steps = stepsOf(m);
@@ -71,6 +85,11 @@ function Message({ m, isLast, busy, onOpenMore, onRetry }: { m: AiMessage; isLas
       <div className={`${enter} rounded-xl border border-info-border bg-info px-3.5 py-2.5 text-sm text-info-foreground`}>
         {m.metadata.heading ? <div className="mb-1 text-xs font-semibold opacity-70">{m.metadata.heading}</div> : null}
         <div className="whitespace-pre-wrap">{text}</div>
+        {m.metadata.suggest && m.metadata.claimId && canAct(m.metadata.claimId, m.metadata.suggest) ? (
+          <div className="mt-2 flex">
+            <SuggestedAction label={m.metadata.suggest} onAct={onAct} />
+          </div>
+        ) : null}
         {action ? (
           <Button variant="outline" size="sm" className="mt-2 bg-card text-foreground" onClick={() => onOpenMore(action.kind)}>
             {action.label}
@@ -80,13 +99,15 @@ function Message({ m, isLast, busy, onOpenMore, onRetry }: { m: AiMessage; isLas
     );
   }
 
-  if (!text && steps.length === 0) return null;
+  const suggestion = suggestionOf(m);
+  if (!text && steps.length === 0 && !suggestion) return null;
   const stepsRunning = isLast && busy && steps.some((s) => !isStepDone(s));
   const finished = !(isLast && busy);
   return (
     <div className={`${enter} flex flex-col gap-2 text-sm leading-relaxed`}>
       {steps.length > 0 ? <ToolSteps steps={steps} running={stepsRunning} /> : null}
       {text ? <ChatMarkdown>{text}</ChatMarkdown> : null}
+      {suggestion && finished && canAct(suggestion.claimId, suggestion.label) ? <SuggestedAction label={suggestion.label} onAct={onAct} /> : null}
       {text && finished ? (
         <div className="-ml-1.5 flex items-center gap-0.5 text-muted-foreground">
           <IconAction
@@ -110,12 +131,18 @@ function Message({ m, isLast, busy, onOpenMore, onRetry }: { m: AiMessage; isLas
   );
 }
 
-export function AiPanel({ claim, allClaims, primaryLabel, onPrimary, onClose, onOpenMore }: Props) {
-  const { aiMessages, aiStatus, askAi, stopAi, regenerateAi, resetAi, addAiMessage, setAiFallback } = useWorkspace();
+export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
+  const { aiMessages, aiStatus, askAi, stopAi, regenerateAi, resetAi, addAiMessage, setAiFallback, runAction } = useWorkspace();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
+  const [voice, setVoice] = useState(false);
   const busy = aiStatus === "submitted" || aiStatus === "streaming";
   const last = aiMessages[aiMessages.length - 1];
+  const lastReply = last && last.role === "assistant" && !last.metadata?.note ? textOf(last) : null;
+
+  // A suggested action only shows while that claim is open and still waiting for review.
+  const availableLabels = claim && claim.status === "waiting_on_noa" ? allActionsFor(claim).map((s) => s.label) : [];
+  const canAct = (claimId: string, label: string) => claim?.id === claimId && availableLabels.includes(label);
 
   // If the live model can't answer (no connection, limit reached), a scripted reply from the claim's data steps in.
   useEffect(() => {
@@ -130,7 +157,7 @@ export function AiPanel({ claim, allClaims, primaryLabel, onPrimary, onClose, on
   useEffect(() => {
     const el = scrollRef.current;
     if (el && atBottom) el.scrollTop = el.scrollHeight;
-  }, [aiMessages, aiStatus, primaryLabel, atBottom]);
+  }, [aiMessages, aiStatus, atBottom]);
 
   function send(text: string) {
     track("ai_prompt_sent", { claim: claim?.id ?? null });
@@ -139,7 +166,7 @@ export function AiPanel({ claim, allClaims, primaryLabel, onPrimary, onClose, on
   }
 
   return (
-    <aside aria-label="Ask Orvo AI" className="flex h-full min-h-0 w-full flex-col bg-card">
+    <aside aria-label="Ask Orvo AI" className="relative flex h-full min-h-0 w-full flex-col bg-card">
       <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
         <h2 className="flex items-center gap-2 text-base font-semibold">
           <Sparkles aria-hidden className="size-4 text-primary" />
@@ -184,14 +211,9 @@ export function AiPanel({ claim, allClaims, primaryLabel, onPrimary, onClose, on
               </div>
             </div>
           ) : (
-            aiMessages.map((m) => <Message key={m.id} m={m} isLast={m === last} busy={busy} onOpenMore={onOpenMore} onRetry={regenerateAi} />)
+            aiMessages.map((m) => <Message key={m.id} m={m} isLast={m === last} busy={busy} canAct={canAct} onAct={runAction} onOpenMore={onOpenMore} onRetry={regenerateAi} />)
           )}
           {busy ? <WorkingIndicator label={workingLabel(last)} /> : null}
-          {primaryLabel && onPrimary && !busy ? (
-            <Button size="lg" className="h-11 w-full bg-success text-success-foreground hover:bg-success/90" onClick={onPrimary}>
-              {primaryLabel}
-            </Button>
-          ) : null}
         </div>
         {!atBottom && aiMessages.length > 0 ? (
           <Button
@@ -206,7 +228,8 @@ export function AiPanel({ claim, allClaims, primaryLabel, onPrimary, onClose, on
         ) : null}
       </div>
 
-      <ChatComposer busy={busy} onSend={send} onStop={stopAi} />
+      <ChatComposer busy={busy} onSend={send} onStop={stopAi} onVoiceChat={() => setVoice(true)} />
+      {voice ? <VoiceChat busy={busy} reply={lastReply} onAsk={send} onStopAnswer={stopAi} onEnd={() => setVoice(false)} /> : null}
     </aside>
   );
 }

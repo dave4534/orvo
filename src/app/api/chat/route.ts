@@ -7,7 +7,7 @@ import { mergeOverlay, type ClaimOverlay } from "@/logic/chat-context";
 import type { LocalClaim } from "@/logic/local";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { STATIC_INSTRUCTIONS, uiInstructions } from "@/server/chat-prompt";
-import { buildChatTools } from "@/server/chat-tools";
+import { buildChatTools, buildSuggestActionTool } from "@/server/chat-tools";
 
 export const maxDuration = 60;
 
@@ -72,13 +72,14 @@ export async function POST(req: Request) {
 
   const claims = mergeOverlay(dataset.claims as unknown as LocalClaim[], parsed.context.overlay as unknown as ClaimOverlay[]);
 
+  const openClaim = claims.find((c) => c.id === parsed.context.ui.openClaimId);
   const agent = new ToolLoopAgent({
     model: anthropic(MODEL),
     instructions: [
       { role: "system", content: STATIC_INSTRUCTIONS, providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } } },
-      { role: "system", content: uiInstructions(parsed.context.ui) },
+      { role: "system", content: uiInstructions(parsed.context.ui, openClaim) },
     ],
-    tools: buildChatTools(claims),
+    tools: { ...buildChatTools(claims), ...buildSuggestActionTool(openClaim) },
     stopWhen: isStepCount(6),
     maxOutputTokens: 700,
   });

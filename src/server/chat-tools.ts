@@ -1,4 +1,4 @@
-import { tool } from "ai";
+import { tool, type ToolSet } from "ai";
 import { z } from "zod";
 
 import { dataset, NOW } from "@/data";
@@ -6,7 +6,7 @@ import type { Category, Status } from "@/data/types";
 import { employeeName } from "@/logic/comparison";
 import { claimStatusLabel, formatSubmitted } from "@/logic/format";
 import type { LocalClaim } from "@/logic/local";
-import { recommendationFor } from "@/logic/recommendations";
+import { allActionsFor, recommendationFor } from "@/logic/recommendations";
 
 const STATUSES = [
   "waiting_on_noa",
@@ -21,6 +21,24 @@ const STATUSES = [
 const CATEGORIES = Object.keys(dataset.enums.category) as [Category, ...Category[]];
 
 const money = (n: number | null | undefined) => (typeof n === "number" ? Math.round(n * 100) / 100 : null);
+
+/**
+ * Lets the model attach a button to its message when it suggests an action on the open claim.
+ * The button runs the same action as the one in the action bar.
+ * The label is limited to the buttons that exist for that claim.
+ */
+export function buildSuggestActionTool(claim: LocalClaim | undefined): ToolSet {
+  if (!claim || claim.status !== "waiting_on_noa") return {};
+  const labels = allActionsFor(claim).map((s) => s.label) as [string, ...string[]];
+  return {
+    suggestAction: tool({
+      description:
+        "Call this when you recommend or suggest that Noa take one specific action on the open claim. A button with that label appears under your message. Write your answer in text as well: the button never replaces it. Do not call it for questions that do not suggest an action.",
+      inputSchema: z.object({ claimId: z.literal(claim.id), buttonLabel: z.enum(labels).describe("Exact label of the button") }),
+      execute: async () => ({ ok: true, note: "Done. A button now sits under your message. Now write your complete answer to Noa's question from scratch, in your normal style: the answer first, then the reason. Do not refer to the button, this tool, or anything you did before." }),
+    }),
+  };
+}
 
 /** Read-only tools over the dataset with the session's changes laid over it. */
 export function buildChatTools(claims: LocalClaim[]) {

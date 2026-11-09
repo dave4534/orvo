@@ -1,25 +1,42 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUp, Square } from "lucide-react";
+import { ArrowUp, AudioLines, Mic, Square } from "lucide-react";
 
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from "@/components/ui/input-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSpeechInput } from "@/hooks/use-speech-input";
+import { cn } from "@/lib/utils";
 
 type Props = {
   busy: boolean;
   onSend: (text: string) => void;
   onStop: () => void;
+  onVoiceChat: () => void;
 };
 
-/** The message box. It grows with the text, Enter sends, Shift+Enter adds a line, and the send button becomes Stop while an answer is being written. */
-export function ChatComposer({ busy, onSend, onStop }: Props) {
+/** The message box. It grows with the text, Enter sends, Shift+Enter adds a line, and the send button becomes Stop while an answer is being written. The microphone dictates into the box; the waveform starts a voice chat. */
+export function ChatComposer({ busy, onSend, onStop, onVoiceChat }: Props) {
   const [draft, setDraft] = useState("");
+  const [interim, setInterim] = useState("");
+  const speech = useSpeechInput();
+  const shown = interim ? `${draft}${draft ? " " : ""}${interim}` : draft;
 
   function send() {
-    const text = draft.trim();
+    const text = shown.trim();
     if (!text || busy) return;
+    speech.stop();
     setDraft("");
+    setInterim("");
     onSend(text);
+  }
+
+  function toggleMic() {
+    if (speech.listening) {
+      speech.stop();
+      return;
+    }
+    speech.start({ onInterim: setInterim, onFinal: (t) => setDraft((d) => (d ? `${d} ${t}` : t)) });
   }
 
   return (
@@ -27,10 +44,13 @@ export function ChatComposer({ busy, onSend, onStop }: Props) {
       <InputGroup className="rounded-2xl bg-card shadow-sm">
         <InputGroupTextarea
           aria-label="Message to Ask Orvo AI"
-          placeholder="Ask about claims, history or policy"
+          placeholder={speech.listening ? "Listening" : "Ask about claims, history or policy"}
           rows={1}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          value={shown}
+          onChange={(e) => {
+            setInterim("");
+            setDraft(e.target.value);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
@@ -39,19 +59,51 @@ export function ChatComposer({ busy, onSend, onStop }: Props) {
           }}
           className="max-h-40 min-h-11 field-sizing-content px-3.5 pt-3"
         />
-        <InputGroupAddon align="block-end" className="justify-end">
+        <InputGroupAddon align="block-end" className="justify-end gap-1">
+          {speech.supported ? (
+            <>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <InputGroupButton
+                      size="icon-sm"
+                      className={cn("rounded-full", speech.listening && "animate-pulse bg-destructive/15 text-destructive hover:bg-destructive/20")}
+                      aria-label={speech.listening ? "Stop dictating" : "Dictate"}
+                      aria-pressed={speech.listening}
+                      onClick={toggleMic}
+                    >
+                      <Mic />
+                    </InputGroupButton>
+                  }
+                />
+                <TooltipContent>{speech.listening ? "Stop dictating" : "Dictate"}</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <InputGroupButton size="icon-sm" className="rounded-full" aria-label="Start voice chat" onClick={onVoiceChat}>
+                      <AudioLines />
+                    </InputGroupButton>
+                  }
+                />
+                <TooltipContent>Voice chat</TooltipContent>
+              </Tooltip>
+            </>
+          ) : null}
           {busy ? (
             <InputGroupButton variant="default" size="icon-sm" className="rounded-full" aria-label="Stop" onClick={onStop}>
               <Square className="fill-current" />
             </InputGroupButton>
           ) : (
-            <InputGroupButton variant="default" size="icon-sm" className="rounded-full" aria-label="Send" disabled={!draft.trim()} onClick={send}>
+            <InputGroupButton variant="default" size="icon-sm" className="rounded-full" aria-label="Send" disabled={!shown.trim()} onClick={send}>
               <ArrowUp />
             </InputGroupButton>
           )}
         </InputGroupAddon>
       </InputGroup>
-      <p className="mt-2 text-center text-xs text-muted-foreground">Orvo AI reads the claim data and can&apos;t change anything.</p>
+      <p className="mt-2 text-center text-xs text-muted-foreground">
+        {speech.error === "blocked" ? "Microphone access is blocked. Allow it in the browser's site settings." : speech.error === "unavailable" ? "Voice isn't available in this browser right now." : "Orvo AI reads the claim data and can't change anything."}
+      </p>
     </div>
   );
 }

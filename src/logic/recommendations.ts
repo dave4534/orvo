@@ -115,6 +115,13 @@ export function recommendationFor(claim: LocalClaim): Recommendation {
   }
 }
 
+/** Every action offered for a claim that is waiting for review: the buttons and the entries in More options. */
+export function allActionsFor(claim: LocalClaim): ActionSpec[] {
+  const rec = recommendationFor(claim);
+  const shown = [rec.recommended, ...rec.secondary].filter((s): s is ActionSpec => Boolean(s));
+  return [...shown, ...rec.more, ...moreOptionsFor(claim, [...shown, ...rec.more])];
+}
+
 /** Menu entries for the "More options" menu that are not already shown as buttons. */
 export function moreOptionsFor(claim: LocalClaim, shown: ActionSpec[]): ActionSpec[] {
   const base: ActionSpec[] = [otherAmount(), ask(claim), toFinance()];

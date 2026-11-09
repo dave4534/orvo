@@ -24,7 +24,6 @@ import {
   type TabId,
 } from "@/logic/claims";
 import { isSpotCheck } from "@/logic/local";
-import { recommendationFor } from "@/logic/recommendations";
 import { sectionsFor } from "@/logic/sections";
 import { buildChatContext } from "@/logic/chat-context";
 import { claimSummary } from "@/logic/summary";
@@ -46,7 +45,7 @@ const tabOfStatus = (status: Status): TabId =>
 
 export function ClaimsView() {
   const { claims, sessionIds, simulateError, setSimulateError, reset } = useClaims();
-  const { aiOpen, setAiOpen, addAiMessage, resetAi, runPrimaryAction, setChatContext } = useWorkspace();
+  const { aiOpen, setAiOpen, addAiMessage, resetAi, setChatContext } = useWorkspace();
 
   const [tab, setTab] = useState<TabId>("needs_review");
   const [filters, setFilters] = useState<ClaimFilters>(DEFAULT_FILTERS);
@@ -97,9 +96,9 @@ export function ClaimsView() {
       addAiMessage({ role: "assistant", text: "Let's review the open claims." });
     }
     if (claim) {
-      const { heading, summary, recommendation } = claimSummary(claim);
+      const { heading, summary, recommendation, recommendationLabel } = claimSummary(claim);
       addAiMessage({ role: "assistant", heading, text: summary });
-      if (recommendation) addAiMessage({ role: "assistant", text: recommendation });
+      if (recommendation) addAiMessage({ role: "assistant", text: recommendation, claimId: claim.id, suggest: recommendationLabel ?? undefined });
     }
     setOpenId(id);
   }
@@ -171,8 +170,6 @@ export function ClaimsView() {
   const waitingCount = sessionClaims.filter((c) => c.status === "waiting_on_employee").length;
   const cleared = tab === "needs_review" && !filtered && rows.length === 0;
   const hasSpotChecks = claims.some((c) => c.status === "approved_by_agent" && isSpotCheck(c));
-
-  const primaryRec = openClaim && openClaim.status === "waiting_on_noa" ? recommendationFor(openClaim).recommended : null;
 
   return (
     <div className={cn("w-full", inTriage ? "h-[calc(100svh-var(--header-height))] overflow-hidden" : "min-h-[calc(100svh-var(--header-height))]")}>
@@ -337,8 +334,6 @@ export function ClaimsView() {
               <AiPanel
                 claim={openClaim}
                 allClaims={claims}
-                primaryLabel={primaryRec?.label ?? null}
-                onPrimary={runPrimaryAction}
                 onClose={() => setAiOpen(false)}
                 onOpenMore={openMore}
               />
