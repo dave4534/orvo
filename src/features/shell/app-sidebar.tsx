@@ -22,11 +22,8 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { useClaims } from "@/store/claims-store";
-import { useWorkspace } from "@/store/workspace-store";
-import { useEffect, useRef } from "react";
 import { notInPrototype } from "./not-in-prototype";
 
 type NavItem = { label: string; icon: LucideIcon; active?: boolean };
@@ -70,22 +67,8 @@ function NavItems({ items, needsReview }: { items: NavItem[]; needsReview: numbe
 
 export function AppSidebar() {
   const { claims } = useClaims();
-  const { aiOpen } = useWorkspace();
-  const { setOpen, open } = useSidebar();
   // Badge on Expenses: claims waiting on Noa, unfiltered (PRD FR-NAV-3).
   const needsReview = claims.filter((c) => c.status === "waiting_on_noa").length;
-
-  // Collapse the nav while Ask Orvo AI is open and restore it after (PRD FR-NAV-6).
-  const wasOpen = useRef<boolean | null>(null);
-  useEffect(() => {
-    if (aiOpen && wasOpen.current === null) {
-      wasOpen.current = open;
-      setOpen(false);
-    } else if (!aiOpen && wasOpen.current !== null) {
-      setOpen(wasOpen.current);
-      wasOpen.current = null;
-    }
-  }, [aiOpen, open, setOpen]);
 
   return (
     <Sidebar

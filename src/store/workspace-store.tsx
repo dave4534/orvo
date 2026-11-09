@@ -2,7 +2,14 @@
 
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
-export type AiMessage = { id: number; role: "user" | "orvo"; text: string; action?: { label: string; kind: "documents" | "policy" } };
+export type AiMessage = {
+  id: number;
+  role: "user" | "orvo";
+  text: string;
+  /** Small label above the message, naming the claim the summary is about. */
+  heading?: string;
+  action?: { label: string; kind: "documents" | "policy" };
+};
 
 type WorkspaceStore = {
   aiOpen: boolean;

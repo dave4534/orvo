@@ -1,5 +1,7 @@
 "use client";
 
+import { X } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +20,7 @@ type Props = {
   allClaims: LocalClaim[];
   tab: MoreTab;
   onTab: (tab: MoreTab) => void;
+  onClose: () => void;
   onOpenClaim: (id: string) => void;
 };
 
@@ -289,11 +292,17 @@ function PastClaims({ claim, allClaims, onOpenClaim }: { claim: LocalClaim; allC
   );
 }
 
-/** Right column of the claims queue, beside triage. Always shows the claim open in triage. */
-export function MoreInfoPanel({ claim, allClaims, tab, onTab, onOpenClaim }: Props) {
+/** Details drawer beside triage. Opens from "View details" and shows the claim open in triage. */
+export function MoreInfoPanel({ claim, allClaims, tab, onTab, onClose, onOpenClaim }: Props) {
   return (
-    <aside aria-label="More info" className="flex min-h-0 w-[30rem] max-w-full shrink-0 flex-col border-l">
-      <Tabs value={tab} onValueChange={(v) => onTab(v as MoreTab)} className="min-h-0 flex-1 gap-0 pt-6">
+    <aside aria-label="Details" className="flex min-h-0 w-[24rem] max-w-full shrink-0 flex-col border-l bg-card">
+      <div className="flex h-16 shrink-0 items-center justify-between px-6">
+        <h2 className="text-base font-semibold">Details</h2>
+        <Button variant="ghost" size="icon-sm" aria-label="Close details" onClick={onClose}>
+          <X />
+        </Button>
+      </div>
+      <Tabs value={tab} onValueChange={(v) => onTab(v as MoreTab)} className="min-h-0 flex-1 gap-0">
         <TabsList variant="line" className="h-11 w-full justify-start border-b px-6">
           <TabsTrigger value="overview" className="flex-none px-1 mr-5">Overview</TabsTrigger>
           <TabsTrigger value="documents" className="flex-none px-1 mr-5">Documents</TabsTrigger>

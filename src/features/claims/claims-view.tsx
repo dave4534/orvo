@@ -24,13 +24,15 @@ import {
 } from "@/logic/claims";
 import { isSpotCheck } from "@/logic/local";
 import { sectionsFor } from "@/logic/sections";
+import { claimSummary } from "@/logic/summary";
+import { cn } from "@/lib/utils";
 import { track } from "@/logic/track";
 import { useClaims } from "@/store/claims-store";
 import { useWorkspace } from "@/store/workspace-store";
 import { AiPanel } from "./ai-panel";
 import { ClaimsFilters } from "./claims-filters";
+import { ClaimsQueue } from "./claims-queue";
 import { ClaimsTable } from "./claims-table";
-import { ClaimsWorkspace } from "./claims-workspace";
 import { DailyBriefBanner } from "./daily-brief";
 import type { MoreTab } from "./panel-types";
 
@@ -39,7 +41,7 @@ const tabOfStatus = (status: Status): TabId =>
 
 export function ClaimsView() {
   const { claims, sessionIds, simulateError, setSimulateError, reset } = useClaims();
-  const { aiOpen, setAiOpen, resetAi } = useWorkspace();
+  const { aiOpen, setAiOpen, addAiMessage, resetAi } = useWorkspace();
 
   const [tab, setTab] = useState<TabId>("needs_review");
   const [filters, setFilters] = useState<ClaimFilters>(DEFAULT_FILTERS);
@@ -47,6 +49,7 @@ export function ClaimsView() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [openId, setOpenId] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [moreTab, setMoreTab] = useState<MoreTab>("overview");
 
   const brief = useMemo(() => buildDailyBrief(claims), [claims]);
@@ -73,18 +76,31 @@ export function ClaimsView() {
     else track("filter_used");
   }
 
+  // Opening a claim posts its summary and recommendation in the AI chat. The first claim of a visit also opens the chat with a greeting.
   function openClaimById(id: string) {
     track("claim_opened", { claim: id });
+    const claim = claims.find((c) => c.id === id);
+    if (openId === null) {
+      setAiOpen(true);
+      addAiMessage({ role: "orvo", text: "Let's review the open claims." });
+    }
+    if (claim) {
+      const { heading, summary, recommendation } = claimSummary(claim);
+      addAiMessage({ role: "orvo", heading, text: summary });
+      if (recommendation) addAiMessage({ role: "orvo", text: recommendation });
+    }
     setOpenId(id);
   }
 
   function closeWorkspace() {
     setOpenId(null);
+    setDetailsOpen(false);
   }
 
   function openMore(nextTab: MoreTab = "overview") {
     track("more_info_opened", { tab: nextTab });
     setMoreTab(nextTab);
+    setDetailsOpen(true);
   }
 
   // After a decision, move on: to the next claim in the group, or close when there is none (PRD FR-ACT-1).
@@ -94,7 +110,7 @@ export function ClaimsView() {
     if (!leavesTab && action !== "confirm") return;
     const index = scopeIds.indexOf(claimId);
     const next = scopeIds[index + 1] ?? scopeIds[index - 1] ?? null;
-    if (next && next !== claimId) setOpenId(next);
+    if (next && next !== claimId) openClaimById(next);
     else closeWorkspace();
   }
 
@@ -130,7 +146,7 @@ export function ClaimsView() {
     setSelectedIds(checked ? new Set(visible.map((c) => c.id)) : new Set());
   }
 
-  const dockOpen = aiOpen && openId === null;
+  const inTriage = openClaim !== null && position !== null;
 
   // Cleared-queue summary from what was decided this session (PRD EMP-1).
   const sessionClaims = claims.filter((c) => sessionIds.includes(c.id));
@@ -141,7 +157,26 @@ export function ClaimsView() {
   const hasSpotChecks = claims.some((c) => c.status === "approved_by_agent" && isSpotCheck(c));
 
   return (
-    <div className="flex min-h-[calc(100svh-var(--header-height))] w-full">
+    <div className={cn("flex w-full", inTriage ? "h-[calc(100svh-var(--header-height))]" : "min-h-[calc(100svh-var(--header-height))]")}>
+      {inTriage ? (
+        <ClaimsQueue
+          claim={openClaim}
+          allClaims={claims}
+          position={position}
+          detailsOpen={detailsOpen}
+          moreTab={moreTab}
+          onPrev={scopeIndex > 0 ? () => step(-1) : undefined}
+          onNext={scopeIndex < scopeIds.length - 1 ? () => step(1) : undefined}
+          onBack={closeWorkspace}
+          onOpenDetails={() => openMore(moreTab)}
+          onCloseDetails={() => setDetailsOpen(false)}
+          onOpenMore={openMore}
+          onMoreTab={setMoreTab}
+          onOpenClaim={openClaimById}
+          onDecided={onDecided}
+          onReopen={onReopen}
+        />
+      ) : (
       <main className="mx-auto flex min-w-0 w-full max-w-[1400px] flex-1 flex-col gap-6 p-8">
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-3xl font-semibold tracking-tight">Claims</h1>
@@ -270,27 +305,9 @@ export function ClaimsView() {
           </Empty>
         )}
       </main>
+      )}
 
-      {dockOpen ? (
-        <AiPanel claim={null} allClaims={claims} onClose={() => setAiOpen(false)} onOpenMore={(t) => openMore(t)} />
-      ) : null}
-
-      <ClaimsWorkspace
-        claim={openClaim}
-        allClaims={claims}
-        position={position}
-        moreTab={moreTab}
-        aiOpen={aiOpen}
-        onPrev={scopeIndex > 0 ? () => step(-1) : undefined}
-        onNext={scopeIndex < scopeIds.length - 1 ? () => step(1) : undefined}
-        onClose={closeWorkspace}
-        onOpenMore={openMore}
-        onMoreTab={setMoreTab}
-        onOpenClaim={openClaimById}
-        onSetAi={setAiOpen}
-        onDecided={onDecided}
-        onReopen={onReopen}
-      />
+      {aiOpen ? <AiPanel claim={openClaim} allClaims={claims} onClose={() => setAiOpen(false)} onOpenMore={openMore} /> : null}
     </div>
   );
 }

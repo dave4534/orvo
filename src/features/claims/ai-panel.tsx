@@ -40,7 +40,7 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
   }
 
   return (
-    <aside aria-label="Ask Orvo AI" className="flex h-full min-h-0 w-[min(25rem,100vw)] shrink flex-col border-l bg-card">
+    <aside aria-label="Ask Orvo AI" className="flex h-full min-h-0 w-[22rem] max-w-full shrink-0 flex-col border-l bg-card">
       <div className="flex h-16 shrink-0 items-center justify-between border-b px-5">
         <h2 className="flex items-center gap-2 text-base font-semibold">
           <Sparkles aria-hidden className="size-4 text-primary" />
@@ -75,6 +75,7 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
         ) : (
           aiMessages.map((m) => (
             <div key={m.id} className={m.role === "user" ? "ml-8 self-end rounded-xl bg-primary px-3.5 py-2.5 text-sm text-primary-foreground" : "mr-8 rounded-xl border bg-info px-3.5 py-2.5 text-sm text-info-foreground"}>
+              {m.heading ? <div className="mb-1 text-xs font-semibold opacity-70">{m.heading}</div> : null}
               {m.text}
               {m.action ? (
                 <Button variant="outline" size="sm" className="mt-2 block bg-card text-foreground" onClick={() => onOpenMore(m.action!.kind)}>

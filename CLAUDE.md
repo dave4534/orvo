@@ -15,7 +15,7 @@ Source documents (outside this folder, in `..`):
 - **Spot checks are deferred.** The dataset no longer has `agent.audit_sample`. Do not build the spot-check group, "Confirm decision" or spot-check acceptance criteria. If something in the PRD depends on them, flag it to the user instead of improvising.
 - The triage panel's comparison model may differ by situation (the user allows suggestions).
 - Tier 1 of PRD section 1.1 comes first. No min or max widths until the user decides.
-- Wireframes will be supplied by the user. Do not invent layout before they arrive.
+- Wireframes are in `../Wireframes` (round 17). Take only the architecture from them (states, panel order). Do not take copy, colors, buttons or button priority from them.
 - `ground_truth` in the data is the answer key for the planted agent mistakes. Never render it, never read it for logic. Strip it from the runtime data (see Data below).
 
 ## The rule

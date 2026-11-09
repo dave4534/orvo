@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ArrowRight, ChevronDown, Info } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -19,7 +19,7 @@ import { dataset } from "@/data";
 import type { Status } from "@/data/types";
 import { firstName, type ActionId, type ActionInput } from "@/logic/actions";
 import { buildComparison, employeeName } from "@/logic/comparison";
-import { formatUsd, initials } from "@/logic/format";
+import { claimStatusLabel, formatUsd, initials } from "@/logic/format";
 import { isAgentDecided, isSpotCheck, type LocalClaim } from "@/logic/local";
 import { moreOptionsFor, recommendationFor, type ActionSpec } from "@/logic/recommendations";
 import { track } from "@/logic/track";
@@ -34,6 +34,9 @@ export type TriagePosition = { index: number; total: number; noun: string };
 type Props = {
   claim: LocalClaim;
   allClaims: LocalClaim[];
+  /** Show the next claims peeking behind the card. */
+  stacked: boolean;
+  onOpenDetails: () => void;
   onOpenMore: (tab?: MoreTab) => void;
   onDecided: (claimId: string, status: Status, action: ActionId) => void;
   onReopen: (claimId: string) => void;
@@ -55,7 +58,7 @@ function retarget(spec: ActionSpec, claim: LocalClaim): ActionSpec {
 }
 
 /** Triage column of the claims queue: the claim, its comparison and the decision actions (actions stay pinned at the bottom). */
-export function TriagePanel({ claim, allClaims, onOpenMore, onDecided, onReopen }: Props) {
+export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMore, onDecided, onReopen }: Props) {
   const { perform } = useClaims();
   const [pending, setPending] = useState<ActionSpec | null>(null);
   const [fixOpen, setFixOpen] = useState(false);
@@ -99,21 +102,6 @@ export function TriagePanel({ claim, allClaims, onOpenMore, onDecided, onReopen 
       ? moreOptionsFor(claim, [])
       : [];
 
-  const lastEvent = claim.events[claim.events.length - 1];
-  const claimedAmount = claim.amount.usd_claimed;
-  const title =
-    decidedByNoa && claim.noa
-      ? `${claim.noa.decision === "approved" ? "Approved" : "Declined"} ${formatUsd(claim.noa.decision === "approved" ? claim.noa.approved_amount_usd : claimedAmount)}`
-      : agentDecided
-        ? `${claim.status === "approved_by_agent" ? "Approved" : "Declined"} ${formatUsd(claimed)} automatically`
-        : claim.agent.headline;
-  const body =
-    decidedByNoa && claim.noa
-      ? `${lastEvent?.text ?? ""}${claim.noa.note ? `. Note: ${claim.noa.note}` : ""}. Review said: ${claim.agent.headline}`
-      : needsReview && claim.agent.needs_from_noa
-        ? `${claim.agent.explanation} Next: ${claim.agent.needs_from_noa}`
-        : claim.agent.explanation;
-
   const subtitle = agentDecided
     ? `${category}, ${claim.status === "approved_by_agent" ? "approved" : "declined"} automatically ${formatDay(claim.agent.decided_at)}`
     : decidedByNoa && claim.noa
@@ -123,39 +111,49 @@ export function TriagePanel({ claim, allClaims, onOpenMore, onDecided, onReopen 
   const chase = claim.agent.chase;
 
   return (
-    <section aria-label={`Claim ${claim.id}, ${full}`} className="flex min-h-0 w-[35rem] max-w-full shrink-0 flex-col bg-card">
-      <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto bg-background p-4 px-6">
-        <div className="flex flex-col gap-2 rounded-xl border border-info-border bg-info p-4 text-info-foreground">
-          <div className="flex items-center gap-2 font-semibold">
-            <Sparkles aria-hidden className="size-[18px] shrink-0" />
-            {title}
-          </div>
-          <p className="text-sm leading-relaxed">{body}</p>
-        </div>
-
-        <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border bg-card">
-          <div className="flex items-center gap-3.5 border-b px-6 py-[18px]">
-            <Avatar size="lg">
-              <AvatarFallback>{initials(full)}</AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[1.375rem] leading-7 font-semibold">{full}</div>
-              <div className="text-xs text-muted-foreground">{subtitle}</div>
-            </div>
-            <div className="text-right text-3xl leading-9 font-semibold tabular-nums">{formatUsd(claimed)}</div>
-          </div>
-
-          <div className="mt-6 border-t">
-            <ComparisonView comparison={comparison} />
-          </div>
-
-          {claim.status === "waiting_on_employee" && chase ? (
-            <p className="mx-6 mb-4 rounded-lg bg-muted/60 p-3 text-sm">
-              Waiting on {name}. {chase.attempts.length} of {chase.max_attempts} requests sent.{" "}
-              {chase.next_attempt_at ? `Next request ${formatDay(chase.next_attempt_at)}. ` : "No requests left. "}
-              Passes to review {formatDay(chase.escalates_at)}.
-            </p>
+    <section aria-label={`Claim ${claim.id}, ${full}`} className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
+        <div className="relative flex flex-1 flex-col pb-5">
+          {stacked ? (
+            <>
+              <div aria-hidden className="absolute inset-x-7 bottom-0 h-10 rounded-[14px] border bg-card" />
+              <div aria-hidden className="absolute inset-x-3.5 bottom-2.5 h-10 rounded-[14px] border bg-card" />
+            </>
           ) : null}
+          <div className="relative flex flex-1 flex-col overflow-hidden rounded-2xl border bg-card shadow-md">
+            <div className="flex items-center gap-3.5 border-b px-6 py-[18px]">
+              <Avatar size="lg">
+                <AvatarFallback>{initials(full)}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[1.375rem] leading-7 font-semibold">{full}</div>
+                <div className="text-xs text-muted-foreground">{subtitle}</div>
+              </div>
+              <div className="text-right text-3xl leading-9 font-semibold tabular-nums">{formatUsd(claimed)}</div>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 border-b bg-muted/40 px-6 py-2.5">
+              <span className="inline-flex min-w-0 items-center gap-2 font-medium">
+                <Info aria-hidden className="size-4 shrink-0" />
+                <span className="truncate">{needsReview ? dataset.enums.reason_type[claim.agent.reason_type] : claimStatusLabel(claim)}</span>
+              </span>
+              <Button variant="outline" size="sm" onClick={onOpenDetails}>
+                View details <ArrowRight data-icon="inline-end" />
+              </Button>
+            </div>
+
+            <div className="mt-6 border-t">
+              <ComparisonView comparison={comparison} />
+            </div>
+
+            {claim.status === "waiting_on_employee" && chase ? (
+              <p className="mx-6 mb-4 rounded-lg bg-muted/60 p-3 text-sm">
+                Waiting on {name}. {chase.attempts.length} of {chase.max_attempts} requests sent.{" "}
+                {chase.next_attempt_at ? `Next request ${formatDay(chase.next_attempt_at)}. ` : "No requests left. "}
+                Passes to review {formatDay(chase.escalates_at)}.
+              </p>
+            ) : null}
+          </div>
         </div>
       </div>
 
