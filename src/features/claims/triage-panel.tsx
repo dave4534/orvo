@@ -197,7 +197,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
               {editable ? (
                 <>
                   <p className="min-w-0 text-sm text-muted-foreground">{decidedSummary}</p>
-                  <div className="flex shrink-0 flex-col items-end gap-1.5">
+                  <div className="flex shrink-0 flex-col items-start gap-1.5">
                     <Label htmlFor="decision-select" className="text-xs text-muted-foreground">
                       Status
                     </Label>

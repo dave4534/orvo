@@ -61,8 +61,9 @@ function GapScale({ scale }: { scale: NonNullable<Comparison["scale"]> }) {
 
 export function ComparisonView({ comparison }: { comparison: Comparison }) {
   const lowIsLeft = (comparison.left.amount ?? 0) <= (comparison.right.amount ?? 0);
-  const leftDot = comparison.scale ? (lowIsLeft ? SCALE_DOT.low : SCALE_DOT.high) : DOT[comparison.left.tone];
-  const rightDot = comparison.scale ? (lowIsLeft ? SCALE_DOT.high : SCALE_DOT.low) : DOT[comparison.right.tone];
+  const noGap = comparison.scale ? comparison.left.amount === comparison.right.amount : false;
+  const leftDot = comparison.scale ? (noGap || lowIsLeft ? SCALE_DOT.low : SCALE_DOT.high) : DOT[comparison.left.tone];
+  const rightDot = comparison.scale ? (noGap || !lowIsLeft ? SCALE_DOT.low : SCALE_DOT.high) : DOT[comparison.right.tone];
   return (
     <div>
       {comparison.kind === "identity" && comparison.records ? (
