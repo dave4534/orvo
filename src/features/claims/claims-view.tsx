@@ -238,7 +238,7 @@ export function ClaimsView() {
             <ClaimsQueue
               claim={openClaim}
               allClaims={claims}
-              queueTitle={tab === "done" ? "Done Queue" : "Claims Queue"}
+              queueTitle={tab === "done" ? "Done Queue" : tab === "all" ? "All Claims" : "Claims Queue"}
               position={position}
               onPrev={scopeIndex > 0 ? () => step(-1) : undefined}
               onNext={scopeIndex < scopeIds.length - 1 ? () => step(1) : undefined}
@@ -282,25 +282,6 @@ export function ClaimsView() {
           </DropdownMenu>
         </div>
 
-        {tab === "needs_review" && !briefDismissed.has("needs_review") ? (
-          <AiBriefBanner
-            title={`Daily brief, ${brief.dateLabel}`}
-            text={briefSentence(brief)}
-            reviewCount={brief.needsYou}
-            onDismiss={() => dismissBrief("needs_review")}
-            onReviewAll={reviewAll}
-          />
-        ) : null}
-        {tab === "done" && !briefDismissed.has("done") ? (
-          <AiBriefBanner
-            title={`Done brief, ${doneBrief.dateLabel}`}
-            text={doneBriefSentence(doneBrief)}
-            reviewCount={doneBrief.done}
-            onDismiss={() => dismissBrief("done")}
-            onReviewAll={reviewDone}
-          />
-        ) : null}
-
         <Tabs
           value={tab}
           onValueChange={(value) => {
@@ -320,6 +301,26 @@ export function ClaimsView() {
             ))}
           </TabsList>
         </Tabs>
+
+        {tab === "done" ? (
+          !briefDismissed.has("done") ? (
+            <AiBriefBanner
+              title={`Done brief, ${doneBrief.dateLabel}`}
+              text={doneBriefSentence(doneBrief)}
+              reviewCount={doneBrief.done}
+              onDismiss={() => dismissBrief("done")}
+              onReviewAll={reviewDone}
+            />
+          ) : null
+        ) : !briefDismissed.has("needs_review") ? (
+          <AiBriefBanner
+            title={`Daily brief, ${brief.dateLabel}`}
+            text={briefSentence(brief)}
+            reviewCount={brief.needsYou}
+            onDismiss={() => dismissBrief("needs_review")}
+            onReviewAll={reviewAll}
+          />
+        ) : null}
 
         <ClaimsFilters filters={filters} onChange={changeFilters} onReset={() => changeFilters(DEFAULT_FILTERS)} canReset={filtered} showStatus={tab === "all"} />
 

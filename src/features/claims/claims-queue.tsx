@@ -12,8 +12,8 @@ import { TriagePanel, type TriagePosition } from "./triage-panel";
 type Props = {
   claim: LocalClaim;
   allClaims: LocalClaim[];
-  /** "Claims Queue" for review, "Done Queue" when the claim was opened from Done. */
-  queueTitle: "Claims Queue" | "Done Queue";
+  /** "Claims Queue" for review, "Done Queue" when the claim was opened from Done, "All Claims" from the All tab. */
+  queueTitle: "Claims Queue" | "Done Queue" | "All Claims";
   position: TriagePosition;
   onPrev?: () => void;
   onNext?: () => void;

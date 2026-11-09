@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,12 +86,14 @@ function retarget(spec: ActionSpec, claim: LocalClaim): ActionSpec {
 
 /** Triage column of the claims queue: the claim, its comparison and the decision actions (actions stay pinned at the bottom). */
 export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMore, padded = true, flat = false, primary = true, onDecided, onReopen }: Props) {
-  const { perform } = useClaims();
+  const { perform, sendMessage } = useClaims();
   const { setActionRunner } = useWorkspace();
   const [pending, setPending] = useState<ActionSpec | null>(null);
   const [fixOpen, setFixOpen] = useState(false);
   const [error, setError] = useState<ActionInput | null>(null);
   const [choice, setChoice] = useState<Outcome>("keep");
+  /** Required for a decline. It is sent to the employee in chat after the update. */
+  const [reason, setReason] = useState("");
 
   const comparison = useMemo(() => buildComparison(claim, allClaims), [claim, allClaims]);
   const name = firstName(claim);
@@ -103,16 +106,17 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
   const spot = isSpotCheck(claim) && !claim.local?.spot_checked && claim.status === "approved_by_agent";
   const rec = needsReview ? recommendationFor(claim) : null;
 
-  function run(input: ActionInput) {
+  function run(input: ActionInput): boolean {
     const result = perform(claim.id, input, { onUndo: onReopen, silent: input.id === "confirm" });
     if (!result.ok) {
       setError(input);
-      return;
+      return false;
     }
     setError(null);
     setPending(null);
     setFixOpen(false);
     onDecided(claim.id, result.status, input.id);
+    return true;
   }
 
   function choose(spec: ActionSpec) {
@@ -162,8 +166,8 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
   const currentOutcome: Outcome | null = claim.status.startsWith("approved") ? "approved" : claim.status.startsWith("declined") ? "declined" : null;
   const decisionItems: Record<Outcome, string> = {
     keep: claimStatusLabel(claim),
-    approved: "Approved",
-    declined: "Declined",
+    approved: "Approve",
+    declined: "Decline",
   };
   const decisionOptions = (["keep", "approved", "declined"] as const).filter((o) => o === "keep" || o !== currentOutcome);
   const changed = editable && choice !== "keep";
@@ -250,6 +254,20 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
       </div>
 
       <div className={cn("flex shrink-0 flex-col gap-3 border-t px-6 py-4", "bg-card")}>
+        {changed && choice === "declined" ? (
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="decline-reason">Reason for declining</Label>
+            <Textarea
+              id="decline-reason"
+              rows={3}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Say why the claim is declined"
+            />
+            <p className="text-xs text-muted-foreground">Sent to {name} in chat after the update.</p>
+          </div>
+        ) : null}
+
         {changed ? (
           <Alert>
             <Info aria-hidden />
@@ -369,10 +387,26 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
             {editable ? (
               changed && savedInput ? (
                 <>
-                  <Button variant="outline" size="lg" className="h-11" onClick={() => setChoice("keep")}>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="h-11"
+                    onClick={() => {
+                      setChoice("keep");
+                      setReason("");
+                    }}
+                  >
                     Cancel
                   </Button>
-                  <Button size="lg" className="h-11" onClick={() => run(savedInput)}>
+                  <Button
+                    size="lg"
+                    className="h-11"
+                    disabled={choice === "declined" && !reason.trim()}
+                    onClick={() => {
+                      const text = reason.trim();
+                      if (run(savedInput) && choice === "declined" && text) sendMessage(claim.id, text);
+                    }}
+                  >
                     Save
                   </Button>
                 </>
