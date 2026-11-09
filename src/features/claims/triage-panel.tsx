@@ -53,6 +53,8 @@ type Props = {
   primary?: boolean;
   onDecided: (claimId: string, status: Status, action: ActionId) => void;
   onReopen: (claimId: string) => void;
+  /** Continue waiting on the employee: moves on to the next claim. */
+  onContinue?: () => void;
 };
 
 const dayFormat = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
@@ -85,7 +87,7 @@ function retarget(spec: ActionSpec, claim: LocalClaim): ActionSpec {
 }
 
 /** Triage column of the claims queue: the claim, its comparison and the decision actions (actions stay pinned at the bottom). */
-export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMore, padded = true, flat = false, primary = true, onDecided, onReopen }: Props) {
+export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMore, padded = true, flat = false, primary = true, onDecided, onReopen, onContinue }: Props) {
   const { perform, sendMessage } = useClaims();
   const { setActionRunner } = useWorkspace();
   const [pending, setPending] = useState<ActionSpec | null>(null);
@@ -423,9 +425,14 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
             ) : null}
 
             {claim.status === "waiting_on_employee" ? (
-              <Button size="lg" className="h-11" onClick={() => run({ id: "decide_now" })}>
-                Decide now
-              </Button>
+              <>
+                <Button variant="ghost" size="lg" className="h-11" onClick={() => run({ id: "decide_now" })}>
+                  Decide now
+                </Button>
+                <Button size="lg" className="h-11" onClick={() => onContinue?.()}>
+                  Continue waiting
+                </Button>
+              </>
             ) : null}
           </div>
         </div>

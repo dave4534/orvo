@@ -58,6 +58,9 @@ type WorkspaceStore = {
   setChatContext: (read: (() => ChatContext) | null) => void;
   /** The claims view runs screen tools for the chat. Returns the result sent back to the model. */
   setUiToolHandler: (run: ((name: string, input: Record<string, unknown>) => Record<string, unknown>) | null) => void;
+  /** The top bar logo asks the claims view to go back to the Expenses list. Each call bumps homeRequest. */
+  homeRequest: number;
+  goHome: () => void;
   /** Called when the live model can't answer, so scripted replies can step in. */
   setAiFallback: (run: ((prompt: string, session: string) => void) | null) => void;
 };
@@ -115,6 +118,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [aiSession, setAiSession] = useState(LIST_SESSION);
   const [epoch, setEpoch] = useState(0);
+  const [homeRequest, setHomeRequest] = useState(0);
+  const goHome = useCallback(() => setHomeRequest((n) => n + 1), []);
   const runner = useRef<((label: string) => boolean) | null>(null);
 
   const chat = useMemo(() => getChat(epoch, aiSession), [epoch, aiSession]);
@@ -160,8 +165,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ aiOpen, setAiOpen, aiSession, setAiSession, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setChatContext, setUiToolHandler, setAiFallback }),
-    [aiOpen, aiSession, messages, status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setChatContext, setUiToolHandler, setAiFallback],
+    () => ({ aiOpen, setAiOpen, aiSession, setAiSession, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome }),
+    [aiOpen, aiSession, messages, status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

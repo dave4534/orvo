@@ -12,8 +12,8 @@ import { TriagePanel, type TriagePosition } from "./triage-panel";
 type Props = {
   claim: LocalClaim;
   allClaims: LocalClaim[];
-  /** "Claims Queue" for review, "Done Queue" when the claim was opened from Done, "All Claims" from the All tab. */
-  queueTitle: "Claims Queue" | "Done Queue" | "All Claims";
+  /** "Claims Queue" for review, "Done Queue" from Done, "All Claims" from All, "Waiting on others" from Waiting. */
+  queueTitle: "Claims Queue" | "Done Queue" | "All Claims" | "Waiting on others";
   position: TriagePosition;
   onPrev?: () => void;
   onNext?: () => void;
@@ -65,6 +65,7 @@ export function ClaimsQueue(props: Props) {
         onOpenMore={props.onOpenMore}
         onDecided={props.onDecided}
         onReopen={props.onReopen}
+        onContinue={props.onNext ?? props.onBack}
       />
     </section>
   );

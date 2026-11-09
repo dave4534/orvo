@@ -12,13 +12,18 @@ import { AppSidebar } from "./app-sidebar";
 import { useWorkspace } from "@/store/workspace-store";
 
 function TopBar() {
-  const { aiOpen, setAiOpen } = useWorkspace();
+  const { aiOpen, setAiOpen, goHome } = useWorkspace();
   return (
     <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b bg-background px-6">
-      <div className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
+      <Button
+        variant="ghost"
+        aria-label="Orvo home, go to Expenses"
+        onClick={goHome}
+        className="-ml-2 h-10 gap-2.5 px-2 text-lg font-semibold tracking-tight"
+      >
         <span aria-hidden className="size-6 rounded-md bg-primary" />
         Orvo
-      </div>
+      </Button>
       <div className="flex items-center gap-4">
         <Tooltip>
           <TooltipTrigger

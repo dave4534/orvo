@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Info, Paperclip, Sparkles, TriangleAlert, X } from "lucide-react";
+import { Info, Paperclip, Sparkles, X } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -129,16 +129,12 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
           .filter(Boolean)
           .join(" ");
 
-  const receiptIcon = hasReceipt ? (
+  const receiptIcon = (
     <div aria-hidden className="flex h-10 w-8 shrink-0 flex-col gap-1 rounded border bg-muted/40 p-1.5">
       <Skeleton className="h-1.5" />
       <Skeleton className="h-1.5 w-[70%]" />
       <Skeleton className="h-1.5" />
     </div>
-  ) : (
-    <span aria-hidden className={cn(DOC_ICON, "bg-warning text-warning-foreground")}>
-      <TriangleAlert className="size-4" />
-    </span>
   );
 
   return (
@@ -163,20 +159,18 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
           </div>
 
           <ul className="divide-y border-t">
-            <DocumentRow
-              icon={receiptIcon}
-              label="Receipt"
-              sub={hasReceipt ? undefined : receipt.status === "unreadable" ? "Can't be read" : "Missing"}
-              onView={hasReceipt ? () => onView({ kind: "receipt" }) : undefined}
-            >
-              {!hasReceipt ? (
+            {hasReceipt ? (
+              <DocumentRow icon={receiptIcon} label="Receipt" onView={() => onView({ kind: "receipt" })} />
+            ) : (
+              // No receipt to show: the inline banner alone says what is missing or unreadable.
+              <li className="p-3">
                 <Alert className="border-info-border bg-info text-info-foreground">
                   <Info />
                   <AlertTitle>{receipt.status === "unreadable" ? "Receipt can't be read" : "Receipt missing"}</AlertTitle>
                   <AlertDescription className="text-info-foreground/90">{missingText}</AlertDescription>
                 </Alert>
-              ) : null}
-            </DocumentRow>
+              </li>
+            )}
             {receipt.attachments.map((a) => (
               <DocumentRow
                 key={a.label}

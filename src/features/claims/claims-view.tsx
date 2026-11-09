@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, PartyPopper, SearchX, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -45,7 +45,8 @@ const tabOfStatus = (status: Status): TabId =>
 
 export function ClaimsView() {
   const { claims, sessionIds, simulateError, setSimulateError, reset, undoLast } = useClaims();
-  const { aiOpen, setAiOpen, setAiSession, addAiMessage, hasAiMessages, resetAi, setChatContext, setUiToolHandler, runAction, voiceOpen } = useWorkspace();
+  const { aiOpen, setAiOpen, setAiSession, addAiMessage, hasAiMessages, resetAi, setChatContext, setUiToolHandler, runAction, voiceOpen, homeRequest } = useWorkspace();
+  const seenHome = useRef(homeRequest);
 
   const [tab, setTab] = useState<TabId>("needs_review");
   const [filters, setFilters] = useState<ClaimFilters>(DEFAULT_FILTERS);
@@ -61,6 +62,14 @@ export function ClaimsView() {
   useEffect(() => {
     setChatContext(() => buildChatContext(claims, { tab, openClaimId: openId, detailsOpen: openId !== null && detailsOpen, detailsTab: moreTab, search: filters.query, voice: voiceOpen }));
     return () => setChatContext(null);
+  });
+
+  // The top bar logo asks for the Expenses list: close any open claim and return to the list.
+  useEffect(() => {
+    if (homeRequest !== seenHome.current) {
+      seenHome.current = homeRequest;
+      closeWorkspace();
+    }
   });
 
   // The screen tools the chat can run. Registered on every render so they always see the current state.
@@ -242,7 +251,7 @@ export function ClaimsView() {
             <ClaimsQueue
               claim={openClaim}
               allClaims={claims}
-              queueTitle={tab === "done" ? "Done Queue" : tab === "all" ? "All Claims" : "Claims Queue"}
+              queueTitle={tab === "done" ? "Done Queue" : tab === "all" ? "All Claims" : tab === "waiting" ? "Waiting on others" : "Claims Queue"}
               position={position}
               onPrev={scopeIndex > 0 ? () => step(-1) : undefined}
               onNext={scopeIndex < scopeIds.length - 1 ? () => step(1) : undefined}
@@ -316,7 +325,7 @@ export function ClaimsView() {
               onReviewAll={reviewDone}
             />
           ) : null
-        ) : !briefDismissed.has("needs_review") ? (
+        ) : tab !== "waiting" && !briefDismissed.has("needs_review") ? (
           <AiBriefBanner
             title={`Daily brief, ${brief.dateLabel}`}
             text={briefSentence(brief)}
