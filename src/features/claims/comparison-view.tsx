@@ -9,11 +9,14 @@ const DOT: Record<Half["tone"], string> = {
   info: "bg-primary",
 };
 
-function HalfView({ half }: { half: Half }) {
+/** Same colors as the scale bar: the lower value is the green part, the higher one is the red gap. */
+const SCALE_DOT = { low: "bg-success/50", high: "bg-danger-border/70" };
+
+function HalfView({ half, dot }: { half: Half; dot: string }) {
   return (
     <div className="min-w-0 px-6 py-5">
       <div className="flex items-center gap-2 font-medium text-foreground/80">
-        <span aria-hidden className={cn("size-2.5 rounded-full", DOT[half.tone])} />
+        <span aria-hidden className={cn("size-2.5 rounded-full", dot)} />
         {half.label}
       </div>
       {half.amount !== undefined ? (
@@ -57,6 +60,9 @@ function GapScale({ scale }: { scale: NonNullable<Comparison["scale"]> }) {
 }
 
 export function ComparisonView({ comparison }: { comparison: Comparison }) {
+  const lowIsLeft = (comparison.left.amount ?? 0) <= (comparison.right.amount ?? 0);
+  const leftDot = comparison.scale ? (lowIsLeft ? SCALE_DOT.low : SCALE_DOT.high) : DOT[comparison.left.tone];
+  const rightDot = comparison.scale ? (lowIsLeft ? SCALE_DOT.high : SCALE_DOT.low) : DOT[comparison.right.tone];
   return (
     <div>
       {comparison.kind === "identity" && comparison.records ? (
@@ -85,9 +91,9 @@ export function ComparisonView({ comparison }: { comparison: Comparison }) {
         </div>
       ) : (
         <div className="grid grid-cols-[1fr_1px_1fr] border-y">
-          <HalfView half={comparison.left} />
+          <HalfView half={comparison.left} dot={leftDot} />
           <div className="bg-border" />
-          <HalfView half={comparison.right} />
+          <HalfView half={comparison.right} dot={rightDot} />
         </div>
       )}
       {comparison.scale ? <GapScale scale={comparison.scale} /> : null}

@@ -47,7 +47,6 @@ export function ClaimsView() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [openId, setOpenId] = useState<string | null>(null);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [moreTab, setMoreTab] = useState<MoreTab>("overview");
 
   const brief = useMemo(() => buildDailyBrief(claims), [claims]);
@@ -82,13 +81,11 @@ export function ClaimsView() {
 
   function closeWorkspace() {
     setOpenId(null);
-    setMoreOpen(false);
   }
 
   function openMore(nextTab: MoreTab = "overview") {
     track("more_info_opened", { tab: nextTab });
     setMoreTab(nextTab);
-    setMoreOpen(true);
   }
 
   // After a decision, move on: to the next claim in the group, or close when there is none (PRD FR-ACT-1).
@@ -284,14 +281,12 @@ export function ClaimsView() {
         allClaims={claims}
         position={position}
         spotCheckPosition={spotCheckPosition}
-        moreOpen={moreOpen}
         moreTab={moreTab}
         aiOpen={aiOpen}
         onPrev={scopeIndex > 0 ? () => step(-1) : undefined}
         onNext={scopeIndex < scopeIds.length - 1 ? () => step(1) : undefined}
         onClose={closeWorkspace}
         onOpenMore={openMore}
-        onCloseMore={() => setMoreOpen(false)}
         onMoreTab={setMoreTab}
         onOpenClaim={openClaimById}
         onSetAi={setAiOpen}

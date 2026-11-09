@@ -59,7 +59,7 @@ function NavItems({ items, needsReview }: { items: NavItem[]; needsReview: numbe
             onClick={active ? undefined : () => notInPrototype(label)}
           >
             <Icon />
-            <span>{label}</span>
+            <span className="group-data-[collapsible=icon]:hidden">{label}</span>
           </SidebarMenuButton>
           {active && needsReview > 0 ? <SidebarMenuBadge>{needsReview}</SidebarMenuBadge> : null}
         </SidebarMenuItem>

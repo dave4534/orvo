@@ -2958,8 +2958,8 @@
       "agent": {
         "outcome": "escalated",
         "reason_type": "receipt_missing_unresolved",
-        "headline": "No receipt after two requests",
-        "explanation": "$48.50 is over the $25 receipt limit. Wei says the receipt was left in the taxi and sent a card statement that shows $48.50 at Bayline Taxi on 12 Nov, which matches the claim. A statement is not a receipt under the policy, so the agent can't approve it.",
+        "headline": "$48.50 has no receipt, over the $25.00 limit",
+        "explanation": "Policy needs a receipt, and a card statement isn't one.",
         "cited_rule_ids": [
           "receipt_required"
         ],
@@ -3012,7 +3012,7 @@
           }
         ],
         "unsure": false,
-        "needs_from_noa": "Accept the card statement in place of a receipt, or hold out for a receipt from the taxi company.",
+        "needs_from_noa": "Accept the statement instead of a receipt?",
         "policy_version": "v3",
         "decided_at": "2026-11-14T08:01:00",
         "chase": {
@@ -3182,8 +3182,8 @@
       "agent": {
         "outcome": "escalated",
         "reason_type": "over_finance_threshold",
-        "headline": "$1,224.53 needs your approval, then Finance",
-        "explanation": "In policy and the receipt matches. At SEK 11,640.00 (about $1,224.53) it is over $1,000, so it needs you first and then Finance.",
+        "headline": "$224.53 over the $1,000.00 Finance limit",
+        "explanation": "Over $1,000.00 needs Finance after you, so Orvo can't finish it.",
         "cited_rule_ids": [
           "finance_over_1000"
         ],
@@ -3243,7 +3243,7 @@
           }
         ],
         "unsure": false,
-        "needs_from_noa": "Approve to send it on to Finance, or decline.",
+        "needs_from_noa": "Approve to send it to Finance, or decline?",
         "policy_version": "v3",
         "decided_at": "2026-11-13T07:52:00",
         "chase": null,
@@ -3376,8 +3376,8 @@
       "agent": {
         "outcome": "escalated",
         "reason_type": "unusual_amount",
-        "headline": "Ride is 3.6x the usual airport fare this week",
-        "explanation": "No policy limit applies, but $187.40 is 3.6 times the median of the other SFO rides this week ($52.30). The receipt shows a 3.2x surge at 00:48, which fits Fatima's note.",
+        "headline": "Ride is 3.6x the usual fare this week",
+        "explanation": "No policy limit applies. The 3.2x surge fits Fatima's note, but Orvo can't confirm it.",
         "cited_rule_ids": [],
         "facts": [
           {
@@ -4213,8 +4213,8 @@
       "agent": {
         "outcome": "escalated",
         "reason_type": "currency_mismatch",
-        "headline": "Claim is $62.70 higher than the receipt converts to",
-        "explanation": "Receipt is €795.00. At the 12 Nov rate (1.0800) that is $858.60. The claim is $921.30, which is $62.70 (7.3%) more. The tolerance is 3%. A card foreign-transaction fee could explain it, but the receipt doesn't show one.",
+        "headline": "$62.70 over the converted receipt",
+        "explanation": "The gap is 7.3%, above the 3% tolerance, and no card fee is shown.",
         "cited_rule_ids": [],
         "facts": [
           {
@@ -4280,7 +4280,7 @@
           }
         ],
         "unsure": false,
-        "needs_from_noa": "Pay the receipt amount ($858.60) or the card statement amount ($921.30)?",
+        "needs_from_noa": "Pay the receipt's $858.60, or the statement's $921.30?",
         "policy_version": "v3",
         "decided_at": "2026-11-13T10:17:00",
         "chase": null,
@@ -4544,8 +4544,8 @@
       "agent": {
         "outcome": "escalated",
         "reason_type": "possible_split",
-        "headline": "Together with a claim from 11 minutes earlier, this is over $1,000",
-        "explanation": "Carmen filed $540.00 (approved) and this $498.00 claim, both to MONO Music Conference, 11 minutes apart. Together they are $1,038.00. Each is under the $1,000 Finance limit, but together they would not be. They have separate invoice numbers, so this may be two real workshops.",
+        "headline": "$1,038.00 together, over the $1,000.00 limit",
+        "explanation": "Each is under $1,000.00, and Orvo can't tell if it was split.",
         "cited_rule_ids": [
           "finance_over_1000"
         ],
@@ -4605,7 +4605,7 @@
           }
         ],
         "unsure": false,
-        "needs_from_noa": "Two separate workshops, or one purchase split to stay under $1,000?",
+        "needs_from_noa": "Two workshops, or one split purchase?",
         "policy_version": "v3",
         "decided_at": "2026-11-13T12:17:00",
         "chase": null,
@@ -6225,7 +6225,7 @@
         "outcome": "escalated",
         "reason_type": "no_matching_rule",
         "headline": "Concert tickets: no policy covers this",
-        "explanation": "Nine tickets to the Red Hot Chili Peppers on 14 Nov, $943.65 with fees. The policy has no rule for entertainment, and the only note is \"team culture\". The agent can't tell whether this is an approved team event.",
+        "explanation": "No rule covers entertainment, and Orvo can't confirm it was a team event.",
         "cited_rule_ids": [],
         "facts": [
           {
@@ -6291,7 +6291,7 @@
           }
         ],
         "unsure": true,
-        "needs_from_noa": "Was this team event approved, and should the company pay for it?",
+        "needs_from_noa": "Approve it as a team event, or decline?",
         "policy_version": "v3",
         "decided_at": "2026-11-15T08:54:00",
         "chase": null,
@@ -6704,8 +6704,8 @@
       "agent": {
         "outcome": "escalated",
         "reason_type": "over_meal_cap",
-        "headline": "Dinner is $5.00 per person over the meal cap",
-        "explanation": "9 people, $585.00 with tax and tip, so $65.00 each against the $60 cap. The bill is uneven: one $72.00 bottle of wine was ordered and one person left before dessert. Without the wine it would be $54.87 each.",
+        "headline": "Dinner is $5.00 each over the meal cap",
+        "explanation": "Over the cap, so Orvo can't approve it. Without the wine, $54.87 each.",
         "cited_rule_ids": [
           "meal_cap"
         ],
@@ -6777,7 +6777,7 @@
           }
         ],
         "unsure": false,
-        "needs_from_noa": "Pay the full $585.00 as an exception, pay up to the cap ($540.00), or ask Marco to cover the wine.",
+        "needs_from_noa": "Pay $585.00 as an exception, or cap at $540.00?",
         "policy_version": "v3",
         "decided_at": "2026-11-15T21:42:00",
         "chase": null,
