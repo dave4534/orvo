@@ -251,7 +251,7 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
               <div className="flex items-start gap-3">
                 <Checkbox id="fix-tell-orvo" checked={tellOrvo} onCheckedChange={(c) => setTellOrvo(c)} className="mt-0.5" />
                 <Label htmlFor="fix-tell-orvo" className="flex flex-col items-start gap-0.5 font-normal">
-                  <span className="font-semibold">Record what went wrong</span>
+                  <span className="font-semibold">Submit feedback</span>
                   <span className="text-xs text-muted-foreground">Recorded as &quot;{chosen?.tag}&quot; on this claim, so the pattern is on file.</span>
                 </Label>
               </div>

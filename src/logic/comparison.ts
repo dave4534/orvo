@@ -24,9 +24,9 @@ export type Comparison = {
   scale?: { max: number; marks: { value: number; label: string }[] };
   /** One plain sentence that states the gap. */
   sentence: string;
+  /** True when the receipt and the approval agree. The view marks it with a green check. */
+  matches?: boolean;
   evidence: { label: string; value: string }[];
-  /** For identity comparisons: the two records side by side. */
-  records?: { leftTitle: string; rightTitle: string; rows: ComparisonRow[] };
 };
 
 const SYMBOL: Record<string, string> = { USD: "$", EUR: "€", SEK: "SEK " };
@@ -85,8 +85,8 @@ function identityComparison(claim: LocalClaim, other: LocalClaim): Comparison {
     sentence: sameRide
       ? `Same ride ID on both claims, so this is the same trip claimed twice.`
       : `Same fare and route as ${otherEmployee}, but a different ride ID and pickup.`,
-    evidence: [],
-    records: { leftTitle: `${other.id}, ${otherName}`, rightTitle: `${claim.id}, ${firstName(claim)}`, rows },
+    // The fields side by side, one line each: the earlier value, then this claim's value when it differs.
+    evidence: rows.map((r) => ({ label: r.label, value: r.differs ? `${r.left}, now ${r.right}` : r.left })),
   };
 }
 
@@ -225,6 +225,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
       right: { label: "Approved", tone: "good", amount: paid, sub: claim.noa.overrode_agent ? `Automatically approved at ${formatUsd(claimed)}` : "Amount approved" },
       scale: scaleFor(total, paid),
       sentence: diff < 0.005 ? "Receipt and approval match." : `You approved ${formatUsd(paid)}, ${formatUsd(diff)} ${paid < total ? "less" : "more"} than the receipt.`,
+      matches: diff < 0.005,
       evidence: [],
     };
   }
@@ -269,6 +270,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
         right: { label: "Approved", tone: "good", amount: paid, sub: claim.status === "approved_by_noa" ? "Amount approved" : "Total read from receipt" },
         scale: scaleFor(doc.total, paid),
         sentence: Math.abs(doc.total - paid) < 0.005 ? "Receipt and approval match." : `You approved ${formatUsd(paid)}, ${formatUsd(Math.abs(doc.total - paid))} ${paid < doc.total ? "less" : "more"} than the receipt.`,
+        matches: Math.abs(doc.total - paid) < 0.005,
         evidence: [],
       };
     }

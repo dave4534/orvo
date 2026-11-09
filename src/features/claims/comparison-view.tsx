@@ -1,4 +1,5 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Check } from "lucide-react";
+
 import { formatUsd } from "@/logic/format";
 import type { Comparison, Half } from "@/logic/comparison";
 import { cn } from "@/lib/utils";
@@ -66,39 +67,20 @@ export function ComparisonView({ comparison }: { comparison: Comparison }) {
   const rightDot = comparison.scale ? (noGap || !lowIsLeft ? SCALE_DOT.low : SCALE_DOT.high) : DOT[comparison.right.tone];
   return (
     <div>
-      {comparison.kind === "identity" && comparison.records ? (
-        <div className="px-6 pt-5">
-          <Table className="table-fixed">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[28%]">Field</TableHead>
-                <TableHead>{comparison.records.leftTitle}</TableHead>
-                <TableHead>{comparison.records.rightTitle}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {comparison.records.rows.map((row) => (
-                <TableRow key={row.label}>
-                  <TableCell className="text-muted-foreground">{row.label}</TableCell>
-                  <TableCell className="break-words whitespace-normal">{row.left}</TableCell>
-                  <TableCell className={cn("break-words whitespace-normal", row.differs && "bg-warning font-semibold text-warning-foreground")}>
-                    {row.right}
-                    {row.differs ? <span className="sr-only"> (differs)</span> : null}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      ) : (
-        <div className="grid grid-cols-[1fr_1px_1fr] border-y">
-          <HalfView half={comparison.left} dot={leftDot} />
-          <div className="bg-border" />
-          <HalfView half={comparison.right} dot={rightDot} />
-        </div>
-      )}
+      <div className="grid grid-cols-[1fr_1px_1fr] border-y">
+        <HalfView half={comparison.left} dot={leftDot} />
+        <div className="bg-border" />
+        <HalfView half={comparison.right} dot={rightDot} />
+      </div>
       {comparison.scale ? <GapScale scale={comparison.scale} /> : null}
-      <p className={cn("px-6 pb-3 text-base font-semibold text-balance", comparison.scale ? "pt-8" : "pt-5")}>{comparison.sentence}</p>
+      <p className={cn("flex items-center gap-2 px-6 pb-3 text-base font-semibold text-balance", comparison.scale ? "pt-11" : "pt-5")}>
+        {comparison.matches ? (
+          <span aria-hidden className="flex size-5 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground">
+            <Check className="size-3.5" strokeWidth={3} />
+          </span>
+        ) : null}
+        {comparison.sentence}
+      </p>
       {comparison.evidence.length > 0 ? (
         <dl className="mx-6 mb-4 flex flex-col gap-1.5 rounded-lg bg-muted/60 p-3 text-sm">
           {comparison.evidence.map((e) => (
