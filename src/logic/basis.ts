@@ -23,7 +23,6 @@ const firstCheck = (checks: Check[], pick: (c: Check) => boolean) => checks.find
 const REASON_LABEL: Partial<Record<ReasonType, string>> = {
   possible_duplicate: "Duplicate",
   over_meal_cap: "Over meal cap",
-  unusual_pattern: "Unusual pattern",
 };
 
 const reasonLabel = (reason: ReasonType) => REASON_LABEL[reason] ?? dataset.enums.reason_type[reason] ?? "Reviewed";

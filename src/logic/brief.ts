@@ -5,7 +5,7 @@ import { daysOverTarget, WAIT_TARGET_DAYS } from "./wait";
 
 // UI-layer fixture (PRD 9.1): reasons where Orvo's evidence points to a routine approval.
 // Everything else is a judgment call.
-const QUICK_APPROVAL_REASONS: ReasonType[] = ["over_finance_threshold", "unusual_amount"];
+const QUICK_APPROVAL_REASONS: ReasonType[] = ["over_finance_threshold"];
 
 const RECEIPT_REASONS: ReasonType[] = ["receipt_missing", "receipt_unreadable", "receipt_missing_unresolved"];
 

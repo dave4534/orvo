@@ -19,7 +19,7 @@ export const UI_TOOLS = [
   { name: "reviewAll", surface: "Claims list", control: "Brief banner: Review all" },
   { name: "selectClaims", surface: "Claims list", control: "Row checkboxes and the select all checkbox" },
   { name: "bulkAction", surface: "Claims list", control: "Bulk Approve and Decline buttons beside the filters, shown when two or more claims are selected" },
-  { name: "skipAhead", surface: "Claims list", control: "Skip ahead 14 days button beside the filters on Waiting on others (demo clock: waits end and their claims return to Needs review)" },
+  { name: "skipAhead", surface: "Claims list", control: "Skip ahead 1 day button beside the filters on Waiting on others (demo clock: waits end and their claims return to Needs review)" },
   { name: "toggleSection", surface: "Claims list", control: "Collapsible groups in the table" },
   { name: "openClaim", surface: "Claims list", control: "Review button on a row" },
   // Claim page

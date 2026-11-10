@@ -11,7 +11,6 @@ The comparison in the triage card is built in `src/logic/comparison.ts`. Every c
 | Reason | Left half | Right half | Sentence |
 |---|---|---|---|
 | Possible duplicate | Ride ID, earlier claim | Ride ID, this claim | "Same ride ID on both, so the trip is claimed twice." or "Ride IDs differ, so these look like two rides." |
-| Repeat purchase | Earlier purchase and amount | This purchase and amount | "Second monitor in 34 days. No rule covers repeats." |
 | Receipt missing | Policy limit | Claim | "$23.50 over the no-receipt limit." |
 | Meal cap | Cap for the people on the receipt | Claim | "$45.00 over the meal cap in total." |
 | Week over $1,000 | Finance limit | The week's total | "$296.71 over the weekly Finance limit." |

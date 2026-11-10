@@ -24,6 +24,7 @@ import type { Status } from "@/data/types";
 import { actionPreview, firstName, type ActionId, type ActionInput } from "@/logic/actions";
 import { buildComparison, employeeName } from "@/logic/comparison";
 import { claimStatusLabel, formatUsd, initials } from "@/logic/format";
+import { dayCount } from "@/logic/time";
 import { daysOverTarget, formatDuration, isOpen, WAIT_TARGET_DAYS, waitingFor } from "@/logic/wait";
 import { isAgentDecided, isSpotCheck, isWaitOver, type LocalClaim } from "@/logic/local";
 import { allActionsFor, assess, moreOptionsFor, recommendationFor, type ActionSpec } from "@/logic/recommendations";
@@ -340,19 +341,18 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
               // The wait ended: say so, and how many times it was already extended, so a loop is visible.
               <p className="mx-6 mb-4 rounded-lg bg-muted/60 p-3 text-sm">
                 {wait.kind === "finance"
-                  ? `Back in the queue. No decision from Finance after ${wait.days} working days (since ${formatDay(wait.since)}).`
-                  : `Back in the queue. The ${wait.days}-day wait for ${name} ended ${formatDay(wait.until)}.`}
+                  ? `Back in the queue. No decision from Finance after ${dayCount(wait.days)} (working), since ${formatDay(wait.since)}.`
+                  : `Back in the queue. The wait for ${name} ended ${formatDay(wait.until)}.`}
                 {wait.extensions > 0 ? ` Waited ${wait.extensions + 1} times already.` : ""}
               </p>
             ) : claim.status === "waiting_on_employee" && wait ? (
               <p className="mx-6 mb-4 rounded-lg bg-muted/60 p-3 text-sm">
-                Waiting on {name} for {wait.days} days. Back in the queue {formatDay(wait.until)}.
+                Waiting on {name} for {dayCount(wait.days)}. The agent keeps asking. Back in the queue {formatDay(wait.until)}.
               </p>
             ) : claim.status === "waiting_on_employee" && chase ? (
               <p className="mx-6 mb-4 rounded-lg bg-muted/60 p-3 text-sm">
-                Waiting on {name}. {chase.attempts.length} of {chase.max_attempts} requests sent.{" "}
-                {chase.next_attempt_at ? `Next request ${formatDay(chase.next_attempt_at)}. ` : "No requests left. "}
-                Passes to review {formatDay(chase.escalates_at)}.
+                Waiting on {name}. {chase.attempts.length} {chase.attempts.length === 1 ? "request" : "requests"} sent, one a day until there is a reply.
+                {chase.next_attempt_at ? ` Next request ${formatDay(chase.next_attempt_at)}.` : ""}
               </p>
             ) : null}
           </div>

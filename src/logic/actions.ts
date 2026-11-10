@@ -4,7 +4,7 @@ import { displayName, formatUsd } from "./format";
 import { NOW } from "@/data";
 import { isAgentDecided, type ClaimWait, type LocalClaim, type LocalEvent } from "./local";
 import { FINANCE_LIMIT, FINANCE_NUDGE_WORKING_DAYS, needsFinance, waitDays, weeklyFacts } from "./policy";
-import { addDays, addWorkingDays, formatDay, isoLocal } from "./time";
+import { addDays, addWorkingDays, dayCount, formatDay, isoLocal } from "./time";
 
 export { isoLocal } from "./time";
 
@@ -151,10 +151,10 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
       const days = claim.local?.wait?.days ?? waitDays(claim.agent.reason_type, input.id);
       if (input.id === "wait") {
         // Waiting writes nothing to the employee. The agent keeps asking for the receipt while the claim is parked.
-        claim.events.push(event(at, "noa_asked", `Waiting ${days} days for a receipt. The agent keeps asking ${name}.`));
-        return { changed, summary: `Waiting ${days} days for ${name}'s receipt. Back in the queue ${formatDay(until)}` };
+        claim.events.push(event(at, "noa_asked", `Waiting ${dayCount(days)} for a receipt. The agent keeps asking ${name}.`));
+        return { changed, summary: `Waiting ${dayCount(days)} for ${name}'s receipt. Back in the queue ${formatDay(until)}` };
       }
-      claim.events.push(event(at, "noa_asked", `Asked ${name}: ${input.message ?? ""}`.trim() + ` Waiting ${days} days.`));
+      claim.events.push(event(at, "noa_asked", `Asked ${name}: ${input.message ?? ""}`.trim() + ` Waiting ${dayCount(days)}.`));
       addToThread(claim, at, input.message);
       return { changed, summary: `Asked ${name}. Back in the queue ${formatDay(until)}` };
     }

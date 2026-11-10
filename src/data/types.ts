@@ -24,10 +24,11 @@ export type Status =
   | "declined_by_agent" | "declined_by_noa"
   | "waiting_on_employee" | "waiting_on_noa" | "waiting_on_finance";
 
+/** Why a claim came to review. Each one is read against one of the three policies (meals, receipt, Finance). */
 export type ReasonType =
   | "within_policy" | "over_meal_cap" | "receipt_missing" | "receipt_unreadable"
-  | "receipt_missing_unresolved" | "over_finance_threshold" | "no_matching_rule"
-  | "currency_mismatch" | "possible_duplicate" | "possible_split" | "unusual_amount" | "unusual_pattern";
+  | "receipt_missing_unresolved" | "over_finance_threshold"
+  | "currency_mismatch" | "possible_duplicate" | "possible_split";
 
 export type CheckResult = "pass" | "fail" | "flag" | "unsure" | "skipped";
 export type RuleId = "meal_cap" | "receipt_required" | "finance_over_1000";
@@ -107,11 +108,9 @@ export interface Agent {
   policy_version: string;
   decided_at: string;
   chase: null | {
-    max_attempts: number;
     status: "waiting" | "unresolved";
     attempts: ChaseAttempt[];
     next_attempt_at: string | null;
-    escalates_at: string;
   };
   related_claim_ids: string[];
 }

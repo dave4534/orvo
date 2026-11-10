@@ -106,9 +106,10 @@ export type ReceiptException = {
 export function receiptException(claim: LocalClaim): ReceiptException {
   const statement = claim.receipt.attachments.find((a) => /statement/i.test(a.kind) || /statement/i.test(a.label));
   const chase = claim.agent.chase;
-  const chased = Boolean(chase && (chase.status === "unresolved" || chase.attempts.length >= chase.max_attempts));
+  // The agent asks every day, so the employee has been asked as much as they can be once they reply that they cannot supply a receipt.
+  const chased = chase?.status === "unresolved";
   const claimed = claim.amount.usd_claimed;
-  const blockedBy = claimed > EXCEPTION_CEILING ? "over the ceiling" : !statement ? "no card statement" : !chased ? "requests still going out" : "";
+  const blockedBy = claimed > EXCEPTION_CEILING ? "over the ceiling" : !statement ? "no card statement" : !chased ? "the employee has not replied yet" : "";
   return { allowed: blockedBy === "", ceiling: EXCEPTION_CEILING, statement, blockedBy };
 }
 

@@ -86,21 +86,19 @@
       "source": "assumption",
       "auto_approve_when_all_checks_pass": true,
       "chase": {
-        "max_attempts": 2,
-        "hours_between_attempts": 24,
-        "escalate_after_hours_of_silence": 24
+        "hours_between_attempts": 24
       },
       "fx_tolerance_pct": 3,
       "unusual_amount_multiple_of_median": 3,
       "linked_claims_window_hours": 24,
-      "finance_nudge_working_days": 5,
+      "finance_nudge_working_days": 2,
       "wait_days": {
-        "receipt_missing": 14,
-        "receipt_missing_unresolved": 14,
-        "receipt_unreadable": 7,
-        "possible_duplicate": 7,
-        "unusual_amount": 3,
-        "ask": 7
+        "receipt_missing": 1,
+        "receipt_missing_unresolved": 1,
+        "receipt_unreadable": 1,
+        "possible_duplicate": 1,
+        "unusual_amount": 1,
+        "ask": 1
       }
     }
   },
@@ -195,12 +193,9 @@
       "receipt_unreadable": "Receipt unreadable",
       "receipt_missing_unresolved": "Receipt still missing",
       "over_finance_threshold": "Over $1,000, needs Finance",
-      "no_matching_rule": "No rule covers this",
       "currency_mismatch": "Currency doesn't match",
       "possible_duplicate": "Possible duplicate",
-      "possible_split": "Two claims may be one purchase",
-      "unusual_amount": "Unusual amount",
-      "unusual_pattern": "Unusual pattern"
+      "possible_split": "Two claims may be one purchase"
     },
     "policy_label": {
       "meal_cap": "Meals policy",
@@ -2262,7 +2257,7 @@
       "expense_date": "2026-11-11",
       "category": "equipment",
       "merchant": "Tech Depot",
-      "description": "27 inch monitor for home office",
+      "description": "32 inch 6K monitor for home office",
       "employee_note": "Better screen for design review.",
       "attendees": {
         "count": 1,
@@ -2272,10 +2267,10 @@
       },
       "amount": {
         "original": {
-          "value": 617.37,
+          "value": 1290.07,
           "currency": "USD"
         },
-        "usd_claimed": 617.37,
+        "usd_claimed": 1290.07,
         "fx": null
       },
       "receipt": {
@@ -2286,14 +2281,14 @@
           "currency": "USD",
           "lines": [
             {
-              "label": "ViewPro 27in 4K monitor",
-              "amount": 569
+              "label": "ViewPro 32in 6K monitor",
+              "amount": 1189
             }
           ],
-          "subtotal": 569,
-          "tax": 48.37,
+          "subtotal": 1189,
+          "tax": 101.07,
           "tip": 0,
-          "total": 617.37,
+          "total": 1290.07,
           "covers": null,
           "details": {}
         },
@@ -2303,14 +2298,14 @@
           "currency": "USD",
           "lines": [
             {
-              "label": "ViewPro 27in 4K monitor",
-              "amount": 569
+              "label": "ViewPro 32in 6K monitor",
+              "amount": 1189
             }
           ],
-          "subtotal": 569,
-          "tax": 48.37,
+          "subtotal": 1189,
+          "tax": 101.07,
           "tip": 0,
-          "total": 617.37,
+          "total": 1290.07,
           "covers": null,
           "details": {}
         },
@@ -2321,18 +2316,20 @@
       ],
       "agent": {
         "outcome": "escalated",
-        "reason_type": "unusual_pattern",
-        "headline": "Second monitor claimed in 34 days",
-        "explanation": "In policy, but Shiv claimed another monitor ($579.00) on 8 Oct. It can't be confirmed whether a second one is intended.",
-        "cited_rule_ids": [],
+        "reason_type": "over_finance_threshold",
+        "headline": "$290.07 over the Finance limit",
+        "explanation": "Clean claim, but the policy sends anything over $1,000 through the manager and then Finance.",
+        "cited_rule_ids": [
+          "finance_over_1000"
+        ],
         "facts": [
           {
-            "label": "Earlier claim",
-            "value": "Monitor, $579.00, 8 Oct"
+            "label": "Total",
+            "value": "$1,290.07"
           },
           {
-            "label": "Days apart",
-            "value": "34"
+            "label": "Over the limit by",
+            "value": "$290.07"
           }
         ],
         "checks": [
@@ -2347,33 +2344,26 @@
             "id": "amount_match",
             "label": "Amount matches receipt",
             "result": "pass",
-            "detail": "Receipt total $617.37 matches the claim.",
-            "rule_id": null
-          },
-          {
-            "id": "rule_coverage",
-            "label": "Policy",
-            "result": "flag",
-            "detail": "No rule covers repeat equipment purchases.",
+            "detail": "Receipt total $1,290.07 matches the claim.",
             "rule_id": null
           },
           {
             "id": "finance_threshold",
             "label": "Finance threshold",
-            "result": "pass",
-            "detail": "Under $1,000.",
+            "result": "flag",
+            "detail": "$1,290.07 is over $1,000.",
             "rule_id": "finance_over_1000"
           },
           {
             "id": "duplicate",
             "label": "Duplicate check",
             "result": "pass",
-            "detail": "Different item from the earlier claim.",
+            "detail": "No matching claim found.",
             "rule_id": null
           }
         ],
-        "unsure": true,
-        "needs_from_noa": "Decide whether a second monitor is okay.",
+        "unsure": false,
+        "needs_from_noa": "Approve to send it to Finance, or decline?",
         "policy_version": "v3",
         "decided_at": "2026-11-11T16:24:00",
         "chase": null,
@@ -2392,13 +2382,13 @@
         },
         {
           "step": "finance",
-          "state": "not_needed"
+          "state": "skipped"
         }
       ],
       "noa": {
         "decision": "declined",
         "decided_at": "2026-11-12T08:55:00",
-        "note": "You already have one from last month. Please use that or ask IT.",
+        "note": "Over $1,000 for a home office screen. Ask IT about a company monitor first.",
         "approved_amount_usd": 0,
         "overrode_agent": false
       },
@@ -2413,13 +2403,13 @@
           "at": "2026-11-11T16:24:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Sent for review: a second monitor in 34 days."
+          "text": "Sent for review: over $1,000, so Finance approves after the manager."
         },
         {
           "at": "2026-11-12T08:55:00",
           "actor": "noa",
           "type": "noa_decision",
-          "text": "Declined. Note: One was already issued last month. Use that one, or raise it with IT."
+          "text": "Declined. Note: Over $1,000 for a home office screen. Ask IT about a company monitor first."
         }
       ]
     },
@@ -2976,7 +2966,7 @@
         "outcome": "escalated",
         "reason_type": "receipt_missing_unresolved",
         "headline": "$48.50 has no receipt, over the $25.00 limit",
-        "explanation": "Policy needs a receipt, and a card statement isn't one.",
+        "explanation": "Wei says the receipt is lost. Policy needs a receipt, and a card statement isn't one, so only a person can accept it.",
         "cited_rule_ids": [
           "receipt_required"
         ],
@@ -3031,12 +3021,10 @@
         "unsure": false,
         "needs_from_noa": "Accept the statement instead of a receipt?",
         "policy_version": "v3",
-        "decided_at": "2026-11-14T08:01:00",
+        "decided_at": "2026-11-13T07:43:00",
         "chase": {
-          "max_attempts": 2,
           "status": "unresolved",
           "next_attempt_at": null,
-          "escalates_at": "2026-11-14T08:01:00",
           "attempts": [
             {
               "sent_at": "2026-11-12T22:11:00",
@@ -3086,7 +3074,7 @@
           "at": "2026-11-12T22:11:00",
           "actor": "agent",
           "type": "chase_sent",
-          "text": "Receipt requested from Wei (request 1 of 2)."
+          "text": "Receipt requested from Wei (request 1)."
         },
         {
           "at": "2026-11-13T07:40:00",
@@ -3098,13 +3086,13 @@
           "at": "2026-11-13T07:42:00",
           "actor": "agent",
           "type": "chase_sent",
-          "text": "Trip receipt requested from the taxi company (request 2 of 2)."
+          "text": "Trip receipt requested from the taxi company (request 2)."
         },
         {
-          "at": "2026-11-14T08:01:00",
+          "at": "2026-11-13T07:43:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "No reply after 24 hours. Sent for review."
+          "text": "Sent for review: the receipt is lost and a card statement can't replace it."
         }
       ]
     },
@@ -3303,14 +3291,15 @@
       "employee_id": "fatima",
       "submitted_at": "2026-11-13T08:10:00",
       "expense_date": "2026-11-12",
-      "category": "travel_ground",
-      "merchant": "Hop Rideshare",
-      "description": "Ride from SFO to the hotel after a late landing",
-      "employee_note": "Landed at 00:30 after the last shuttles stopped. Surge was 3.2x.",
+      "category": "meals",
+      "merchant": "Bay Street Grill",
+      "description": "Client dinner with the Northwind team",
+      "employee_note": "Dinner with the Northwind buyer after the keynote.",
       "attendees": {
-        "count": 1,
+        "count": 2,
         "ids": [
-          "fatima"
+          "fatima",
+          "ext_northwind"
         ]
       },
       "amount": {
@@ -3324,90 +3313,80 @@
       "receipt": {
         "status": "attached",
         "document": {
-          "merchant": "Hop Rideshare",
+          "merchant": "Bay Street Grill",
           "date": "2026-11-12",
           "currency": "USD",
           "lines": [
             {
-              "label": "Trip fare (includes 3.2x surge)",
-              "amount": 168.9
+              "label": "Entrees x2",
+              "amount": 124
             },
             {
-              "label": "Airport fee",
-              "amount": 7.5
-            },
-            {
-              "label": "Tip",
-              "amount": 11
+              "label": "Wine, 1 bottle",
+              "amount": 38
             }
           ],
-          "subtotal": 187.4,
-          "tax": 0,
-          "tip": 0,
+          "subtotal": 162,
+          "tax": 14.18,
+          "tip": 11.22,
           "total": 187.4,
-          "covers": null,
-          "details": {
-            "ride_id": "HR-70290",
-            "pickup": "SFO Airport",
-            "dropoff": "Harbor Street Hotel",
-            "surge_multiplier": 3.2,
-            "pickup_time": "00:48"
-          }
+          "covers": 2,
+          "details": {}
         },
         "agent_read": {
-          "merchant": "Hop Rideshare",
+          "merchant": "Bay Street Grill",
           "date": "2026-11-12",
           "currency": "USD",
           "lines": [
             {
-              "label": "Trip fare (includes 3.2x surge)",
-              "amount": 168.9
+              "label": "Entrees x2",
+              "amount": 124
             },
             {
-              "label": "Airport fee",
-              "amount": 7.5
-            },
-            {
-              "label": "Tip",
-              "amount": 11
+              "label": "Wine, 1 bottle",
+              "amount": 38
             }
           ],
-          "subtotal": 187.4,
-          "tax": 0,
-          "tip": 0,
+          "subtotal": 162,
+          "tax": 14.18,
+          "tip": 11.22,
           "total": 187.4,
-          "covers": null,
-          "details": {
-            "ride_id": "HR-70290",
-            "pickup": "SFO Airport",
-            "dropoff": "Harbor Street Hotel",
-            "surge_multiplier": 3.2,
-            "pickup_time": "00:48"
-          }
+          "covers": 2,
+          "details": {}
         },
         "attachments": []
       },
       "story_moments": [
-        1
+        2
       ],
       "agent": {
         "outcome": "escalated",
-        "reason_type": "unusual_amount",
-        "headline": "Ride is 3.6x the usual fare this week",
-        "explanation": "No policy limit applies. The 3.2x surge fits Fatima's note, but it can't be confirmed.",
-        "cited_rule_ids": [],
+        "reason_type": "over_meal_cap",
+        "headline": "Dinner is $33.70 per person over the meal cap",
+        "explanation": "2 people, $187.40, so $93.70 each against the $60 cap. Receipt matches the claim.",
+        "cited_rule_ids": [
+          "meal_cap"
+        ],
         "facts": [
           {
-            "label": "Claimed",
-            "value": "$187.40"
+            "label": "People",
+            "value": "2"
           },
           {
-            "label": "Median of other SFO rides this week",
-            "value": "$52.30"
+            "label": "Per person",
+            "value": "$93.70"
           },
           {
-            "label": "Surge",
-            "value": "3.2x at 00:48"
+            "label": "Cap",
+            "value": "$60.00"
+          },
+          {
+            "label": "Over by",
+            "value": "$67.40 in total"
+          },
+          {
+            "label": "Wine on the bill",
+            "value": "$38.00, 1 bottle"
           }
         ],
         "checks": [
@@ -3426,11 +3405,11 @@
             "rule_id": null
           },
           {
-            "id": "amount_typical",
-            "label": "Typical amount",
-            "result": "flag",
-            "detail": "3.6 times the median airport ride this week.",
-            "rule_id": null
+            "id": "meal_cap",
+            "label": "Meal cap",
+            "result": "fail",
+            "detail": "$93.70 per person is $33.70 over the $60 cap.",
+            "rule_id": "meal_cap"
           },
           {
             "id": "finance_threshold",
@@ -3448,7 +3427,7 @@
           }
         ],
         "unsure": false,
-        "needs_from_noa": "Accept the surge fare?",
+        "needs_from_noa": "Pay the $120.00 cap, or accept the full $187.40?",
         "policy_version": "v3",
         "decided_at": "2026-11-13T08:12:00",
         "chase": null,
@@ -3482,7 +3461,7 @@
           "at": "2026-11-13T08:12:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Sent for review: 3.6 times the usual airport fare."
+          "text": "Sent for review: $33.70 per person over the meal cap."
         }
       ]
     },
@@ -4232,7 +4211,9 @@
         "reason_type": "currency_mismatch",
         "headline": "$62.70 over the converted receipt",
         "explanation": "The gap is 7.3%, above the 3% tolerance, and no card fee is shown.",
-        "cited_rule_ids": [],
+        "cited_rule_ids": [
+          "receipt_required"
+        ],
         "facts": [
           {
             "label": "Receipt",
@@ -5372,7 +5353,7 @@
         "outcome": "chasing",
         "reason_type": "receipt_missing",
         "headline": "Waiting for a receipt",
-        "explanation": "$31.20 is over the $25 receipt limit and nothing is attached. Two requests have been sent. It passes to review if there is no reply by Mon 16 Nov, 13:41.",
+        "explanation": "$31.20 is over the $25 receipt limit and nothing is attached. Two requests have been sent, one a day. The next goes out Mon 16 Nov at 13:41, and they continue every day until there is a reply.",
         "cited_rule_ids": [
           "receipt_required"
         ],
@@ -5410,7 +5391,6 @@
         "policy_version": "v3",
         "decided_at": "2026-11-14T13:41:00",
         "chase": {
-          "max_attempts": 2,
           "status": "waiting",
           "attempts": [
             {
@@ -5424,8 +5404,7 @@
               "reply": null
             }
           ],
-          "next_attempt_at": null,
-          "escalates_at": "2026-11-16T13:41:00"
+          "next_attempt_at": "2026-11-16T13:41:00"
         },
         "related_claim_ids": []
       },
@@ -5457,13 +5436,13 @@
           "at": "2026-11-14T13:41:00",
           "actor": "agent",
           "type": "chase_sent",
-          "text": "Receipt requested from Fatima (request 1 of 2)."
+          "text": "Receipt requested from Fatima (request 1)."
         },
         {
           "at": "2026-11-15T13:41:00",
           "actor": "agent",
           "type": "chase_sent",
-          "text": "Receipt requested from Fatima (request 2 of 2)."
+          "text": "Receipt requested from Fatima (request 2)."
         }
       ]
     },
@@ -6173,10 +6152,10 @@
       },
       "amount": {
         "original": {
-          "value": 943.65,
+          "value": 1099.35,
           "currency": "USD"
         },
-        "usd_claimed": 943.65,
+        "usd_claimed": 1099.35,
         "fx": null
       },
       "receipt": {
@@ -6188,17 +6167,17 @@
           "lines": [
             {
               "label": "Red Hot Chili Peppers, Bayfront Arena, 14 Nov, x9",
-              "amount": 864
+              "amount": 1008
             },
             {
               "label": "Service fees",
-              "amount": 79.65
+              "amount": 91.35
             }
           ],
-          "subtotal": 943.65,
+          "subtotal": 1099.35,
           "tax": 0,
           "tip": 0,
-          "total": 943.65,
+          "total": 1099.35,
           "covers": null,
           "details": {
             "event": "Red Hot Chili Peppers",
@@ -6214,17 +6193,17 @@
           "lines": [
             {
               "label": "Red Hot Chili Peppers, Bayfront Arena, 14 Nov, x9",
-              "amount": 864
+              "amount": 1008
             },
             {
               "label": "Service fees",
-              "amount": 79.65
+              "amount": 91.35
             }
           ],
-          "subtotal": 943.65,
+          "subtotal": 1099.35,
           "tax": 0,
           "tip": 0,
-          "total": 943.65,
+          "total": 1099.35,
           "covers": null,
           "details": {
             "event": "Red Hot Chili Peppers",
@@ -6240,22 +6219,24 @@
       ],
       "agent": {
         "outcome": "escalated",
-        "reason_type": "no_matching_rule",
-        "headline": "Concert tickets: no policy covers this",
-        "explanation": "No rule covers entertainment, and it can't be confirmed as a team event.",
-        "cited_rule_ids": [],
+        "reason_type": "over_finance_threshold",
+        "headline": "$99.35 over the Finance limit",
+        "explanation": "Clean claim, but the policy sends anything over $1,000 through the manager and then Finance.",
+        "cited_rule_ids": [
+          "finance_over_1000"
+        ],
         "facts": [
           {
             "label": "Tickets",
-            "value": "9 at $96.00"
+            "value": "9 at $112.00"
           },
           {
             "label": "Fees",
-            "value": "$79.65"
+            "value": "$91.35"
           },
           {
             "label": "Total",
-            "value": "$943.65"
+            "value": "$1,099.35"
           },
           {
             "label": "Paid by",
@@ -6266,8 +6247,8 @@
             "value": "team culture"
           },
           {
-            "label": "Under the Finance limit by",
-            "value": "$56.35"
+            "label": "Over the limit by",
+            "value": "$99.35"
           }
         ],
         "checks": [
@@ -6282,21 +6263,14 @@
             "id": "amount_match",
             "label": "Amount matches receipt",
             "result": "pass",
-            "detail": "Receipt total $943.65 matches the claim.",
-            "rule_id": null
-          },
-          {
-            "id": "rule_coverage",
-            "label": "Policy",
-            "result": "unsure",
-            "detail": "No rule covers entertainment or team events.",
+            "detail": "Receipt total $1,099.35 matches the claim.",
             "rule_id": null
           },
           {
             "id": "finance_threshold",
             "label": "Finance threshold",
-            "result": "pass",
-            "detail": "Under $1,000.",
+            "result": "flag",
+            "detail": "$1,099.35 is over $1,000.",
             "rule_id": "finance_over_1000"
           },
           {
@@ -6307,8 +6281,8 @@
             "rule_id": null
           }
         ],
-        "unsure": true,
-        "needs_from_noa": "Approve it as a team event, or decline?",
+        "unsure": false,
+        "needs_from_noa": "Approve to send it to Finance, or decline?",
         "policy_version": "v3",
         "decided_at": "2026-11-15T08:54:00",
         "chase": null,
@@ -6327,7 +6301,7 @@
         },
         {
           "step": "finance",
-          "state": "not_needed"
+          "state": "waiting"
         }
       ],
       "noa": null,
@@ -6342,7 +6316,7 @@
           "at": "2026-11-15T08:54:00",
           "actor": "agent",
           "type": "agent_decision",
-          "text": "Sent for review: no rule covers entertainment."
+          "text": "Sent for review: over $1,000, so Finance approves after the manager."
         }
       ]
     },
@@ -6406,7 +6380,7 @@
         "outcome": "chasing",
         "reason_type": "receipt_unreadable",
         "headline": "Waiting for a clearer receipt photo",
-        "explanation": "The photo cuts off the total, so $26.40 can't be confirmed. A clearer photo was requested once. A second request goes out Mon 16 Nov at 08:59.",
+        "explanation": "The photo cuts off the total, so $26.40 can't be confirmed. A clearer photo was requested once. The next request goes out Mon 16 Nov at 08:59, and they continue every day until there is a reply.",
         "cited_rule_ids": [
           "receipt_required"
         ],
@@ -6444,7 +6418,6 @@
         "policy_version": "v3",
         "decided_at": "2026-11-15T08:59:00",
         "chase": {
-          "max_attempts": 2,
           "status": "waiting",
           "attempts": [
             {
@@ -6453,8 +6426,7 @@
               "reply": null
             }
           ],
-          "next_attempt_at": "2026-11-16T08:59:00",
-          "escalates_at": "2026-11-17T08:59:00"
+          "next_attempt_at": "2026-11-16T08:59:00"
         },
         "related_claim_ids": []
       },
@@ -6486,7 +6458,7 @@
           "at": "2026-11-15T08:59:00",
           "actor": "agent",
           "type": "chase_sent",
-          "text": "Receipt requested from Marco (request 1 of 2)."
+          "text": "Receipt requested from Marco (request 1)."
         }
       ]
     },
@@ -6526,7 +6498,7 @@
         "outcome": "chasing",
         "reason_type": "receipt_missing",
         "headline": "Waiting for a receipt",
-        "explanation": "$64.00 is over the $25 receipt limit and nothing is attached. One request has been sent. A second request goes out Mon 16 Nov at 17:31.",
+        "explanation": "$64.00 is over the $25 receipt limit and nothing is attached. One request has been sent. The next goes out Mon 16 Nov at 17:31, and they continue every day until there is a reply.",
         "cited_rule_ids": [
           "receipt_required"
         ],
@@ -6564,7 +6536,6 @@
         "policy_version": "v3",
         "decided_at": "2026-11-15T17:31:00",
         "chase": {
-          "max_attempts": 2,
           "status": "waiting",
           "attempts": [
             {
@@ -6573,8 +6544,7 @@
               "reply": null
             }
           ],
-          "next_attempt_at": "2026-11-16T17:31:00",
-          "escalates_at": "2026-11-17T17:31:00"
+          "next_attempt_at": "2026-11-16T17:31:00"
         },
         "related_claim_ids": []
       },
@@ -6606,7 +6576,7 @@
           "at": "2026-11-15T17:31:00",
           "actor": "agent",
           "type": "chase_sent",
-          "text": "Receipt requested from Dima (request 1 of 2)."
+          "text": "Receipt requested from Dima (request 1)."
         }
       ]
     },

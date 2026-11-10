@@ -259,7 +259,7 @@ export function ClaimsView() {
           return callControl("document", { do: "close" });
         case "skipAhead": {
           if (openId !== null) return listOnly;
-          const days = Math.max(1, Math.min(60, Math.round(Number(input.days) || 14)));
+          const days = Math.max(1, Math.min(60, Math.round(Number(input.days) || 1)));
           skipAhead(days);
           return { ok: true, days };
         }
@@ -601,8 +601,8 @@ export function ClaimsView() {
               <BulkActions actions={bulkActions} onRun={runBulk} />
               {tab === "waiting" ? (
                 // Demo clock: lets a wait end so its claim returns to Needs review. Not part of the product.
-                <Button variant="outline" size="sm" onClick={() => skipAhead(14)}>
-                  Skip ahead 14 days
+                <Button variant="outline" size="sm" onClick={() => skipAhead(1)}>
+                  Skip ahead 1 day
                 </Button>
               ) : null}
             </>

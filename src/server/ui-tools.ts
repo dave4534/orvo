@@ -61,7 +61,7 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
     }),
     skipAhead: tool({
       description: "Move the demo clock forward so waits end and their claims return to Needs review, as the Skip ahead button on Waiting on others does. Only when Noa asks to skip ahead or to see a wait end. Works on the claims list, not inside a claim.",
-      inputSchema: z.object({ days: z.number().int().min(1).max(60).optional().describe("Days to skip. Default 14.") }),
+      inputSchema: z.object({ days: z.number().int().min(1).max(60).optional().describe("Days to skip. Default 1.") }),
     }),
     confirmDialog: tool({
       description: 'Send or confirm whatever is waiting: an open pop-up (for example the message to an employee) or a message typed into the employee chat. Use when Noa says "send it", "yes", "go ahead" or similar after you opened or typed one.',

@@ -38,11 +38,6 @@ const SYMBOL: Record<string, string> = { USD: "$", EUR: "€", SEK: "SEK " };
 const money = (value: number, currency = "USD") =>
   currency === "USD" ? formatUsd(value) : `${SYMBOL[currency] ?? `${currency} `}${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const parseMoney = (text: string | undefined): number | null => {
-  const m = text?.match(/-?\d[\d,]*(?:\.\d+)?/);
-  return m ? Number(m[0].replace(/,/g, "")) : null;
-};
-
 const fact = (claim: LocalClaim, pattern: RegExp) => claim.agent.facts.find((f) => pattern.test(f.label))?.value;
 
 const niceMax = (value: number) => {
@@ -120,20 +115,6 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
           evidence: note,
         };
       }
-      case "unusual_amount": {
-        const usual = parseMoney(fact(claim, /median/i)) ?? 0;
-        const surge = fact(claim, /surge/i);
-        return {
-          kind: "money",
-          left: { label: "Policy", tone: "neutral", amount: usual, sub: "No limit. Median of other SFO rides this week" },
-          right: { label: "Claim", tone: "info", amount: claimed, sub: surge ? `Surge ${surge}` : undefined },
-          scale: scaleFor(usual, claimed),
-          sentence: `${formatUsd(claimed - usual)} above a usual ride. No policy limit applies.`,
-          // No policy rule is broken, so the card shows the green check like the other cards that agree.
-          matches: true,
-          evidence: note,
-        };
-      }
       case "currency_mismatch": {
         const fx = claim.amount.fx;
         if (fx) {
@@ -184,40 +165,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
           evidence: [
             ...(statement ? [{ label: "Card statement", value: statement.shows }] : []),
             ...note,
-            ...(requests ? [{ label: "Requests sent", value: `${requests} of ${claim.agent.chase?.max_attempts}` }] : []),
-          ],
-        };
-      }
-      case "unusual_pattern": {
-        // A repeat purchase. The halves are the two purchases, so the sentence about "a second one" is about what is on screen.
-        const earlier = fact(claim, /earlier claim/i) ?? "";
-        const [item, , when] = earlier.split(",").map((part) => part.trim());
-        const days = fact(claim, /days apart/i);
-        const earlierAmount = parseMoney(earlier);
-        const declineNote = claim.noa?.decision === "declined" && claim.noa.note ? [{ label: "Decline note", value: claim.noa.note }] : [];
-        return {
-          kind: "money",
-          left: { label: "Earlier claim", tone: "neutral", ...(earlierAmount !== null ? { amount: earlierAmount } : { text: earlier }), sub: [item, when].filter(Boolean).join(", ") },
-          right: { label: "This claim", tone: "info", amount: claimed, sub: `${claim.description}, ${formatSubmitted(claim.expense_date).split(",")[0]}` },
-          sentence: days ? `Second ${(item ?? "purchase").toLowerCase()} in ${days} days. No rule covers repeats.` : "A repeat purchase. No rule covers repeats.",
-          evidence: [...note, ...declineNote],
-        };
-      }
-      case "no_matching_rule": {
-        const tickets = fact(claim, /tickets/i);
-        const fees = fact(claim, /fees/i);
-        const margin = fact(claim, /under the finance/i);
-        const weekly = weeklyFacts(claim, all);
-        return {
-          kind: "text",
-          left: { label: "No rule", tone: "neutral", text: "Nothing covers entertainment or team events" },
-          right: { label: "Claim", tone: "info", amount: claimed, sub: [tickets && `${tickets} tickets`, fees && `${fees} fees`].filter(Boolean).join(" plus ") || undefined },
-          sentence: "No rule covers this, so the decision is open.",
-          evidence: [
-            ...(fact(claim, /paid by/i) ? [{ label: "Paid by", value: fact(claim, /paid by/i)! }] : []),
-            ...note,
-            ...(margin ? [{ label: "Under the Finance limit by", value: margin }] : []),
-            ...(weekly.over ? [{ label: `Claims in ${weekly.days} days`, value: `${formatUsd(weekly.total)}, over the ${formatUsd(weekly.limit)} weekly limit` }] : []),
+            ...(requests ? [{ label: "Requests sent", value: `${requests}, one a day` }] : []),
           ],
         };
       }
@@ -362,7 +310,7 @@ function chaseSentence(claim: LocalClaim): string {
   const chase = claim.agent.chase;
   if (!chase) return "";
   const sent = chase.attempts.length;
-  return `Requests sent: ${sent} of ${chase.max_attempts}.`;
+  return `Requests sent: ${sent}, one a day.`;
 }
 
 /** Total with the wine and its share of tax and tip removed, from the receipt lines. PRD 8.3. */

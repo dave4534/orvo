@@ -6,6 +6,9 @@ export const isoLocal = (d: Date) => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 };
 
+/** "1 day", "14 days". */
+export const dayCount = (n: number): string => `${n} ${n === 1 ? "day" : "days"}`;
+
 export const addDays = (from: Date, days: number): Date => new Date(from.getTime() + days * DAY_MS);
 
 /** Monday to Friday. Used for the Finance response window. */

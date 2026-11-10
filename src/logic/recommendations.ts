@@ -5,6 +5,7 @@ import { noWineAmount } from "./comparison";
 import { formatUsd } from "./format";
 import { isWaitOver, MEAL_CAP, RECEIPT_LIMIT, type LocalClaim } from "./local";
 import { FINANCE_LIMIT, FINANCE_NUDGE_WORKING_DAYS, fxFacts, receiptException, waitDays, weeklyFacts } from "./policy";
+import { dayCount } from "./time";
 
 /**
  * The one table that turns a claim into actions and reasons (PRD 9). The facts come from `policy.ts`, which reads every limit from the
@@ -79,7 +80,7 @@ const ask = (claim: LocalClaim): ActionSpec => ({
  */
 const wait = (claim: LocalClaim, more = false): ActionSpec => {
   const days = waitDays(claim.agent.reason_type, "wait");
-  return { id: "wait", label: `Wait ${days}${more ? " more" : ""} days for receipt`, input: { id: "wait" }, confirm: false };
+  return { id: "wait", label: more ? `Wait ${days} more ${days === 1 ? "day" : "days"} for receipt` : `Wait ${dayCount(days)} for receipt`, input: { id: "wait" }, confirm: false };
 };
 
 const otherAmount = (): ActionSpec => ({
@@ -97,7 +98,7 @@ const toFinanceBoth = (): ActionSpec => ({ id: "to_finance_both", label: "Send b
 
 const extendWait = (): ActionSpec => ({
   id: "extend_wait",
-  label: `Wait ${FINANCE_NUDGE_WORKING_DAYS} more working days`,
+  label: `Wait ${FINANCE_NUDGE_WORKING_DAYS} more working ${FINANCE_NUDGE_WORKING_DAYS === 1 ? "day" : "days"}`,
   input: { id: "extend_wait" },
   confirm: false,
 });
@@ -119,7 +120,8 @@ function needsPersonFor(claim: LocalClaim, all: LocalClaim[], now: Date): string
     case "possible_split":
       return weeklyFacts(claim, all).over ? `Week over ${formatUsd(FINANCE_LIMIT).replace(".00", "")}: a person approves, then Finance` : "Two claims: a person decides";
     case "receipt_missing_unresolved":
-      return `No receipt after ${asked || 2} requests: a person decides`;
+      // The agent asks every day, so a claim only reaches the manager once the employee has replied that they cannot supply a receipt.
+      return claim.agent.chase?.attempts.some((a) => a.reply) ? "Receipt can't be supplied: a person decides" : `No receipt after ${asked} requests: a person decides`;
     case "receipt_missing":
       return "No receipt yet: a person decides";
     case "receipt_unreadable":
@@ -156,7 +158,7 @@ function assessCore(claim: LocalClaim, all: LocalClaim[], now: Date): Omit<Asses
       recommendation: { recommended: extendWait(), secondary: [], more: [] },
       gap: "With Finance, no decision yet",
       short: "Finance has not decided yet",
-      why: `${FINANCE_NUDGE_WORKING_DAYS} working days have passed since it went to Finance. Waiting longer keeps the Finance approval the policy requires.`,
+      why: `${dayCount(FINANCE_NUDGE_WORKING_DAYS)} (working) have passed since it went to Finance. Waiting longer keeps the Finance approval the policy requires.`,
     });
   }
   if (waitedOut && (reason === "receipt_missing" || reason === "receipt_missing_unresolved" || reason === "receipt_unreadable")) {
@@ -166,10 +168,10 @@ function assessCore(claim: LocalClaim, all: LocalClaim[], now: Date): Omit<Asses
     return make({
       recommendation: { recommended: decline(), secondary, more: [otherAmount()] },
       gap: `${formatUsd(Math.max(0, claimed - RECEIPT_LIMIT))} over the no-receipt limit`,
-      short: `No receipt after ${days} days`,
-      why: `The ${days}-day wait ended without a receipt, and policy needs one above ${formatUsd(RECEIPT_LIMIT)}. Declining is the outcome the policy allows.`,
+      short: `No receipt after ${dayCount(days)}`,
+      why: `The wait of ${dayCount(days)} ended without a receipt, and policy needs one above ${formatUsd(RECEIPT_LIMIT)}. Declining is the outcome the policy allows.`,
       others: [
-        { label: secondary[secondary.length - 1].label, why: `${days} days have already passed, so waiting again only delays the answer.` },
+        { label: secondary[secondary.length - 1].label, why: `${dayCount(days)} already passed, so waiting again only delays the answer.` },
         ...(ex.allowed ? [{ label: "Approve with card statement", why: `Allowed up to ${formatUsd(ex.ceiling)}, but it skips the receipt the policy requires.` }] : []),
       ],
     });
@@ -186,35 +188,6 @@ function assessCore(claim: LocalClaim, all: LocalClaim[], now: Date): Omit<Asses
         others: [
           { label: "Decline claim", why: "The claim is valid, so declining rejects a good claim." },
           { label: ask(claim).label, why: "Nothing is unclear, so a question only delays Finance." },
-        ],
-      });
-    }
-
-    case "unusual_amount": {
-      const doc = claim.receipt.document;
-      const supported = claim.receipt.status === "attached" && doc?.total != null && Math.abs(doc.total - claimed) < 0.005;
-      const usual = Number((claim.agent.facts.find((f) => /median/i.test(f.label))?.value ?? "").replace(/[^0-9.]/g, "")) || 0;
-      const gap = usual ? `${formatUsd(claimed - usual)} above a usual ride` : "Higher than a usual ride";
-      if (supported) {
-        return make({
-          recommendation: { recommended: approve(claim, claimed, `Approve ${formatUsd(claimed)}`, true), secondary: [decline(), ask(claim)], more: [otherAmount()] },
-          gap,
-          short: "Higher than usual, receipt supports it",
-          why: `The receipt supports ${formatUsd(claimed)} and no policy limit applies.`,
-          others: [
-            { label: "Decline claim", why: "No rule is broken, so there is no ground to decline." },
-            { label: ask(claim).label, why: "The receipt already answers the question." },
-          ],
-        });
-      }
-      return make({
-        recommendation: { recommended: ask(claim), secondary: [decline()], more: [approve(claim), otherAmount()] },
-        gap,
-        short: "Higher than usual, nothing supports it yet",
-        why: "The amount can't be matched to a receipt yet, so a question comes first.",
-        others: [
-          { label: `Approve ${formatUsd(claimed)}`, why: "Nothing supports the higher amount yet." },
-          { label: "Decline claim", why: "No rule is broken, so there is no ground to decline." },
         ],
       });
     }
@@ -283,7 +256,7 @@ function assessCore(claim: LocalClaim, all: LocalClaim[], now: Date): Omit<Asses
         recommendation: { recommended: waitSpec, secondary: [...(ex.allowed ? [exSpec] : []), decline()], more: [otherAmount()] },
         gap: reason === "receipt_missing" ? `${formatUsd(claimed)} claimed, no receipt` : `${formatUsd(claimed - RECEIPT_LIMIT)} over the no-receipt limit`,
         short: reason === "receipt_missing" ? `Policy needs a receipt above ${formatUsd(RECEIPT_LIMIT)}` : "Policy needs a receipt, one may still arrive",
-        why: `Policy needs a receipt above ${formatUsd(RECEIPT_LIMIT)}, so approving now would break it. ${days} days gives ${name} time to send one, then the claim returns to the queue.`,
+        why: `Policy needs a receipt above ${formatUsd(RECEIPT_LIMIT)}, so approving now would break it. ${dayCount(days)} gives ${name} time to send one while the agent keeps asking, then the claim returns to the queue.`,
         others: [
           ...(ex.allowed
             ? [{ label: exSpec.label, why: `The statement shows the spend, but policy asks for a receipt. It stays an exception, allowed up to ${formatUsd(ex.ceiling)}.` }]
@@ -299,25 +272,10 @@ function assessCore(claim: LocalClaim, all: LocalClaim[], now: Date): Omit<Asses
         recommendation: { recommended: wait(claim), secondary: [decline()], more: [otherAmount()] },
         gap: "Receipt image can't be read",
         short: "Amounts can't be checked from the image",
-        why: `The receipt exists, but its amount can't be checked against the claim. ${days} days gives ${name} time to send a clearer copy.`,
+        why: `The receipt exists, but its amount can't be checked against the claim. ${dayCount(days)} gives ${name} time to send a clearer copy.`,
         others: [
           { label: `Approve ${formatUsd(claimed)}`, why: "The amount can't be verified from the image." },
           { label: "Decline claim", why: `${name} has a receipt to send, so declining is too strict.` },
-        ],
-      });
-    }
-
-    case "no_matching_rule": {
-      const askSpec = ask(claim);
-      const finance = week.over ? ` Approving also sends it to Finance, since the week totals ${formatUsd(week.total)}.` : "";
-      return make({
-        recommendation: { recommended: askSpec, secondary: [decline()], more: [approve(claim), otherAmount()] },
-        gap: "No policy rule covers this spend",
-        short: "Unclear if agreed in advance, ask first",
-        why: `No rule covers this, so it can't be checked against policy. Whether it was agreed in advance settles it.${finance}`,
-        others: [
-          { label: `Approve ${formatUsd(claimed)}`, why: "No rule allows it yet, so approval would be a guess." },
-          { label: "Decline claim", why: "Declining before asking may reject an event that was agreed." },
         ],
       });
     }
@@ -362,15 +320,6 @@ function assessCore(claim: LocalClaim, all: LocalClaim[], now: Date): Omit<Asses
         ],
       });
     }
-
-    case "unusual_pattern":
-      return make({
-        recommendation: { recommended: null, secondary: [approve(claim), decline(), ask(claim)], more: [otherAmount()] },
-        // The agent's own headline names the pattern, for example "Second monitor claimed in 34 days", so the note matches the comparison.
-        gap: claim.agent.headline,
-        short: "Repeat purchase, no rule covers repeats",
-        why: "",
-      });
 
     default:
       return make({

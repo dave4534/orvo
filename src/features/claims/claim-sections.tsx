@@ -86,7 +86,7 @@ export function TransactionUnit({ claim, onView }: { claim: LocalClaim; onView: 
       ? "The attached image can't be read, so there are no totals for it."
       : [
           "No receipt is attached.",
-          chase ? `Requests sent: ${chase.attempts.length} of ${chase.max_attempts}.` : "",
+          chase ? `Requests sent: ${chase.attempts.length}, one a day.` : "",
           statement ? "A card statement is attached instead." : "",
           claim.employee_note ? `Employee note: "${claim.employee_note}"` : "",
         ]

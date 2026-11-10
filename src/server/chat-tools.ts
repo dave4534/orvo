@@ -150,11 +150,10 @@ export function buildChatTools(claims: LocalClaim[], now: Date = NOW) {
           relatedClaimIds: c.agent.related_claim_ids,
           activity: c.events.map((e) => ({ at: formatSubmitted(e.at), actor: e.actor, text: e.text })),
           requestsToEmployee: c.agent.chase && {
-            maxRequests: c.agent.chase.max_attempts,
             status: c.agent.chase.status,
             attempts: c.agent.chase.attempts.map((a) => ({ sentAt: formatSubmitted(a.sent_at), message: a.message, reply: a.reply && { at: formatSubmitted(a.reply.at), text: a.reply.text } })),
             nextRequestAt: c.agent.chase.next_attempt_at && formatSubmitted(c.agent.chase.next_attempt_at),
-            passesToManagerAt: formatSubmitted(c.agent.chase.escalates_at),
+            note: "The agent asks every day until the employee replies. A claim reaches the manager when the employee says they cannot supply it.",
           },
           claimChat: (c.local?.thread ?? []).map((m) => ({ at: formatSubmitted(m.at), from: m.from, text: m.text })),
         };

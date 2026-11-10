@@ -46,7 +46,7 @@ The single list is `src/logic/assistant-tools.ts`. `npm run audit:assistant` che
 | `previousClaim` | Claim page | Previous |
 | `backToClaims` | Claim page | Back to claims |
 | `takeAction` | Claim page | Every button in the action bar and More options: approve, decline, wait for receipt, ask, send to Finance, different amount, decide now, continue waiting |
-| `skipAhead` | Claims list | Skip ahead 14 days button beside the filters on Waiting on others (demo clock: waits end and their claims return to Needs review) |
+| `skipAhead` | Claims list | Skip ahead 1 day button beside the filters on Waiting on others (demo clock: waits end and their claims return to Needs review) |
 | `changeDecision` | Claim page and past claim window | Changing a decision that is already made (status menu, Edit decision, Fix) |
 | `confirmDialog` | Pop-ups and chat | Send or Confirm in a pop-up, and Send in the employee chat |
 | `cancelDialog` | Pop-ups and chat | Cancel in a pop-up, and clearing an unsent message |

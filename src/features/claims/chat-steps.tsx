@@ -6,6 +6,7 @@ import { Check, ChevronRight, Sparkles, X } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
+import { dayCount } from "@/logic/time";
 
 export type StepPart = { type: string; state?: string; input?: unknown; output?: unknown };
 
@@ -29,7 +30,7 @@ const LABELS: Record<string, { running: (i: Input) => string; done: (i: Input) =
   "tool-confirmDialog": { running: () => "Sending it", done: () => "Sent it" },
   "tool-cancelDialog": { running: () => "Closing the pop-up", done: () => "Closed the pop-up" },
   "tool-clearSearch": { running: () => "Clearing the search", done: () => "Cleared the search" },
-  "tool-skipAhead": { running: () => "Skipping ahead", done: (i) => `Skipped ahead ${(i as { days?: number }).days ?? 14} days` },
+  "tool-skipAhead": { running: () => "Skipping ahead", done: (i) => `Skipped ahead ${dayCount((i as { days?: number }).days ?? 1)}` },
   "tool-undoLastDecision": { running: () => "Undoing the decision", done: () => "Undid the decision" },
   "tool-lookAtScreen": { running: () => "Looking at the screen", done: () => "Looked at the screen" },
   "tool-pressControl": { running: (i) => `Pressing ${(i as { label?: string }).label ?? "a control"}`, done: (i) => `Pressed ${(i as { label?: string }).label ?? "a control"}` },
