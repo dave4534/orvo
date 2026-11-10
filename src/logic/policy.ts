@@ -54,6 +54,18 @@ const POLICY_BY_REASON: Partial<Record<ReasonType, PolicyId>> = {
   possible_split: "finance_over_1000",
 };
 export const policyOf = (reason: ReasonType): PolicyId | null => POLICY_BY_REASON[reason] ?? null;
+/**
+ * The one policy a claim is read against, for every card, including the ones decided by the agent. A reason that names a policy wins.
+ * Otherwise a meals claim is read against the meals policy, a claim over the Finance limit against the Finance policy, and anything
+ * else against the receipt policy (a claim under $25 is still read against it: no receipt is needed).
+ */
+export function policyForClaim(claim: { agent: { reason_type: ReasonType }; category: string; amount: { usd_claimed: number } }): PolicyId {
+  const named = policyOf(claim.agent.reason_type);
+  if (named) return named;
+  if (claim.category === "meals") return "meal_cap";
+  if (claim.amount.usd_claimed > FINANCE_LIMIT) return "finance_over_1000";
+  return "receipt_required";
+}
 /** "Meals policy", "Receipt policy" or "Finance policy". The labels are `enums.policy_label` in the dataset. */
 export const policyLabel = (id: PolicyId): string => dataset.enums.policy_label[id] ?? id;
 

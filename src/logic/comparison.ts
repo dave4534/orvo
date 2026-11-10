@@ -3,7 +3,7 @@ import { firstName } from "./actions";
 import { personById } from "./claims";
 import { displayName, formatSubmitted, formatUsd } from "./format";
 import { FINANCE_LIMIT, MEAL_CAP, RECEIPT_LIMIT, type LocalClaim } from "./local";
-import { weeklyFacts, type PolicyId } from "./policy";
+import { policyForClaim, weeklyFacts, type PolicyId } from "./policy";
 
 export type Half = {
   label: string;
@@ -93,8 +93,18 @@ function identityComparison(claim: LocalClaim, other: LocalClaim): Comparison {
   };
 }
 
-/** Builds the comparison shown in the triage panel. Pure. PRD 7.2. */
+/**
+ * Builds the comparison shown in the triage panel. Pure. PRD 7.2. Every comparison names the one policy the claim is read against: a half
+ * that already names one keeps it, and otherwise the policy goes on the money half (the left one, for a claim with no limit half).
+ */
 export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Comparison {
+  const comparison = buildComparisonCore(claim, all);
+  if (comparison.left.policy || comparison.right.policy) return comparison;
+  const policy = policyForClaim(claim);
+  return { ...comparison, left: { ...comparison.left, policy } };
+}
+
+function buildComparisonCore(claim: LocalClaim, all: LocalClaim[]): Comparison {
   const claimed = claim.amount.usd_claimed;
   const original = claim.amount.original;
   const reason = claim.agent.reason_type;

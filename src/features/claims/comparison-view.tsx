@@ -48,14 +48,13 @@ function HalfView({ half, dot }: { half: Half; dot: string }) {
         <div className="mt-1.5 text-lg leading-snug font-semibold text-balance">{half.text}</div>
       )}
       {half.policy && PolicyIcon ? (
-        // Which of the three policies this is, as a small solid icon and its short name, then the detail of the limit.
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
+        // Only the policy: a small solid icon, 2px from its name. The detail of the limit is left out on purpose.
+        <div className="mt-1 flex items-center gap-0.5 text-xs text-muted-foreground">
           <PolicyIcon className="size-3.5 shrink-0" />
           <span className="font-medium whitespace-nowrap text-foreground/80">{policyLabel(half.policy)}</span>
-          {half.sub ? <span>· {half.sub}</span> : null}
         </div>
       ) : half.sub ? (
-        <div className="mt-0.5 text-xs text-muted-foreground">{half.sub}</div>
+        <div className="mt-1 text-xs text-muted-foreground">{half.sub}</div>
       ) : null}
     </div>
   );
