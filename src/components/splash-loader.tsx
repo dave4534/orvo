@@ -9,7 +9,7 @@ const SRC = "/brand/orvo-logo-animation.svg"
 // never lets the file get that far.
 const END_MS = 3900
 // Hold the settled coin briefly, then dissolve.
-const HOLD_MS = 500
+const HOLD_MS = 400
 // Reduced motion: the file turns its animations off and shows the wordmark.
 const STATIC_HOLD_MS = 1200
 const FADE_MS = 800
