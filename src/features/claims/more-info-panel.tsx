@@ -65,7 +65,7 @@ export function ActivityList({ claim }: { claim: LocalClaim }) {
           <EventMarker actor={e.actor} name={e.actor === "employee" ? employeeName(claim) : "Noa"} personId={e.actor === "employee" ? claim.employee_id : "noa"} />
           <div className="min-w-0 pt-0.5">
             <div className="font-semibold">{e.text}</div>
-            <div className="text-xs text-muted-foreground">{formatSubmitted(e.at)}</div>
+            <div className="mt-1 text-xs text-muted-foreground">{formatSubmitted(e.at)}</div>
           </div>
         </li>
       ))}

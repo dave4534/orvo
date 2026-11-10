@@ -17,6 +17,8 @@ type Props = {
   actions?: ReactNode;
   /** Size of the title. Defaults to text-sm. */
   titleClassName?: string;
+  /** Fades and slides in on mount. On by default. */
+  animateIn?: boolean;
   /** Draws the icon on its own, with no tinted circle behind it. */
   plainIcon?: boolean;
   /** When set, a dismiss button shows and the banner evaporates before this is called. */
@@ -28,7 +30,7 @@ type Props = {
  * Alert banner: an icon chip, title and text, and an optional dismiss button. Dismissing removes it at once.
  * Composed from the stock Alert and Button. Colors come from the project tokens.
  */
-export function StatusBanner({ icon, tone = "info", title, children, actions, plainIcon = false, titleClassName = "text-sm", onDismiss, className }: Props) {
+export function StatusBanner({ icon, tone = "info", title, children, actions, plainIcon = false, titleClassName = "text-sm", animateIn = true, onDismiss, className }: Props) {
   const [visible, setVisible] = useState(true);
   const reduce = useReducedMotion();
   const destructive = tone === "destructive";
@@ -37,7 +39,7 @@ export function StatusBanner({ icon, tone = "info", title, children, actions, pl
     <>
       {visible && (
         <motion.div
-          initial={reduce ? false : { opacity: 0, y: -10 }}
+          initial={reduce || !animateIn ? false : { opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 400, damping: 32 }}
           className={cn("relative", className)}

@@ -2,7 +2,7 @@
 
 import { Kbd } from "@/components/ui/kbd";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Ban, Check, ChevronDown, Command, CornerDownLeft, CircleDollarSign, Clock, Info, Landmark, ListChecks, MessageSquare, Pencil, TriangleAlert, Wrench, type LucideIcon } from "lucide-react";
+import { ArrowRight, Ban, Check, ChevronDown, Command, CornerDownLeft, CircleDollarSign, Clock, Info, Landmark, MessageSquare, Pencil, TriangleAlert, Wrench, type LucideIcon } from "lucide-react";
 
 import { StatusBanner } from "@/components/status-banner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -250,7 +250,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
       : isOpen(claim)
         ? `${category}, submitted ${formatDay(claim.submitted_at)}, waiting ${waitingFor(claim, NOW)}${daysOverTarget(claim, NOW) > 0 ? `, ${formatDuration(daysOverTarget(claim, NOW) * 86400000)} over the ${WAIT_TARGET_DAYS}-day target` : ""}`
         : `${category}, submitted ${formatDay(claim.submitted_at)}`;
-  const subtitle = `${claim.id}, ${detail}`;
+  const subtitle = isOpen(claim) ? `${waitingFor(claim, NOW)} waiting` : `${claim.id}, ${detail}`;
 
   const chase = claim.agent.chase;
 
@@ -435,23 +435,10 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                 </>
               ) : null}
               <DropdownMenuGroup>
-                <DropdownMenuLabel>ABOUT AUTOMATIC DECISIONS</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => setFixOpen(true)}>
                   <Wrench />
-                  <span className="flex flex-col">
-                    <span>Correct an automatic decision</span>
-                    <span className="text-xs text-muted-foreground">Record what went wrong</span>
-                  </span>
+                  Correct a mistake
                 </DropdownMenuItem>
-                {onOpenMore ? (
-                  <DropdownMenuItem onClick={() => onOpenMore("policy")}>
-                    <ListChecks />
-                    <span className="flex flex-col">
-                      <span>See how the decision was made</span>
-                      <span className="text-xs text-muted-foreground">Evidence and checks that were run</span>
-                    </span>
-                  </DropdownMenuItem>
-                ) : null}
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>

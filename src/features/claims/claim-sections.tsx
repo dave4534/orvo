@@ -121,7 +121,7 @@ export function TransactionUnit({ claim, onView }: { claim: LocalClaim; onView: 
             ) : (
               // No receipt to show: the inline banner alone says what is missing or unreadable.
               <li className="p-3">
-                <StatusBanner icon={<Info />} title={receipt.status === "unreadable" ? "Receipt can't be read" : "Receipt missing"}>
+                <StatusBanner icon={<Info />} animateIn={false} title={receipt.status === "unreadable" ? "Receipt can't be read" : "Receipt missing"}>
                   {missingText}
                 </StatusBanner>
               </li>
@@ -142,16 +142,6 @@ export function TransactionUnit({ claim, onView }: { claim: LocalClaim; onView: 
           </ul>
         </div>
 
-        <dl className="mt-3 flex flex-col gap-1.5 text-sm">
-          <div className="grid grid-cols-[7.5rem_1fr] gap-3">
-            <dt className="text-muted-foreground">Description</dt>
-            <dd>{claim.description}</dd>
-          </div>
-          <div className="grid grid-cols-[7.5rem_1fr] gap-3">
-            <dt className="text-muted-foreground">Expense date</dt>
-            <dd>{formatSubmitted(claim.expense_date).split(",")[0]}</dd>
-          </div>
-        </dl>
     </div>
   );
 }
