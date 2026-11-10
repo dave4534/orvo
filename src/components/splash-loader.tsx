@@ -99,6 +99,13 @@ export function SplashLoader() {
     }
   }, [svg])
 
+  // Tells the intro modal the splash has dissolved, so it can appear over the interface.
+  React.useEffect(() => {
+    if (phase !== "done") return
+    document.documentElement.dataset.splashDone = "true"
+    window.dispatchEvent(new Event("orvo:splash-done"))
+  }, [phase])
+
   if (phase === "done") return null
 
   return (

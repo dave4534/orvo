@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
+import { IntroModal } from "./intro-modal";
 import { useWorkspace } from "@/store/workspace-store";
 
 function TopBar() {
@@ -64,6 +65,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <AppSidebar />
           <SidebarInset className="min-w-0 bg-background">{children}</SidebarInset>
         </div>
+        <IntroModal />
       </SidebarProvider>
     </div>
   );
