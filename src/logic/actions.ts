@@ -26,6 +26,8 @@ export type ActionInput = {
   to?: "approved" | "declined" | "ask";
   /** What went wrong, for "correct". Null means the manager opted out of recording it. */
   feedback?: { option: string; text?: string } | null;
+  /** Claim to link this one to, for "to_finance_both". Defaults to the claim's related claims. */
+  linkTo?: string;
   /** Short description for the event log, for example the cited rule when approving an exception. */
   reason?: string;
 };
@@ -137,7 +139,7 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
       claim.noa = { decision: "approved", decided_at: at, note: "", approved_amount_usd: claimed, overrode_agent: wasAgent };
       claim.events.push(event(at, "noa_routed_finance", `Sent ${formatUsd(claimed)} to Finance`));
       if (input.id === "to_finance_both") {
-        for (const relatedId of claim.agent.related_claim_ids) {
+        for (const relatedId of input.linkTo ? [input.linkTo] : claim.agent.related_claim_ids) {
           const other = all.find((c) => c.id === relatedId);
           if (!other || other.status === "waiting_on_finance") continue;
           const copy = structuredClone(other);
@@ -213,19 +215,16 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
   }
 }
 
-export type Preview = { pays: string; tells: string; finance: string };
+export type Preview = { summary: string };
 
-/** Three lines shown before a non-trivial action is confirmed. PRD 8.4. */
+/** Plain-language impact of an action, shown before it is confirmed. PRD 8.4. */
 export function actionPreview(claim: LocalClaim, input: ActionInput, all: LocalClaim[]): Preview {
   const name = firstName(claim);
   const claimed = claim.amount.usd_claimed;
   const amount = input.amount ?? claimed;
-  const finance = (a: number) =>
-    a > FINANCE_LIMIT
-      ? `Involved, over ${formatUsd(FINANCE_LIMIT).replace(".00", "")}`
-      : claimed > FINANCE_LIMIT
-        ? `No longer involved, ${formatUsd(a)} is at or under ${formatUsd(FINANCE_LIMIT).replace(".00", "")}`
-        : `Not needed, under ${formatUsd(FINANCE_LIMIT).replace(".00", "")}`;
+  const overLimit = (a: number) => a > FINANCE_LIMIT;
+  const limit = formatUsd(FINANCE_LIMIT).replace(".00", "");
+  const toldInChat = (text: string) => `${name} is told in the claim chat ${text}.`;
 
   switch (input.id) {
     case "approve":
@@ -233,55 +232,47 @@ export function actionPreview(claim: LocalClaim, input: ActionInput, all: LocalC
     case "exception":
     case "correct": {
       if (input.id === "correct" && input.to === "declined") {
-        return { pays: `Nothing. ${name} is not paid.`, tells: `${name}, in the claim chat, that the claim is declined`, finance: "Not needed" };
+        return { summary: `${name} is not paid. ${toldInChat("that the claim is declined")}` };
       }
       if (input.id === "correct" && input.to === "ask") {
-        return { pays: "Nothing yet", tells: `${name}, in the claim chat, with the question`, finance: "Not involved yet" };
+        return { summary: `Nothing is paid yet. ${toldInChat("with your question")}` };
       }
-      if (amount > FINANCE_LIMIT) {
-        return {
-          pays: `Nothing until Finance approves ${formatUsd(amount)}. ${name} is paid after that.`,
-          tells: `${name}, in the claim chat, that it was approved and is with Finance`,
-          finance: finance(amount),
-        };
-      }
-      const pays =
-        amount < claimed
-          ? `${formatUsd(claimed - amount)} less. ${name} gets ${formatUsd(amount)}.`
-          : `${formatUsd(amount)}. ${name} is paid in full.`;
+      const paid =
+        overLimit(amount)
+          ? `${name} is paid ${formatUsd(amount)} after Finance approves it, because it is over ${limit}.`
+          : amount < claimed
+            ? `${name} is paid ${formatUsd(amount)}, ${formatUsd(claimed - amount)} less than claimed.`
+            : `${name} is paid ${formatUsd(amount)} in full.`;
       const receiptTotal = claim.receipt.document?.total;
-      const tells =
+      const told =
         amount < claimed
           ? input.id === "correct" && receiptTotal === amount
-            ? `${name}, in the claim chat, with the receipt total`
-            : `${name}, in the claim chat, the amount and why it differs`
+            ? toldInChat("with the receipt total")
+            : toldInChat("with the amount and why it differs")
           : input.id === "exception"
-            ? `${name}, in the claim chat, that it is approved as an exception`
-            : `${name}, in the claim chat, that it is approved`;
-      return { pays, tells, finance: finance(amount) };
+            ? toldInChat("that it is approved as an exception")
+            : toldInChat("that it is approved");
+      return { summary: `${paid} ${told}` };
     }
     case "decline":
-      return { pays: `Nothing. ${name} is not paid.`, tells: `${name}, in the claim chat, that the claim is declined${input.message ? ", with the note" : ""}`, finance: "Not needed" };
+      return { summary: `${name} is not paid. ${toldInChat(`that the claim is declined${input.message ? ", with your note" : ""}`)}` };
     case "ask":
-      return { pays: "Nothing yet", tells: `${name}, in the claim chat, with the question`, finance: "Not involved yet" };
+      return { summary: `Nothing is paid yet. ${toldInChat("with your question")}` };
     case "hold":
-      return { pays: "Nothing until a receipt arrives", tells: `${name}, in the claim chat, asking for the receipt`, finance: "Not involved yet" };
-    case "to_finance": {
-      return { pays: `Nothing until Finance approves ${formatUsd(claimed)}`, tells: `${name}, in the claim chat, that it is with Finance`, finance: "Involved, sending it" };
-    }
+      return { summary: `Nothing is paid until a receipt arrives. ${toldInChat("and asked for the receipt")}` };
+    case "to_finance":
+      return { summary: `${name} is paid nothing until Finance approves ${formatUsd(claimed)}. ${toldInChat("that it is with Finance")}` };
     case "to_finance_both": {
-      const others = claim.agent.related_claim_ids
-        .map((id) => all.find((c) => c.id === id))
-        .filter((c): c is LocalClaim => Boolean(c));
-      const list = others.map((c) => `${c.id} (${formatUsd(c.amount.usd_claimed)}, ${c.status === "approved_by_agent" ? "approved automatically, not paid" : c.status})`).join(", ");
-      const total = claimed + others.reduce((s, c) => s + c.amount.usd_claimed, 0);
+      const linkIds = input.linkTo ? [input.linkTo] : claim.agent.related_claim_ids;
+      const others = linkIds.map((id) => all.find((c) => c.id === id)).filter((c): c is LocalClaim => Boolean(c));
+      if (others.length === 0) return { summary: "Choose the claim to link this one to." };
+      const total = claimed + others.reduce((sum, c) => sum + c.amount.usd_claimed, 0);
+      const ids = [claim.id, ...others.map((c) => c.id)].join(" and ");
       return {
-        pays: `Nothing until Finance approves ${formatUsd(total)} together`,
-        tells: `${name}, in the claim chat, that both claims are with Finance`,
-        finance: `Receives both ${claim.id} and ${list || "the linked claim"}`,
+        summary: `${ids} go to Finance together. ${name} is paid nothing until Finance approves ${formatUsd(total)}. ${toldInChat("that both claims are with Finance")}`,
       };
     }
     default:
-      return { pays: "", tells: "", finance: "" };
+      return { summary: "" };
   }
 }

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +15,7 @@ import { actionPreview, firstName, type ActionInput } from "@/logic/actions";
 import { detectFinding, employeeName, type Finding } from "@/logic/comparison";
 import { formatUsd } from "@/logic/format";
 import { MEAL_CAP, type LocalClaim } from "@/logic/local";
+import { ActivityList } from "./more-info-panel";
 import { PreviewList } from "./preview-list";
 
 type OptionId = "amount" | "people" | "declined_valid" | "linked" | "rate" | "other";
@@ -53,9 +55,20 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
   const [otherOutcome, setOtherOutcome] = useState<"approved" | "declined" | "ask">("approved");
   const [otherText, setOtherText] = useState("");
   const [tellOrvo, setTellOrvo] = useState(true);
+  const [linkId, setLinkId] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
 
   const chosen = OPTIONS.find((o) => o.id === option);
+
+  // Claims the missed link could point to: the employee's own claims first, then the closest in time.
+  const linkCandidates = allClaims
+    .filter((c) => c.id !== claim.id && c.status !== "waiting_on_finance")
+    .sort((a, b) => {
+      const own = Number(b.employee_id === claim.employee_id) - Number(a.employee_id === claim.employee_id);
+      if (own !== 0) return own;
+      return Math.abs(Date.parse(a.submitted_at) - Date.parse(claim.submitted_at)) - Math.abs(Date.parse(b.submitted_at) - Date.parse(claim.submitted_at));
+    });
+  const linkItems = Object.fromEntries(linkCandidates.map((c) => [c.id, `${c.id}, ${employeeName(c)}, ${formatUsd(c.amount.usd_claimed)}`]));
   const typed = Math.round(Number(amountText.replace(/[$,\s]/g, "")) * 100) / 100;
   const covers = doc?.covers ?? claim.attendees.count;
   const capAmount = MEAL_CAP * covers;
@@ -84,7 +97,7 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
   } else if (option === "declined_valid") {
     input = reverseChoice === "reverse" ? { id: "correct", to: "approved", amount: claimed, feedback } : null;
   } else if (option === "linked") {
-    input = { id: "to_finance_both" };
+    input = linkId ? { id: "to_finance_both", linkTo: linkId } : null;
   } else if (option === "other") {
     if (otherText.trim() === "") error = "Describe what went wrong so it can be recorded.";
     else if (otherOutcome === "approved") {
@@ -106,7 +119,7 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
           ? "Correct to a decline"
           : input?.to === "ask"
             ? `Ask ${name}`
-            : input?.id === "to_finance_both"
+            : option === "linked"
               ? "Send both to Finance"
               : "Confirm";
 
@@ -220,9 +233,21 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
             ) : null}
 
             {option === "linked" ? (
-              <p className="text-sm text-muted-foreground">
-                This sends {claim.id} and its linked claims ({claim.agent.related_claim_ids.join(", ") || "none found"}) to Finance together.
-              </p>
+  <div className="flex flex-col gap-1.5">
+                <Label htmlFor="fix-link">Link {claim.id} to which claim?</Label>
+                <Select items={linkItems} value={linkId} onValueChange={(v) => setLinkId(v)}>
+                  <SelectTrigger id="fix-link" className="w-full">
+                    <SelectValue placeholder="Choose a claim" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {linkCandidates.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {linkItems[c.id]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             ) : null}
 
             {(option === "amount" || option === "rate" || (option === "other" && otherOutcome === "approved")) ? (
@@ -272,6 +297,13 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
             ) : null}
           </div>
         )}
+
+        <section aria-label="Activity" className="flex flex-col gap-2">
+          <h3 className="text-sm font-semibold">Activity</h3>
+          <div className="max-h-56 overflow-y-auto pr-1">
+            <ActivityList claim={claim} />
+          </div>
+        </section>
 
         <DialogFooter>
           {step === 1 ? (

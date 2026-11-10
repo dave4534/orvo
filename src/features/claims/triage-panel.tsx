@@ -341,13 +341,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
             <Info aria-hidden />
             <AlertTitle>What happens when you save</AlertTitle>
             <AlertDescription>
-              {savedPreview ? (
-                <span className="flex flex-col gap-0.5">
-                  <span>Pays: {savedPreview.pays}</span>
-                  <span>Tells: {savedPreview.tells}</span>
-                  <span>Finance: {savedPreview.finance}</span>
-                </span>
-              ) : null}
+              {savedPreview ? savedPreview.summary : null}
             </AlertDescription>
           </Alert>
         ) : null}

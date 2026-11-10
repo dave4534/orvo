@@ -110,8 +110,26 @@ function EventMarker({ actor, name }: { actor: ClaimEvent["actor"]; name: string
   );
 }
 
-function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: DocumentView) => void }) {
+/** The claim's event history, newest first. Shared by the overview and the correction dialog. */
+export function ActivityList({ claim }: { claim: LocalClaim }) {
   const events = [...claim.events].reverse();
+  return (
+    <ol>
+      {events.map((e, i) => (
+        <li key={`${e.at}-${i}`} className="relative flex gap-3 pb-4 last:pb-0">
+          {i < events.length - 1 ? <span aria-hidden className="absolute top-6 bottom-0 left-[11px] w-px bg-border" /> : null}
+          <EventMarker actor={e.actor} name={e.actor === "employee" ? employeeName(claim) : "Noa"} />
+          <div className="min-w-0 pt-0.5">
+            <div className="font-semibold">{e.text}</div>
+            <div className="text-xs text-muted-foreground">{formatSubmitted(e.at)}</div>
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: DocumentView) => void }) {
   const { receipt } = claim;
   const chase = claim.agent.chase;
   const doc = receipt.document;
@@ -202,18 +220,7 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
 
       <section className="mt-2">
         <SectionLabel>Activity</SectionLabel>
-        <ol>
-          {events.map((e, i) => (
-            <li key={`${e.at}-${i}`} className="relative flex gap-3 pb-4 last:pb-0">
-              {i < events.length - 1 ? <span aria-hidden className="absolute top-6 bottom-0 left-[11px] w-px bg-border" /> : null}
-              <EventMarker actor={e.actor} name={e.actor === "employee" ? employeeName(claim) : "Noa"} />
-              <div className="min-w-0 pt-0.5">
-                <div className="font-semibold">{e.text}</div>
-                <div className="text-xs text-muted-foreground">{formatSubmitted(e.at)}</div>
-              </div>
-            </li>
-          ))}
-        </ol>
+        <ActivityList claim={claim} />
       </section>
     </div>
   );
