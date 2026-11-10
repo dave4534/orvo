@@ -130,9 +130,9 @@ export function ClaimsTable({ tab, sections, expanded, onToggleSection, selected
                 onCheckedChange={(checked) => onToggleAll(checked)}
               />
             </TableHead>
-            <TableHead className={showBasis ? "w-[20%]" : "w-[24%]"}>Employee</TableHead>
-            <TableHead className={showBasis ? "w-[15%]" : "w-[19%]"}>{TIME_HEADER[tab]}</TableHead>
+            <TableHead className={showBasis ? "w-[20%]" : "w-[24%]"}>Claim</TableHead>
             <TableHead className={showBasis ? "w-[15%]" : "w-[19%]"}>Category</TableHead>
+            <TableHead className={showBasis ? "w-[15%]" : "w-[19%]"}>{TIME_HEADER[tab]}</TableHead>
             <TableHead className={showBasis ? "w-[10%] text-right" : "w-[12%] text-right"}>Amount</TableHead>
             <TableHead className={showBasis ? "w-[17%]" : "w-[18%]"}>Status</TableHead>
             {showBasis ? <TableHead className="w-[17%]">Basis</TableHead> : null}
@@ -238,17 +238,20 @@ function SectionRows({
                       <AvatarImage src={photoFor(claim.employee_id)} alt="" />
                       <AvatarFallback>{initials(name)}</AvatarFallback>
                     </Avatar>
-                    <span className="truncate font-medium">{name}</span>
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <span className="truncate font-medium">{claim.id}</span>
+                      <span className="truncate text-xs text-muted-foreground">{name}</span>
+                    </div>
                   </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  <TimeCell tab={tab} claim={claim} />
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Icon aria-hidden className="size-4 shrink-0 text-muted-foreground" />
                     <span className="truncate">{dataset.enums.category[claim.category]}</span>
                   </div>
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  <TimeCell tab={tab} claim={claim} />
                 </TableCell>
                 <TableCell className="text-right font-medium tabular-nums">{formatUsd(claim.amount.usd_claimed)}</TableCell>
                 <TableCell>
