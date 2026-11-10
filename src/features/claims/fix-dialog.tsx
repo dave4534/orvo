@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { X } from "@untitledui/icons";
 
 import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
 import { Badge } from "@/components/base/badges/badges";
@@ -117,7 +118,8 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
     <ModalOverlay isOpen isDismissable onOpenChange={(open) => !open && onCancel()}>
       <Modal className="sm:max-w-xl">
         <Dialog aria-label="Correct an automatic decision" className="flex flex-col gap-4 p-6">
-        <div className="flex flex-col gap-1">
+        <Button color="tertiary" size="sm" aria-label="Close" iconLeading={X} onPress={onCancel} className="absolute top-4 right-4" />
+        <div className="flex flex-col gap-1 pr-10">
           <h2 className="text-lg font-semibold text-primary">
             Correct an automatic decision
           </h2>
