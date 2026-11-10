@@ -353,7 +353,6 @@ export function ClaimsView() {
 
   const filtered = isFiltered(filters);
   const tabLabel = TABS.find((t) => t.id === tab)?.label ?? "";
-  const totalInTab = inTab(claims, tab).length;
 
   // Triage panel scope: the group the open claim is in, so "2 of 5 spot checks" counts what the list shows.
   const openClaim = claims.find((c) => c.id === openId) ?? null;
@@ -588,10 +587,11 @@ export function ClaimsView() {
               onToggleAll={toggleAll}
               onReview={openClaimById}
             />
-            <p className="text-sm text-muted-foreground" aria-live="polite">
-              {selectedIds.size > 0 ? `${selectedIds.size} selected. ` : ""}
-              {rows.length} of {totalInTab} claims. {tab === "needs_review" ? "Oldest first." : "Newest first."}
-            </p>
+            {selectedIds.size > 0 ? (
+              <p className="text-sm text-muted-foreground" aria-live="polite">
+                {selectedIds.size} selected.
+              </p>
+            ) : null}
           </>
         ) : cleared ? (
           <Empty className="rounded-xl border bg-card py-16">
