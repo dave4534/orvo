@@ -7,34 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useWorkspace } from "@/store/workspace-store";
 
-// Set once the first-visit intro has been seen. Per viewer, in this browser only.
-const SEEN_KEY = "melio-prototype:intro-seen";
-
-function alreadySeen(): boolean {
-  try {
-    return window.localStorage.getItem(SEEN_KEY) === "true";
-  } catch {
-    return false;
-  }
-}
-
-function markSeen() {
-  try {
-    window.localStorage.setItem(SEEN_KEY, "true");
-  } catch {
-    // Storage is blocked: the intro shows again next time, which is fine.
-  }
-}
-
-/** First-visit intro. It is already open when the page loads, under the launch splash, so it is there when the splash fades. Only the first time in this browser. */
+/** Intro modal. Opens on every landing, already open under the launch splash, so it is there when the splash fades. Demo behaviour: not remembered between visits. */
 export function IntroModal() {
   const { setAiOpen } = useWorkspace();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    // "?intro" in the address opens it again for review, even after it has been seen.
-    const forced = new URLSearchParams(window.location.search).has("intro");
-    if (alreadySeen() && !forced) return;
     // Opened straight after mount, so it is waiting under the splash rather than appearing after it.
     const timer = window.setTimeout(() => setOpen(true), 0);
     return () => window.clearTimeout(timer);
@@ -50,7 +28,6 @@ export function IntroModal() {
   }, [open]);
 
   function close() {
-    markSeen();
     setOpen(false);
   }
 
