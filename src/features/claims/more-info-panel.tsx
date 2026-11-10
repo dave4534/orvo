@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { InfoCircle, Paperclip, Stars01, X } from "@untitledui/icons";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -20,6 +20,7 @@ import { ClaimChat } from "./claim-chat";
 import { DocumentDialog, type DocumentView } from "./document-dialog";
 import type { MoreTab } from "./panel-types";
 import { PastClaims } from "./past-claims";
+import { useWorkspace } from "@/store/workspace-store";
 
 type Props = {
   claim: LocalClaim;
@@ -250,6 +251,31 @@ function Policy({ claim }: { claim: LocalClaim }) {
 /** Details drawer beside triage. The header and tabs stay put; only the tab content scrolls. */
 export function MoreInfoPanel({ claim, allClaims, tab, onTab, onClose, onOpenPastClaim }: Props) {
   const [viewing, setViewing] = useState<DocumentView | null>(null);
+  const { setControl } = useWorkspace();
+
+  // The assistant can open and close the receipt and attachments, the same as the View buttons. It reports what really opened.
+  useEffect(() => {
+    setControl("document", (input) => {
+      const { receipt } = claim;
+      if (input.do === "read") return { ok: true, open: viewing !== null };
+      if (input.do === "close") {
+        if (!viewing) return { ok: false, error: "No receipt or attachment is open." };
+        setViewing(null);
+        return { ok: true };
+      }
+      if (input.which === "receipt") {
+        if (receipt.status === "missing" || receipt.status === "unreadable" || !receipt.document) return { ok: false, error: "This claim has no readable receipt to open." };
+        setViewing({ kind: "receipt" });
+        return { ok: true, opened: "receipt" };
+      }
+      const label = typeof input.label === "string" ? input.label.toLowerCase() : "";
+      const a = (label ? receipt.attachments.find((x) => x.label.toLowerCase().includes(label) || x.kind.toLowerCase().includes(label)) : undefined) ?? (label ? undefined : receipt.attachments[0]);
+      if (!a) return { ok: false, error: receipt.attachments.length ? `No attachment matches "${label}". There is: ${receipt.attachments.map((x) => x.label).join(", ")}.` : "This claim has no attachments." };
+      setViewing({ kind: "attachment", label: a.label, shows: a.shows });
+      return { ok: true, opened: a.label };
+    });
+    return () => setControl("document", null);
+  });
   return (
     <aside aria-label="Details" className="flex h-full min-h-0 w-full flex-col bg-card">
       <div className="flex h-16 shrink-0 items-center justify-between px-6">

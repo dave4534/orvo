@@ -8,6 +8,18 @@ export type ChatUi = {
   detailsOpen: boolean;
   detailsTab: string;
   search: string;
+  /** The filters other than the search, in words, or an empty string. */
+  filters: string;
+  /** A past claim is open in a window over the review. */
+  pastClaimId: string | null;
+  /** The receipt or an attachment is open in a window. */
+  documentOpen: boolean;
+  /** A pop-up (for example the message to an employee) is open and waiting to be sent or cancelled. */
+  dialogOpen: boolean;
+  /** Text typed into the employee chat and not sent yet. */
+  unsentMessage: string;
+  selectedCount: number;
+  briefVisible: boolean;
   /** Noa is talking to the assistant, so replies will be read aloud. */
   voice: boolean;
 };

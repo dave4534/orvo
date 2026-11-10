@@ -1,13 +1,18 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Chat, useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls, type ChatStatus, type UIMessage } from "ai";
 
 import type { ChatContext } from "@/logic/chat-context";
 
-/** Screen tools the browser runs. Must match src/server/ui-tools.ts. */
-const UI_TOOLS = new Set(["openClaim", "nextClaim", "previousClaim", "backToClaims", "openDetails", "closeDetails", "showClaimsTab", "takeAction", "undoLastDecision", "searchClaims", "clearSearch", "confirmDialog", "cancelDialog"]);
+import { isUiTool } from "@/logic/assistant-tools";
+
+/** What a screen tool hands back to the model. It may take a moment when the tool has to wait for a panel to open. */
+export type UiToolResult = Record<string, unknown>;
+export type UiToolHandler = (name: string, input: Record<string, unknown>) => UiToolResult | Promise<UiToolResult>;
+/** A control that lives inside one component (the employee chat, the document window). The component registers it while it is on screen. */
+export type ControlHandler = (input: Record<string, unknown>) => UiToolResult;
 
 export type AiMeta = {
   /** Posted by the app itself (claim summary and recommendation, offline reply), not by the model. */
@@ -65,7 +70,11 @@ type WorkspaceStore = {
   setDialogControl: (control: DialogControl | null) => void;
   controlDialog: (action: "confirm" | "cancel") => ActionRunResult;
   /** The claims view runs screen tools for the chat. Returns the result sent back to the model. */
-  setUiToolHandler: (run: ((name: string, input: Record<string, unknown>) => Record<string, unknown>) | null) => void;
+  setUiToolHandler: (run: UiToolHandler | null) => void;
+  /** Components with their own state register what the assistant can do with them. Returns false when that control is not on screen. */
+  setControl: (key: string, handler: ControlHandler | null) => void;
+  hasControl: (key: string) => boolean;
+  callControl: (key: string, input?: Record<string, unknown>) => UiToolResult;
   /** The top bar logo asks the claims view to go back to the Expenses list. Each call bumps homeRequest. */
   homeRequest: number;
   goHome: () => void;
@@ -75,18 +84,22 @@ type WorkspaceStore = {
 
 const Context = createContext<WorkspaceStore | null>(null);
 
-const EMPTY_CONTEXT: ChatContext = { ui: { tab: "needs_review", openClaimId: null, detailsOpen: false, detailsTab: "overview", search: "", voice: false }, overlay: [] };
+const EMPTY_CONTEXT: ChatContext = { ui: { tab: "needs_review", openClaimId: null, detailsOpen: false, detailsTab: "overview", search: "", filters: "", pastClaimId: null, documentOpen: false, dialogOpen: false, unsentMessage: "", selectedCount: 0, briefVisible: false, voice: false }, overlay: [] };
 
 // Module level, so the chat transport and the chats do not depend on rendering.
 const chatContextSource: { read: (() => ChatContext) | null } = { read: null };
 const chatHooks: {
   fallback: ((prompt: string, session: string) => void) | null;
   lastPrompt: string;
-  ui: ((name: string, input: Record<string, unknown>) => Record<string, unknown>) | null;
+  ui: UiToolHandler | null;
   reply: ((text: string) => void) | null;
 } = { fallback: null, lastPrompt: "", ui: null, reply: null };
 const transport = new DefaultChatTransport<AiMessage>({ api: "/api/chat", body: () => ({ context: chatContextSource.read?.() ?? EMPTY_CONTEXT }) });
 const chats = new Map<string, Chat<AiMessage>>();
+// How much of each assistant message was already passed on to voice mode. After a screen action the same message continues,
+// so only the new part is read aloud, not the whole message again.
+const spokenLength = new Map<string, number>();
+const controls = new Map<string, ControlHandler>();
 
 function getChat(epoch: number, session: string): Chat<AiMessage> {
   const key = `${epoch}:${session}`;
@@ -99,15 +112,24 @@ function getChat(epoch: number, session: string): Chat<AiMessage> {
       sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
       // Screen tools have no server function. The browser runs them here and sends the result back.
       onToolCall: ({ toolCall }) => {
-        if (toolCall.dynamic || !UI_TOOLS.has(toolCall.toolName)) return;
-        const output = chatHooks.ui?.(toolCall.toolName, (toolCall.input ?? {}) as Record<string, unknown>) ?? { ok: false, error: "The screen is not ready." };
+        if (toolCall.dynamic || !isUiTool(toolCall.toolName)) return;
+        // Some tools wait for a panel to open first, so the result may arrive a moment later. A failure is reported to the model, never swallowed.
+        const run = async (): Promise<UiToolResult> => {
+          try {
+            return (await chatHooks.ui?.(toolCall.toolName, (toolCall.input ?? {}) as Record<string, unknown>)) ?? { ok: false, error: "The screen is not ready." };
+          } catch {
+            return { ok: false, error: "That could not be done on the screen." };
+          }
+        };
         // Not awaited, so the chat is not blocked while the result is recorded.
-        void created.addToolOutput({ tool: toolCall.toolName as never, toolCallId: toolCall.toolCallId, output: output as never });
+        void run().then((output) => created.addToolOutput({ tool: toolCall.toolName as never, toolCallId: toolCall.toolCallId, output: output as never }));
       },
       // Each finished part of an answer is passed on, so voice mode can read it even if the view has moved to another claim.
       onFinish: ({ message }) => {
-        const text = message.parts.filter((p) => p.type === "text").map((p) => (p as { text: string }).text).join("\n\n").trim();
-        if (text) chatHooks.reply?.(text);
+        const full = message.parts.filter((p) => p.type === "text").map((p) => (p as { text: string }).text).join("\n\n");
+        const fresh = full.slice(spokenLength.get(message.id) ?? 0).trim();
+        spokenLength.set(message.id, full.length);
+        if (fresh) chatHooks.reply?.(fresh);
       },
       onError: () => {
         created.clearError();
@@ -118,6 +140,13 @@ function getChat(epoch: number, session: string): Chat<AiMessage> {
     chat = created;
   }
   return chat;
+}
+
+/** Moves the messages of one turn (from index `start`) out of the chat it ran in and onto the end of another chat. */
+function moveTurn(from: Chat<AiMessage>, start: number, to: Chat<AiMessage>) {
+  const moved = from.messages.slice(start);
+  from.messages = from.messages.slice(0, start);
+  to.messages = [...to.messages, ...moved];
 }
 
 /** Holds the Ask Orvo AI chats so they survive panel changes and are reachable from the top bar (PRD FR-AI-8). Each claim has its own chat. */
@@ -131,16 +160,43 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const dialog = useRef<DialogControl | null>(null);
   const runner = useRef<((label: string, extra?: ActionExtra) => ActionRunResult) | null>(null);
 
-  const chat = useMemo(() => getChat(epoch, aiSession), [epoch, aiSession]);
+  // A turn stays in the chat it started in, even when a screen tool moves to another claim, so its steps and its reply stay visible.
+  // When the turn is over, it moves into the chat of the claim Noa is now on.
+  const [turnOrigin, setTurnOrigin] = useState<string | null>(null);
+  const turnStart = useRef(0);
+  const sawBusy = useRef(false);
+  const shownSession = turnOrigin ?? aiSession;
+  const chat = useMemo(() => getChat(epoch, shownSession), [epoch, shownSession]);
   const { messages, sendMessage, status, stop, regenerate } = useChat<AiMessage>({ chat });
 
   const askAi = useCallback(
     (text: string) => {
       chatHooks.lastPrompt = text;
+      turnStart.current = chat.messages.length;
+      sawBusy.current = false;
+      setTurnOrigin(shownSession);
       void sendMessage({ text });
     },
-    [sendMessage],
+    [sendMessage, chat, shownSession],
   );
+
+  useEffect(() => {
+    if (turnOrigin === null) return;
+    // The turn only counts as over after it has actually started.
+    if (status === "submitted" || status === "streaming") {
+      sawBusy.current = true;
+      return;
+    }
+    if (!sawBusy.current) return;
+    // More work is still coming if a screen tool is running or its result has not been sent back yet.
+    const last = chat.messages[chat.messages.length - 1];
+    const working = last?.role === "assistant" && last.parts.some((p) => p.type.startsWith("tool-") && ((p as { state?: string }).state === "input-available" || (p as { state?: string }).state === "input-streaming"));
+    if (working || lastAssistantMessageIsCompleteWithToolCalls({ messages: chat.messages })) return;
+    if (turnOrigin !== aiSession) moveTurn(chat, turnStart.current, getChat(epoch, aiSession));
+    // The turn is over: this is the chat finishing, an external system, so the state follows it.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTurnOrigin(null);
+  }, [turnOrigin, status, chat, aiSession, epoch]);
   const addAiMessage = useCallback(
     (session: string, { role, text, heading, action, claimId, suggest }: NewMessage) => {
       const target = getChat(epoch, session);
@@ -152,6 +208,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const resetAi = useCallback(() => {
     void stop();
     chats.clear();
+    setTurnOrigin(null);
     setEpoch((e) => e + 1);
   }, [stop]);
   const stopAi = useCallback(() => void stop(), [stop]);
@@ -165,9 +222,27 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, []);
   const setDialogControl = useCallback((control: DialogControl | null) => {
     dialog.current = control;
+    // Lets the claims view tell the assistant that a pop-up is waiting.
+    if (control) controls.set("dialog", () => ({ ok: true }));
+    else controls.delete("dialog");
   }, []);
-  const controlDialog = useCallback((action: "confirm" | "cancel"): ActionRunResult => (dialog.current ? dialog.current[action]() : { ok: false, error: "There is no pop-up open." }), []);
-  const setUiToolHandler = useCallback((run: ((name: string, input: Record<string, unknown>) => Record<string, unknown>) | null) => {
+  const setControl = useCallback((key: string, handler: ControlHandler | null) => {
+    if (handler) controls.set(key, handler);
+    else controls.delete(key);
+  }, []);
+  const hasControl = useCallback((key: string) => controls.has(key), []);
+  const callControl = useCallback((key: string, input: Record<string, unknown> = {}): UiToolResult => controls.get(key)?.(input) ?? { ok: false, error: "That is not on screen." }, []);
+  // "Send" and "cancel" go to a pop-up if one is open, otherwise to a message typed in the employee chat.
+  const controlDialog = useCallback(
+    (action: "confirm" | "cancel"): ActionRunResult => {
+      if (dialog.current) return dialog.current[action]();
+      const chatResult = controls.get("employeeChat")?.({ do: action === "confirm" ? "send" : "clear" });
+      if (chatResult) return chatResult as ActionRunResult;
+      return { ok: false, error: "There is no pop-up or unsent message open." };
+    },
+    [],
+  );
+  const setUiToolHandler = useCallback((run: UiToolHandler | null) => {
     chatHooks.ui = run;
   }, []);
   const setChatContext = useCallback((read: (() => ChatContext) | null) => {
@@ -178,8 +253,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ aiOpen, setAiOpen, aiSession, setAiSession, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome }),
-    [aiOpen, aiSession, messages, status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome],
+    () => ({ aiOpen, setAiOpen, aiSession, setAiSession, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, setControl, hasControl, callControl, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome }),
+    [aiOpen, aiSession, messages, status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, setControl, hasControl, callControl, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

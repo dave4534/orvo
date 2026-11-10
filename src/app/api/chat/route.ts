@@ -9,6 +9,7 @@ import { AI_MODEL_ID } from "@/lib/ai-model";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { STATIC_INSTRUCTIONS, uiInstructions } from "@/server/chat-prompt";
 import { buildChatTools, buildSuggestActionTool } from "@/server/chat-tools";
+import { isUiTool } from "@/logic/assistant-tools";
 import { buildUiTools } from "@/server/ui-tools";
 
 export const maxDuration = 60;
@@ -26,6 +27,13 @@ const bodySchema = z.object({
       detailsOpen: z.boolean(),
       detailsTab: z.string().max(20),
       search: z.string().max(80),
+      filters: z.string().max(300).optional().default(""),
+      pastClaimId: z.string().max(20).nullable().optional().default(null),
+      documentOpen: z.boolean().optional().default(false),
+      dialogOpen: z.boolean().optional().default(false),
+      unsentMessage: z.string().max(600).optional().default(""),
+      selectedCount: z.number().optional().default(0),
+      briefVisible: z.boolean().optional().default(false),
       voice: z.boolean().optional().default(false),
     }),
     overlay: z.array(z.object({ id: z.string() }).passthrough()).max(60),
@@ -34,7 +42,6 @@ const bodySchema = z.object({
 
 const json = (body: unknown, status: number, headers?: Record<string, string>) => Response.json(body, { status, headers });
 
-const UI_TOOLS = ["openClaim", "nextClaim", "previousClaim", "backToClaims", "openDetails", "closeDetails", "showClaimsTab", "takeAction", "undoLastDecision", "searchClaims", "clearSearch", "confirmDialog", "cancelDialog"];
 
 /**
  * Keeps the text of earlier turns. Lookups are left out (the model asks again if it needs them). Finished screen actions are kept
@@ -52,7 +59,7 @@ function cleanMessages(messages: z.infer<typeof bodySchema>["messages"]): UIMess
     for (const p of m.parts) {
       if (p.type === "text" && typeof (p as { text?: unknown }).text === "string") {
         texts.push(((p as unknown as { text: string }).text).slice(0, MAX_TEXT_CHARS));
-      } else if (p.type.startsWith("tool-") && UI_TOOLS.includes(p.type.slice(5)) && (p as { state?: unknown }).state === "output-available") {
+      } else if (p.type.startsWith("tool-") && isUiTool(p.type.slice(5)) && (p as { state?: unknown }).state === "output-available") {
         const q = p as { input?: unknown; output?: unknown };
         notices.push(`${p.type.slice(5)} ${JSON.stringify(q.input ?? {})} finished: ${JSON.stringify(q.output ?? {})}`.slice(0, 400));
       }
@@ -95,13 +102,16 @@ export async function POST(req: Request) {
   const claims = mergeOverlay(dataset.claims as unknown as LocalClaim[], parsed.context.overlay as unknown as ClaimOverlay[]);
 
   const openClaim = claims.find((c) => c.id === parsed.context.ui.openClaimId);
+  const pastClaim = claims.find((c) => c.id === parsed.context.ui.pastClaimId);
+  // Decisions go to the claim Noa is looking at: the past claim window if one is open, otherwise the open claim.
+  const activeClaim = pastClaim ?? openClaim;
   const agent = new ToolLoopAgent({
     model: anthropic(AI_MODEL_ID),
     instructions: [
       { role: "system", content: STATIC_INSTRUCTIONS, providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } } },
-      { role: "system", content: uiInstructions(parsed.context.ui, openClaim) },
+      { role: "system", content: uiInstructions(parsed.context.ui, openClaim, pastClaim) },
     ],
-    tools: { ...buildChatTools(claims), ...buildSuggestActionTool(openClaim), ...buildUiTools(openClaim, claims) },
+    tools: { ...buildChatTools(claims), ...buildSuggestActionTool(openClaim), ...buildUiTools(activeClaim, claims, { claimOpen: Boolean(openClaim), pastOpen: Boolean(pastClaim), detailsOpen: parsed.context.ui.detailsOpen }) },
     stopWhen: isStepCount(6),
     maxOutputTokens: 700,
   });

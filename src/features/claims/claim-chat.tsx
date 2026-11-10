@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Send01 } from "@untitledui/icons";
 
 import { Button } from "@/components/base/buttons/button";
@@ -10,6 +10,7 @@ import { formatSubmitted } from "@/logic/format";
 import type { LocalClaim } from "@/logic/local";
 import { cn } from "@/lib/utils";
 import { useClaims } from "@/store/claims-store";
+import { useWorkspace } from "@/store/workspace-store";
 
 type Line = { at: string; from: "manager" | "employee"; text: string };
 
@@ -29,6 +30,37 @@ export function ClaimChat({ claim }: { claim: LocalClaim }) {
   const [draft, setDraft] = useState("");
   const name = firstName(claim);
   const lines = threadFor(claim);
+  const { setControl } = useWorkspace();
+
+  // The assistant can type into this box, send what is typed, or clear it, exactly as Noa would. It reports what really happened.
+  useEffect(() => {
+    setControl("employeeChat", (input) => {
+      switch (input.do) {
+        case "read":
+          return { ok: true, draft };
+        case "type": {
+          const text = String(input.text ?? "").trim();
+          if (!text) return { ok: false, error: "There was no text to type." };
+          setDraft(text);
+          return { ok: true, typed: text, to: name };
+        }
+        case "send": {
+          const text = (typeof input.text === "string" ? input.text : draft).trim();
+          if (!text) return { ok: false, error: "There is no message typed to send." };
+          sendMessage(claim.id, text);
+          setDraft("");
+          return { ok: true, sent: text, to: name, note: "A message in the claim chat can't be undone, so do not offer undo." };
+        }
+        case "clear":
+          if (!draft.trim()) return { ok: false, error: "There is no unsent message." };
+          setDraft("");
+          return { ok: true };
+        default:
+          return { ok: false, error: "Unknown chat action." };
+      }
+    });
+    return () => setControl("employeeChat", null);
+  });
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
