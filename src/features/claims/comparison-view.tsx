@@ -81,7 +81,7 @@ export function ComparisonView({ comparison }: { comparison: Comparison }) {
           aria-hidden
           className={cn(
             "flex size-5 shrink-0 items-center justify-center rounded-full",
-            comparison.matches === true ? "bg-success text-success-foreground" : "bg-warning text-warning-foreground",
+            comparison.matches === true ? "bg-success text-success-foreground" : "bg-gap text-foreground",
           )}
         >
           {comparison.matches === true ? <Check className="size-3.5" strokeWidth={3} /> : <TriangleAlert className="size-3" strokeWidth={2.5} />}
@@ -89,7 +89,7 @@ export function ComparisonView({ comparison }: { comparison: Comparison }) {
         {comparison.sentence}
       </p>
       {comparison.evidence.length > 0 ? (
-        <dl className="mx-6 mb-4 flex flex-col gap-1.5 rounded-lg bg-muted/60 p-3 text-sm">
+        <dl className="mx-6 mb-4 flex flex-col gap-1.5 rounded-card border bg-card p-3 text-sm">
           {comparison.evidence.map((e) => (
             <div key={`${e.label}-${e.value}`} className="grid grid-cols-[8.5rem_1fr] gap-3">
               <dt className="text-muted-foreground">{e.label}</dt>

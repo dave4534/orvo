@@ -271,7 +271,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
               <div className="text-right text-3xl leading-9 font-semibold tabular-nums">{formatUsd(claimed)}</div>
             </div>
 
-            <div className="flex items-center justify-between gap-3 border-b bg-muted/40 px-6 py-2.5">
+            <div className="flex items-center justify-between gap-3 border-b bg-card px-6 py-2.5">
               {editable ? (
                 <>
                   <p className="min-w-0 text-sm text-muted-foreground">{decidedSummary}</p>
@@ -311,7 +311,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
             </div>
 
             {claim.status === "waiting_on_employee" && chase ? (
-              <p className="mx-6 mb-4 rounded-lg bg-muted/60 p-3 text-sm">
+              <p className="mx-6 mb-4 rounded-card border bg-card p-3 text-sm">
                 Waiting on {name}. {chase.attempts.length} of {chase.max_attempts} requests sent.{" "}
                 {chase.next_attempt_at ? `Next request ${formatDay(chase.next_attempt_at)}. ` : "No requests left. "}
                 Passes to review {formatDay(chase.escalates_at)}.

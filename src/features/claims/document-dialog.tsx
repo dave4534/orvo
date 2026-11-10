@@ -63,7 +63,7 @@ export function DocumentDialog({ claim, view, onClose }: Props) {
             ) : null}
           </div>
         ) : view.kind === "attachment" ? (
-          <p className="rounded-card border bg-muted/40 p-4 font-mono text-sm">{view.shows}</p>
+          <p className="rounded-card border bg-card p-4 font-mono text-sm">{view.shows}</p>
         ) : null}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>

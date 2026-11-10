@@ -63,7 +63,7 @@ export function ClaimsTable({ sections, expanded, onToggleSection, selectedIds, 
   return (
     <div className="overflow-hidden rounded-card border bg-card">
       <Table className="table-fixed">
-        <TableHeader className="bg-muted/50">
+        <TableHeader className="bg-card">
           <TableRow>
             <TableHead className="w-12 pl-5">
               <Checkbox
