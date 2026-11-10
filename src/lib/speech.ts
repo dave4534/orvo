@@ -37,54 +37,28 @@ export function plainForSpeech(markdown: string): string {
     .trim();
 }
 
-const VOICE_KEY = "orvo.voice";
+// The spoken voice is fixed: Google UK English Female. Other browsers that do not have it get the best natural English voice they have.
+const DEFAULT_VOICE = "Google UK English Female";
 
-// Novelty voices that ship with macOS. They are never a good default.
+// Novelty voices that ship with macOS. They are never a good fallback.
 const NOVELTY = /^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Fred|Good News|Jester|Junior|Organ|Ralph|Superstar|Trinoids|Whisper|Wobble|Zarvox|Grandma|Grandpa|Eddy|Rocko)\b/;
 
-/** Higher is better. Prefers voices that sound natural: premium or enhanced downloads, cloud voices, then the standard ones. */
+/** Higher is better, for the fallback only. */
 function voiceScore(v: SpeechSynthesisVoice): number {
   let score = 0;
   if (/premium|enhanced|natural|neural|online/i.test(v.name)) score += 100;
-  if (/^(Ava|Zoe|Allison|Evan|Susan|Tom|Nathan|Serena|Aria|Jenny|Guy|Libby|Sonia)\b/i.test(v.name)) score += 80;
   if (/google/i.test(v.name)) score += 60;
   if (/^(Samantha|Daniel|Karen|Moira|Tessa|Rishi)\b/.test(v.name)) score += 30;
-  if (/^(Flo|Shelley|Sandy|Reed)\b/.test(v.name)) score += 20;
-  if (v.lang === "en-US") score += 5;
+  if (v.lang === "en-GB") score += 10;
   if (NOVELTY.test(v.name)) score -= 200;
   return score;
 }
 
-/** English voices, best first. */
-export function listEnglishVoices(): SpeechSynthesisVoice[] {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return [];
-  return window.speechSynthesis
-    .getVoices()
-    .filter((v) => v.lang.toLowerCase().startsWith("en"))
-    .sort((a, b) => voiceScore(b) - voiceScore(a) || a.name.localeCompare(b.name));
-}
-
-export function getPreferredVoiceName(): string | null {
-  try {
-    return window.localStorage.getItem(VOICE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-export function setPreferredVoiceName(name: string) {
-  try {
-    window.localStorage.setItem(VOICE_KEY, name);
-  } catch {
-    // Storage can be blocked. The voice then resets next time, which is fine.
-  }
-}
-
-/** The chosen voice if there is one, otherwise the best available. */
+/** Google UK English Female if the browser has it, otherwise the best English voice available. */
 export function currentVoice(): SpeechSynthesisVoice | undefined {
-  const voices = listEnglishVoices();
-  const chosen = getPreferredVoiceName();
-  return voices.find((v) => v.name === chosen) ?? voices[0];
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return undefined;
+  const english = window.speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith("en"));
+  return english.find((v) => v.name === DEFAULT_VOICE) ?? [...english].sort((a, b) => voiceScore(b) - voiceScore(a) || a.name.localeCompare(b.name))[0];
 }
 
 // The utterance being spoken, so cancelling can silence its callbacks (a cancel is not "finished speaking").

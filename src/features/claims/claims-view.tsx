@@ -26,13 +26,14 @@ import {
 import { isSpotCheck } from "@/logic/local";
 import { sectionsFor } from "@/logic/sections";
 import { buildChatContext } from "@/logic/chat-context";
-import { claimSummary } from "@/logic/summary";
+import { claimSummary, openingLine } from "@/logic/summary";
 import { cn } from "@/lib/utils";
 import { track } from "@/logic/track";
 import { useClaims } from "@/store/claims-store";
 import { LIST_SESSION, useWorkspace } from "@/store/workspace-store";
 import { notInPrototype } from "@/features/shell/not-in-prototype";
 import { RANGES } from "@/logic/claims";
+import { controlSummary, lookAtScreen, pressControl, typeInField } from "./screen-control";
 import { AiPanel } from "./ai-panel";
 import { ClaimsFilters } from "./claims-filters";
 import { ClaimsQueue } from "./claims-queue";
@@ -81,6 +82,7 @@ export function ClaimsView() {
         dialogOpen: hasControl("dialog"),
         unsentMessage: typeof unsent === "string" ? unsent : "",
         selectedCount: selectedIds.size,
+        controls: controlSummary(),
         briefVisible: openId === null && tab !== "waiting" && !briefDismissed.has(tab === "done" ? "done" : "needs_review"),
         voice: voiceOpen,
       });
@@ -242,6 +244,12 @@ export function ClaimsView() {
           if (!pastId) return { ok: false, error: "No past claim is open." };
           setPastId(null);
           return { ok: true };
+        case "lookAtScreen":
+          return lookAtScreen();
+        case "pressControl":
+          return pressControl(String(input.label ?? ""));
+        case "typeInField":
+          return typeInField(String(input.field ?? ""), String(input.text ?? ""));
         case "messageEmployee": {
           if (openId === null) return claimOnly;
           setPastId(null);
@@ -349,7 +357,7 @@ export function ClaimsView() {
     // Every claim has its own chat. A new one starts with the summary and the recommendation, in one message.
     if (claim && !hasAiMessages(id)) {
       const { summary, recommendation, recommendationLabel } = claimSummary(claim);
-      const text = [entering ? "Let's review the open claims." : null, summary, recommendation].filter(Boolean).join("\n\n");
+      const text = [entering ? openingLine(claim) : null, summary, recommendation].filter(Boolean).join("\n\n");
       addAiMessage(id, { role: "assistant", text, claimId: claim.id, suggest: recommendationLabel ?? undefined });
     }
     if (entering) setAiOpen(true);

@@ -37,6 +37,10 @@ export const UI_TOOLS = [
   { name: "closeDocument", surface: "Details panel", control: "Close on the document window" },
   { name: "openPastClaim", surface: "Details panel", control: "A row in Past claims" },
   { name: "closePastClaim", surface: "Past claim window", control: "Close on the past claim window" },
+  // Anywhere: the general hands. They reach anything on screen the specific tools do not name.
+  { name: "lookAtScreen", surface: "Anywhere", control: "Reading what is on screen: open dialogs and every visible control" },
+  { name: "pressControl", surface: "Anywhere", control: "Any visible button, menu item, tab, checkbox, radio, option or link, by its label (for example More options, a filter, the steps of a dialog)" },
+  { name: "typeInField", surface: "Anywhere", control: "Any visible text field, by its label" },
   { name: "messageEmployee", surface: "Details panel", control: "Chat tab: message box and Send" },
 ] as const;
 

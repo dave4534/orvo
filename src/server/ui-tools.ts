@@ -34,6 +34,16 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
   const labels = actionLabelsFor(active);
 
   const tools: ToolSet = {
+    lookAtScreen: tool({ description: "See what is on screen right now: the text of an open dialog and every control that can be pressed. Use it when you are not sure what is available, or after a dialog changed.", inputSchema: z.object({}) }),
+    pressControl: tool({
+      description:
+        "Press any visible control by its exact label from the list of visible controls: a button, menu item, tab, checkbox, option or link. Use it for anything the specific tools do not cover, for example opening the More options menu, opening a filter, or moving through the steps of a dialog. The result lists what is visible afterwards, so you can carry on. Only press what Noa asked for.",
+      inputSchema: z.object({ label: z.string().min(1).max(90) }),
+    }),
+    typeInField: tool({
+      description: "Type text into any visible field, by its label or placeholder, for example a reason in a dialog. It does not press Send or Save: use pressControl for that, and only when Noa said to.",
+      inputSchema: z.object({ field: z.string().max(90), text: z.string().max(500) }),
+    }),
     goToSection: tool({
       description: "Use the sidebar. Home and Expenses go to the claims list. The other sections are not in this prototype, and the app shows a notice saying so.",
       inputSchema: z.object({ section: z.enum(SECTIONS) }),

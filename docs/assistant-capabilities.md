@@ -21,6 +21,10 @@ The single list is `src/logic/assistant-tools.ts`. `npm run audit:assistant` che
 - **Decisions are undoable.** Decisions show the Undo notice and `undoLastDecision` reverses the last one.
 - **Context.** Each request tells the assistant where Noa is: tab, open claim, Details tab, past claim, open document, open pop-up, unsent message, filters, selection, brief.
 
+## The general hands
+
+`lookAtScreen`, `pressControl` and `typeInField` (`src/features/claims/screen-control.ts`) work on whatever is on screen, so nothing is out of reach even if no specific tool exists yet: menus (More options), filter dropdowns, the steps of a dialog, checkboxes. Each request lists the visible controls, and the model presses one by its exact label. The specific tools stay because they are more reliable and wait for panels. When a new control appears in the product, check that `pressControl` can reach it (it needs an accessible name), then add a specific tool if it matters.
+
 ## Controls
 
 | Tool | Where | Covers |
@@ -52,6 +56,9 @@ The single list is `src/logic/assistant-tools.ts`. `npm run audit:assistant` che
 | `closeDocument` | Details panel | Close on the document window |
 | `openPastClaim` | Details panel | A row in Past claims |
 | `closePastClaim` | Past claim window | Close on the past claim window |
+| `lookAtScreen` | Anywhere | Reading what is on screen: open dialogs and every visible control |
+| `pressControl` | Anywhere | Any visible button, menu item, tab, checkbox, radio, option or link, by its label (for example More options, a filter, the steps of a dialog) |
+| `typeInField` | Anywhere | Any visible text field, by its label |
 | `messageEmployee` | Details panel | Chat tab: message box and Send |
 
 ## Not covered on purpose

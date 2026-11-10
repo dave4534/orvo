@@ -1,10 +1,10 @@
-// Best-effort limits kept in memory. On a serverless host each instance counts for itself,
+// Best-effort limits kept in memory. A single request to the assistant can take several round trips (one per screen action), so the limit is generous. On a serverless host each instance counts for itself,
 // so the spend limit on the API workspace is the hard cap and this only slows down abuse.
 const hits = new Map<string, number[]>();
 let day = "";
 let dayCount = 0;
 
-export function checkRateLimit(key: string, max = 20, windowMs = 10 * 60_000, dailyMax = 600): { ok: true } | { ok: false; retryAfterSeconds: number } {
+export function checkRateLimit(key: string, max = 150, windowMs = 10 * 60_000, dailyMax = 2500): { ok: true } | { ok: false; retryAfterSeconds: number } {
   const now = Date.now();
   const today = new Date(now).toISOString().slice(0, 10);
   if (today !== day) {

@@ -33,6 +33,7 @@ const bodySchema = z.object({
       dialogOpen: z.boolean().optional().default(false),
       unsentMessage: z.string().max(600).optional().default(""),
       selectedCount: z.number().optional().default(0),
+      controls: z.array(z.string().max(90)).max(80).optional().default([]),
       briefVisible: z.boolean().optional().default(false),
       voice: z.boolean().optional().default(false),
     }),

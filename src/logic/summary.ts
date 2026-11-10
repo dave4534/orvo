@@ -14,6 +14,13 @@ export type ClaimSummary = {
   recommendationLabel: string | null;
 };
 
+/** Greeting at the top of the chat when a visit starts on this claim. It matches what the claim is, so a closed claim never gets "review the open claims". Pure. */
+export function openingLine(claim: LocalClaim): string | null {
+  if (claim.status === "waiting_on_noa") return "Let's review the open claims.";
+  if (isAgentDecided(claim)) return "Here is what was decided automatically.";
+  return null;
+}
+
 /** Text the AI chat posts when a claim is opened. Pure. */
 export function claimSummary(claim: LocalClaim): ClaimSummary {
   const heading = `${employeeName(claim)}, ${claim.id}`;

@@ -19,6 +19,8 @@ export type ChatUi = {
   /** Text typed into the employee chat and not sent yet. */
   unsentMessage: string;
   selectedCount: number;
+  /** Labels of the controls that can be used right now, so the assistant can press them. */
+  controls: string[];
   briefVisible: boolean;
   /** Noa is talking to the assistant, so replies will be read aloud. */
   voice: boolean;
