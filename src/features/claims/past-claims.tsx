@@ -1,7 +1,8 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableCard } from "@/components/application/table/table";
+import { Badge } from "@/components/base/badges/badges";
+import { cx } from "@/utils/cx";
 import { claimStatusLabel, formatSubmitted, formatUsd } from "@/logic/format";
 import type { LocalClaim } from "@/logic/local";
 
@@ -23,55 +24,43 @@ export function PastClaims({ claim, allClaims, onOpenClaim }: Props) {
   const rows = [claim, ...others].sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
 
   return (
-    <div className="overflow-hidden rounded-lg border">
-      <Table className="table-fixed">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="px-4 py-3 text-left">Claim</TableHead>
-            <TableHead className="w-24 px-4 py-3 text-left">Amount</TableHead>
-            <TableHead className="w-44 px-4 py-3 text-left">Status</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+    <TableCard.Root className="rounded-lg">
+      <Table aria-label="Past claims" className="table-fixed">
+        <Table.Header>
+          <Table.Head id="claim" isRowHeader label="Claim" className="px-4 py-3" />
+          <Table.Head id="amount" label="Amount" className="w-24 px-4 py-3" />
+          <Table.Head id="status" label="Status" className="w-44 px-4 py-3" />
+        </Table.Header>
+        <Table.Body>
           {rows.map((c) => {
             const isCurrent = c.id === claim.id;
             return (
-              <TableRow
+              <Table.Row
                 key={c.id}
-                tabIndex={isCurrent ? undefined : 0}
+                id={c.id}
                 aria-current={isCurrent ? "true" : undefined}
                 aria-label={isCurrent ? `${c.merchant}, this claim` : `Open claim ${c.id}`}
-                className={isCurrent ? "bg-muted/40" : "cursor-pointer"}
-                onClick={isCurrent ? undefined : () => onOpenClaim(c.id)}
-                onKeyDown={
-                  isCurrent
-                    ? undefined
-                    : (e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          onOpenClaim(c.id);
-                        }
-                      }
-                }
+                className={cx("h-auto", isCurrent ? "bg-secondary" : "cursor-pointer")}
+                onAction={isCurrent ? undefined : () => onOpenClaim(c.id)}
               >
-                <TableCell className="px-4 py-4 whitespace-normal">
-                  <div className="text-base font-semibold">
+                <Table.Cell className="px-4 py-4 whitespace-normal">
+                  <div className="text-base font-semibold text-primary">
                     {c.merchant}
-                    {related.has(c.id) ? <span className="ml-1.5 text-xs font-normal text-muted-foreground">Related</span> : null}
+                    {related.has(c.id) ? <span className="ml-1.5 text-xs font-normal text-tertiary">Related</span> : null}
                   </div>
-                  <div className="text-xs text-muted-foreground">{formatSubmitted(c.submitted_at)}</div>
-                </TableCell>
-                <TableCell className="px-4 py-4 text-left tabular-nums">{formatUsd(c.amount.usd_claimed)}</TableCell>
-                <TableCell className="px-4 py-4 whitespace-normal">
-                  <Badge variant="outline" className="bg-card text-muted-foreground">
+                  <div className="text-xs text-tertiary">{formatSubmitted(c.submitted_at)}</div>
+                </Table.Cell>
+                <Table.Cell className="px-4 py-4 text-left tabular-nums">{formatUsd(c.amount.usd_claimed)}</Table.Cell>
+                <Table.Cell className="px-4 py-4 whitespace-normal">
+                  <Badge type="pill-color" size="sm" color="gray">
                     {rowStatus(c)}
                   </Badge>
-                </TableCell>
-              </TableRow>
+                </Table.Cell>
+              </Table.Row>
             );
           })}
-        </TableBody>
+        </Table.Body>
       </Table>
-    </div>
+    </TableCard.Root>
   );
 }

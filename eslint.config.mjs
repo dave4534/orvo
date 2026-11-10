@@ -7,7 +7,7 @@ const RAW_ELEMENTS = ["button", "input", "select", "textarea", "table", "dialog"
 
 const rawElementRules = RAW_ELEMENTS.map((name) => ({
   selector: `JSXOpeningElement[name.name='${name}']`,
-  message: `Raw <${name}> is banned outside src/components/ui. Use the shadcn component from @/components/ui/*. If none fits, stop and ask, then log it in docs/exceptions.md.`,
+  message: `Raw <${name}> is banned outside src/components/ui. Use the Untitled UI component from @/components/base or @/components/application, or the shadcn one from @/components/ui/*. If none fits, stop and ask, then log it in docs/exceptions.md.`,
 }));
 
 // Anything that is not shadcn/ui, Base UI or Lucide is banned. Radix is banned on purpose:
@@ -23,9 +23,6 @@ const BANNED_UI_IMPORTS = [
   "@nextui-org/*",
   "@heroui/*",
   "@ariakit/*",
-  "react-aria",
-  "react-aria-components",
-  "@react-aria/*",
   "antd",
   "primereact",
   "react-bootstrap",
@@ -44,7 +41,7 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     files: ["src/**/*.{ts,tsx}"],
-    ignores: ["src/components/ui/**"],
+    ignores: ["src/components/ui/**", "src/components/base/**", "src/components/application/**", "src/components/foundations/**", "src/components/shared-assets/**"],
     rules: {
       "no-restricted-syntax": ["error", ...rawElementRules],
     },
@@ -59,14 +56,14 @@ const eslintConfig = defineConfig([
             {
               group: BANNED_UI_IMPORTS,
               message:
-                "Only @/components/ui/*, @base-ui/react and lucide-react are allowed for UI. See CLAUDE.md.",
+                "Only Untitled UI (@/components/base, application, react-aria-components, @untitledui/icons), @/components/ui/*, @base-ui/react and lucide-react are allowed for UI. See CLAUDE.md.",
             },
           ],
         },
       ],
     },
   },
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", ".impeccable/**", ".claude/**"]),
+  globalIgnores(["src/components/base/**", "src/components/application/**", "src/components/foundations/**", "src/components/shared-assets/**", "src/utils/**", "src/hooks/use-resize-observer.ts", "src/styles/**", ".next/**", "out/**", "build/**", "next-env.d.ts", ".impeccable/**", ".claude/**"]),
 ]);
 
 export default eslintConfig;

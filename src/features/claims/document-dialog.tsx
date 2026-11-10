@@ -1,8 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
+import { Button } from "@/components/base/buttons/button";
 import type { LocalClaim } from "@/logic/local";
 
 export type DocumentView = { kind: "receipt" } | { kind: "attachment"; label: string; shows: string };
@@ -13,49 +12,50 @@ type Props = { claim: LocalClaim; view: DocumentView; onClose: () => void };
 export function DocumentDialog({ claim, view, onClose }: Props) {
   const doc = claim.receipt.document;
   return (
-    <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{view.kind === "receipt" ? "Receipt" : view.label}</DialogTitle>
-          <DialogDescription>{claim.id}</DialogDescription>
-        </DialogHeader>
+    <ModalOverlay isOpen isDismissable onOpenChange={(open) => (open ? undefined : onClose())}>
+      <Modal className="max-w-md">
+        <Dialog className="flex flex-col gap-4 p-6" aria-label={view.kind === "receipt" ? "Receipt" : view.label}>
+        <header>
+          <h2 className="text-lg font-semibold text-primary">{view.kind === "receipt" ? "Receipt" : view.label}</h2>
+          <p className="text-sm text-tertiary">{claim.id}</p>
+        </header>
         {view.kind === "receipt" && doc ? (
-          <div className="rounded-xl border p-4 text-sm">
+          <div className="rounded-xl border border-secondary p-4 text-sm">
             <div className="font-semibold">{doc.merchant}</div>
-            <div className="mb-3 text-xs text-muted-foreground">{doc.date}</div>
-            <Table className="table-fixed">
-              <TableBody>
+            <div className="mb-3 text-xs text-tertiary">{doc.date}</div>
+            <div role="table" aria-label="Receipt lines" className="text-sm">
+              <div role="rowgroup">
                 {doc.lines.map((l) => (
-                  <TableRow key={l.label}>
-                    <TableCell className="whitespace-normal">{l.label}</TableCell>
-                    <TableCell className="w-28 text-right tabular-nums">
+                  <div role="row" key={l.label} className="flex items-baseline justify-between gap-4 py-2">
+                    <div role="cell" className="min-w-0">{l.label}</div>
+                    <div role="cell" className="shrink-0 text-right tabular-nums">
                       {l.amount.toFixed(2)} {doc.currency}
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                  </div>
                 ))}
                 {doc.tax != null ? (
-                  <TableRow>
-                    <TableCell>Tax</TableCell>
-                    <TableCell className="text-right tabular-nums">{doc.tax.toFixed(2)}</TableCell>
-                  </TableRow>
+                  <div role="row" className="flex items-baseline justify-between gap-4 py-2 ">
+                    <div role="cell" className="min-w-0">Tax</div>
+                    <div role="cell" className="shrink-0 text-right tabular-nums">{doc.tax.toFixed(2)}</div>
+                  </div>
                 ) : null}
                 {doc.tip != null ? (
-                  <TableRow>
-                    <TableCell>Tip</TableCell>
-                    <TableCell className="text-right tabular-nums">{doc.tip.toFixed(2)}</TableCell>
-                  </TableRow>
+                  <div role="row" className="flex items-baseline justify-between gap-4 py-2 ">
+                    <div role="cell" className="min-w-0">Tip</div>
+                    <div role="cell" className="shrink-0 text-right tabular-nums">{doc.tip.toFixed(2)}</div>
+                  </div>
                 ) : null}
-                <TableRow className="font-semibold">
-                  <TableCell>Total</TableCell>
-                  <TableCell className="text-right tabular-nums">
+                <div role="row" className="flex items-baseline justify-between gap-4 py-2 font-semibold text-primary">
+                  <div role="cell" className="min-w-0">Total</div>
+                  <div role="cell" className="shrink-0 text-right tabular-nums">
                     {doc.total?.toFixed(2)} {doc.currency}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-            {doc.covers != null ? <p className="mt-2 text-xs text-muted-foreground">Diners printed on the receipt: {doc.covers}</p> : null}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {doc.covers != null ? <p className="mt-2 text-xs text-tertiary">Diners printed on the receipt: {doc.covers}</p> : null}
             {Object.keys(doc.details).length > 0 ? (
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-tertiary">
                 {Object.entries(doc.details)
                   .map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`)
                   .join(", ")}
@@ -63,14 +63,15 @@ export function DocumentDialog({ claim, view, onClose }: Props) {
             ) : null}
           </div>
         ) : view.kind === "attachment" ? (
-          <p className="rounded-xl border bg-muted/40 p-4 font-mono text-sm">{view.shows}</p>
+          <p className="rounded-xl border border-secondary bg-secondary p-4 font-mono text-sm">{view.shows}</p>
         ) : null}
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+        <footer className="flex justify-end">
+          <Button color="secondary" size="md" onPress={onClose}>
             Close
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </footer>
+        </Dialog>
+      </Modal>
+    </ModalOverlay>
   );
 }

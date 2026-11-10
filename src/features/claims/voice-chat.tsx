@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Mic, MicOff, Square, X } from "lucide-react";
+import { Square } from "lucide-react";
+import { Check, ChevronDown, Microphone01, MicrophoneOff01, X } from "@untitledui/icons";
 
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useSpeechInput } from "@/hooks/use-speech-input";
+import { Button } from "@/components/base/buttons/button";
+import { Dropdown } from "@/components/base/dropdown/dropdown";
+import { stopAllListening, useSpeechInput } from "@/hooks/use-speech-input";
 import { useVoices } from "@/hooks/use-voices";
 import { cancelSpeech, plainForSpeech, speak } from "@/lib/speech";
 import { cn } from "@/lib/utils";
@@ -22,7 +23,7 @@ export function Wave({ phase }: { phase: "listening" | "thinking" | "speaking" |
           key={i}
           className={cn(
             "w-1 origin-center rounded-full",
-            phase === "muted" ? "h-1 bg-muted-foreground" : phase === "thinking" ? "h-1.5 animate-pulse bg-muted-foreground" : "h-6 bg-primary",
+            phase === "muted" ? "h-1 bg-muted-foreground" : phase === "thinking" ? "h-1.5 animate-pulse bg-muted-foreground" : "h-6 bg-brand-solid",
             (phase === "listening" || phase === "speaking") && "animate-wave",
           )}
           style={{ animationDelay: `${i * 110}ms`, animationDuration: phase === "speaking" ? "0.55s" : "1.1s" }}
@@ -59,6 +60,7 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
   const [muted, setMuted] = useState(false);
   const [heard, setHeard] = useState("");
 
+  const alive = useRef(true); // false once voice mode has ended: nothing may start again
   const keep = useRef(true); // listening is wanted
   const mutedRef = useRef(false);
   const speakingRef = useRef(false);
@@ -78,12 +80,12 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
   }
 
   function listen() {
-    if (!keep.current || mutedRef.current || speakingRef.current || pending.current || queue.current.length > 0 || latest.current.busy) return;
+    if (!alive.current || !keep.current || mutedRef.current || speakingRef.current || pending.current || queue.current.length > 0 || latest.current.busy) return;
     speech.start({
       onInterim: setHeard,
       onFinal: (text) => {
         setHeard("");
-        if (!text || pending.current || speakingRef.current || latest.current.busy) return;
+        if (!alive.current || !text || pending.current || speakingRef.current || latest.current.busy) return;
         pending.current = true;
         keep.current = false;
         setWaiting(true);
@@ -99,7 +101,7 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
       },
       // The browser ends listening after a stretch of silence. Start again while voice mode is on.
       onEnded: () => {
-        if (keep.current) listen();
+        if (alive.current && keep.current) listen();
       },
     });
   }
@@ -107,7 +109,7 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
   function scheduleListen() {
     window.clearTimeout(timers.current.grace);
     timers.current.grace = window.setTimeout(() => {
-      if (queue.current.length > 0 || speakingRef.current) return;
+      if (!alive.current || queue.current.length > 0 || speakingRef.current) return;
       pending.current = false;
       setWaiting(false);
       keep.current = !mutedRef.current;
@@ -116,6 +118,7 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
   }
 
   function playNext() {
+    if (!alive.current) return;
     const text = queue.current.shift();
     if (!text) {
       speakingRef.current = false;
@@ -132,6 +135,7 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
   }
 
   function enqueue(reply: string) {
+    if (!alive.current) return;
     const spoken = plainForSpeech(reply);
     window.clearTimeout(timers.current.watchdog);
     window.clearTimeout(timers.current.grace);
@@ -145,14 +149,17 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
 
   // Start listening when voice mode opens, and hear every finished reply.
   useEffect(() => {
+    alive.current = true;
     keep.current = true;
     listen();
     setReplyListener(enqueue);
     return () => {
+      alive.current = false;
       keep.current = false;
       clearTimers();
       queue.current = [];
       cancelSpeech();
+      stopAllListening();
       setReplyListener(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -201,11 +208,13 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
   }
 
   function end() {
+    alive.current = false;
     keep.current = false;
     clearTimers();
     queue.current = [];
     cancelSpeech();
     speech.stop();
+    stopAllListening();
     if (latest.current.busy) latest.current.onStopAnswer();
     onEnd();
   }
@@ -221,48 +230,45 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
           {phase === "thinking" ? <Shimmer className="text-sm">{label}</Shimmer> : <span className="text-sm font-medium">{label}</span>}
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <Button variant="ghost" size="icon-sm" aria-label={muted ? "Turn microphone on" : "Turn microphone off"} aria-pressed={muted} onClick={toggleMute}>
-            {muted ? <MicOff /> : <Mic />}
-          </Button>
+          <Button color="tertiary" size="sm" aria-label={muted ? "Turn microphone on" : "Turn microphone off"} aria-pressed={muted} iconLeading={muted ? MicrophoneOff01 : Microphone01} onPress={toggleMute} />
           {speaking || busy ? (
-            <Button variant="ghost" size="icon-sm" aria-label={speaking ? "Stop speaking" : "Stop the answer"} onClick={interrupt}>
-              <Square className="fill-current" />
-            </Button>
+            <Button color="tertiary" size="sm" aria-label={speaking ? "Stop speaking" : "Stop the answer"} iconLeading={<Square className="size-4 fill-current" />} onPress={interrupt} />
           ) : null}
-          <Button variant="outline" size="sm" onClick={end}>
-            <X data-icon="inline-start" />
+          <Button color="secondary" size="sm" iconLeading={X} onPress={end}>
             End voice
           </Button>
         </div>
       </div>
       {heard ? <p className="mt-2 text-sm text-muted-foreground italic">{heard}</p> : null}
       {voices.length > 0 ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button variant="ghost" size="xs" className="mt-2 -ml-1.5 text-muted-foreground">
-                Voice: {selected ?? "Default"} <ChevronDown data-icon="inline-end" />
-              </Button>
-            }
-          />
-          <DropdownMenuContent align="start" side="top" className="max-h-72 w-64 overflow-y-auto">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>Spoken voice</DropdownMenuLabel>
-              {voices.slice(0, 12).map((v) => (
-                <DropdownMenuItem
-                  key={v.name}
-                  onClick={() => {
-                    choose(v.name);
-                    speak("Hi, this is how I sound.", {});
-                  }}
-                >
-                  <span className="flex-1">{v.name}</span>
-                  {v.name === selected ? <Check /> : null}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Dropdown.Root>
+          <Button color="tertiary" size="xs" className="mt-2 -ml-1.5" iconTrailing={ChevronDown}>
+            Voice: {selected ?? "Default"}
+          </Button>
+          <Dropdown.Popover placement="top left" className="max-h-72 w-64 overflow-y-auto">
+            <Dropdown.Menu aria-label="Spoken voice">
+              <Dropdown.Section>
+                <Dropdown.SectionHeader className="px-4 py-1.5 text-xs font-medium text-quaternary">Spoken voice</Dropdown.SectionHeader>
+                {voices.slice(0, 12).map((v) => (
+                  <Dropdown.Item
+                    key={v.name}
+                    id={v.name}
+                    textValue={v.name}
+                    onAction={() => {
+                      choose(v.name);
+                      speak("Hi, this is how I sound.", {});
+                    }}
+                  >
+                    <span className="flex flex-1 items-center">
+                      <span className="flex-1">{v.name}</span>
+                      {v.name === selected ? <Check className="size-4" /> : null}
+                    </span>
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Section>
+            </Dropdown.Menu>
+          </Dropdown.Popover>
+        </Dropdown.Root>
       ) : null}
       {speech.error === "blocked" ? <p className="mt-2 text-xs text-destructive">Microphone access is blocked. Allow it in the browser&apos;s site settings.</p> : null}
       {speech.error === "unavailable" ? <p className="mt-2 text-xs text-destructive">Voice isn&apos;t available in this browser right now.</p> : null}

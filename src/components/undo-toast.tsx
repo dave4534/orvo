@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/base/buttons/button";
 
 /** How long an action can be undone. Matches the toast's own timeout. */
 export const UNDO_MS = 10_000;
@@ -13,7 +13,7 @@ type Props = { id: string | number; message: string; onUndo: () => void };
 /**
  * A sonner toast whose Undo button drains as the time runs out: a tint covers the button at the start
  * and shrinks from right to left until the toast closes. Hovering the toast pauses the drain.
- * Composed from sonner (toast.custom) and the stock Button.
+ * Composed from sonner (toast.custom) and the Untitled UI Button.
  */
 export function UndoToast({ id, message, onUndo }: Props) {
   const fillRef = useRef<HTMLSpanElement>(null);
@@ -35,15 +35,15 @@ export function UndoToast({ id, message, onUndo }: Props) {
     >
       <span>{message}</span>
       <Button
-        variant="outline"
+        color="secondary"
         size="sm"
         className="relative shrink-0 overflow-hidden"
-        onClick={() => {
+        onPress={() => {
           onUndo();
           toast.dismiss(id);
         }}
       >
-        <span aria-hidden ref={fillRef} className="absolute inset-0 origin-left bg-foreground/10" />
+        <span aria-hidden ref={fillRef} className="absolute inset-0 origin-left bg-primary_hover" />
         <span className="relative">Undo</span>
       </Button>
     </div>

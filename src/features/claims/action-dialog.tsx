@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/base/buttons/button";
+import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
+import { Input } from "@/components/base/input/input";
+import { TextArea } from "@/components/base/textarea/textarea";
 import { actionPreview, firstName, type ActionInput } from "@/logic/actions";
 import { formatUsd } from "@/logic/format";
 import type { LocalClaim } from "@/logic/local";
@@ -79,54 +78,55 @@ export function ActionDialog({ claim, allClaims, spec, onConfirm, onCancel, init
   });
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{spec.label}</DialogTitle>
-          <DialogDescription>
+    <ModalOverlay isOpen isDismissable onOpenChange={(open) => !open && onCancel()}>
+      <Modal className="sm:max-w-lg">
+        <Dialog aria-label={spec.label} className="flex flex-col gap-4 p-6">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold text-primary">
+            {spec.label}
+          </h2>
+          <p className="text-sm text-tertiary">
             {employeeName(claim)}, {claim.id}, {formatUsd(claimed)} claimed
-          </DialogDescription>
-        </DialogHeader>
+          </p>
+        </div>
 
         {spec.askAmount ? (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="action-amount">Amount to approve (USD)</Label>
-            <Input
-              id="action-amount"
-              inputMode="decimal"
-              autoFocus
-              placeholder={formatUsd(claimed)}
-              value={amountText}
-              aria-invalid={touched && Boolean(amountError)}
-              aria-describedby="action-amount-help"
-              onChange={(e) => {
-                setAmountText(e.target.value);
-                setTouched(true);
-              }}
-            />
-            <p id="action-amount-help" className={touched && amountError ? "text-sm text-destructive" : "text-xs text-muted-foreground"}>
-              {touched && amountError ? amountError : `Up to ${formatUsd(claimed)}. The amount is always in USD.`}
-            </p>
-          </div>
+          <Input
+            id="action-amount"
+            label="Amount to approve (USD)"
+            inputMode="decimal"
+            autoFocus
+            placeholder={formatUsd(claimed)}
+            value={amountText}
+            isInvalid={touched && Boolean(amountError)}
+            hint={touched && amountError ? amountError : `Up to ${formatUsd(claimed)}. The amount is always in USD.`}
+            onChange={(value) => {
+              setAmountText(value);
+              setTouched(true);
+            }}
+          />
         ) : null}
 
         {spec.askMessage ? (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="action-message">{spec.askMessage === "decline" ? `Message to ${firstName(claim)} (optional)` : `Message to ${firstName(claim)}`}</Label>
-            <Textarea id="action-message" rows={3} value={message} onChange={(e) => setMessage(e.target.value)} />
-          </div>
+          <TextArea
+            id="action-message"
+            label={spec.askMessage === "decline" ? `Message to ${firstName(claim)} (optional)` : `Message to ${firstName(claim)}`}
+            rows={3}
+            value={message}
+            onChange={setMessage}
+          />
         ) : null}
 
         <PreviewList preview={preview} title="What happens when confirmed" />
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onCancel}>
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button color="secondary" onPress={onCancel}>
             Cancel
           </Button>
           <Button
-            variant={spec.destructive ? "destructive" : "default"}
-            disabled={blocked}
-            onClick={() => {
+            color={spec.destructive ? "primary-destructive" : "primary"}
+            isDisabled={blocked}
+            onPress={() => {
               if (blocked) {
                 setTouched(true);
                 return;
@@ -136,8 +136,9 @@ export function ActionDialog({ claim, allClaims, spec, onConfirm, onCancel, init
           >
             {spec.askAmount ? (amountError ? "Approve" : `Approve ${formatUsd(amount ?? claimed)}`) : spec.label}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+        </Dialog>
+      </Modal>
+    </ModalOverlay>
   );
 }

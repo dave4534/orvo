@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check } from "@untitledui/icons";
 
 import { formatUsd } from "@/logic/format";
 import type { Comparison, Half } from "@/logic/comparison";
@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 const DOT: Record<Half["tone"], string> = {
   neutral: "bg-muted-foreground",
   good: "bg-success",
-  info: "bg-primary",
+  info: "bg-brand-solid",
 };
 
 /** Same colors as the scale bar: the lower value is the green part, the higher one is the red gap. */

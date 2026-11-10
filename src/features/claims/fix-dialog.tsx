@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
+import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
+import { Badge } from "@/components/base/badges/badges";
+import { Button } from "@/components/base/buttons/button";
+import { Checkbox } from "@/components/base/checkbox/checkbox";
+import { Input } from "@/components/base/input/input";
+import { RadioButton, RadioGroup } from "@/components/base/radio-buttons/radio-buttons";
+import { TextArea } from "@/components/base/textarea/textarea";
+import { cx } from "@/utils/cx";
 import { actionPreview, firstName, type ActionInput } from "@/logic/actions";
 import { detectFinding, employeeName, type Finding } from "@/logic/comparison";
 import { formatUsd } from "@/logic/format";
@@ -26,6 +26,9 @@ const OPTIONS: { id: OptionId; title: string; description: string; tag: string }
   { id: "rate", title: "Used the wrong rate or limit", description: "Currency, category or policy cap", tag: "wrong rate or limit" },
   { id: "other", title: "Something else", description: "Describe it, and it is recorded", tag: "other" },
 ];
+
+/** Bordered option card around a radio. */
+const CARD = "w-full cursor-pointer rounded-xl border border-primary p-3";
 
 const FINDING_TO_OPTION: Record<Finding, OptionId> = { amount: "amount", people: "people", declined_valid: "declined_valid" };
 
@@ -111,47 +114,49 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
               : "Confirm";
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="sm:max-w-xl" aria-label="Correct an automatic decision">
-        <DialogHeader>
-          <DialogTitle>Correct an automatic decision</DialogTitle>
-          <DialogDescription>
+    <ModalOverlay isOpen isDismissable onOpenChange={(open) => !open && onCancel()}>
+      <Modal className="sm:max-w-xl">
+        <Dialog aria-label="Correct an automatic decision" className="flex flex-col gap-4 p-6">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold text-primary">
+            Correct an automatic decision
+          </h2>
+          <p className="text-sm text-tertiary">
             {employeeName(claim)}, {claim.id}. Step {step} of 2
-          </DialogDescription>
-        </DialogHeader>
+          </p>
+        </div>
 
         <div aria-hidden className="flex gap-1.5">
-          <span className="h-1 flex-1 rounded-full bg-primary" />
-          <span className={`h-1 flex-1 rounded-full ${step === 2 ? "bg-primary" : "bg-muted"}`} />
+          <span className="h-1 flex-1 rounded-full bg-brand-solid" />
+          <span className={`h-1 flex-1 rounded-full ${step === 2 ? "bg-brand-solid" : "bg-tertiary"}`} />
         </div>
 
         {step === 1 ? (
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1 text-sm font-semibold text-muted-foreground">What went wrong?</legend>
-            <RadioGroup value={option ?? ""} onValueChange={(v) => setOption(v as OptionId)} className="gap-2">
+            <legend className="mb-1 text-sm font-semibold text-tertiary">What went wrong?</legend>
+            <RadioGroup aria-label="What went wrong?" value={option} onChange={(v) => setOption(v as OptionId)} className="gap-2">
               {OPTIONS.map((o) => (
-                <Label
+                <RadioButton
                   key={o.id}
-                  htmlFor={`fix-${o.id}`}
-                  className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 font-normal ${option === o.id ? "border-primary bg-info" : ""}`}
-                >
-                  <RadioGroupItem id={`fix-${o.id}`} value={o.id} className="mt-0.5" />
-                  <span className="flex flex-col">
-                    <span className="font-semibold">{o.title}</span>
-                    <span className="text-xs text-muted-foreground">{o.description}</span>
-                  </span>
-                  {finding && FINDING_TO_OPTION[finding] === o.id ? <Badge variant="outline" className="ml-auto border-warning-border bg-warning text-warning-foreground">Differs on screen</Badge> : null}
-                </Label>
+                  id={`fix-${o.id}`}
+                  value={o.id}
+                  className={({ isSelected }) => cx(CARD, isSelected && "border-brand bg-brand-primary")}
+                  label={
+                    <span className="flex items-center gap-2">
+                      {o.title}
+                      {finding && FINDING_TO_OPTION[finding] === o.id ? <Badge size="sm" color="warning">Differs on screen</Badge> : null}
+                    </span>
+                  }
+                  hint={o.description}
+                />
               ))}
             </RadioGroup>
           </fieldset>
         ) : (
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <Badge variant="outline" className="border-warning-border bg-warning text-warning-foreground">
-                {chosen?.title}
-              </Badge>
-              <Button variant="ghost" size="sm" onClick={() => setStep(1)}>
+              <Badge color="warning">{chosen?.title}</Badge>
+              <Button color="tertiary" size="sm" onPress={() => setStep(1)}>
                 Change
               </Button>
             </div>
@@ -159,11 +164,11 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
             {(option === "amount" || option === "rate") && doc ? (
               <div className="grid grid-cols-2 overflow-hidden rounded-xl border">
                 <div className="p-4">
-                  <div className="text-xs text-muted-foreground">Receipt total</div>
+                  <div className="text-xs text-tertiary">Receipt total</div>
                   <div className="text-2xl font-semibold tabular-nums">{doc.total != null ? formatUsd(doc.total) : "Unreadable"}</div>
                 </div>
                 <div className="border-l p-4">
-                  <div className="text-xs text-muted-foreground">Approved automatically</div>
+                  <div className="text-xs text-tertiary">Approved automatically</div>
                   <div className="text-2xl font-semibold tabular-nums">{formatUsd(claimed)}</div>
                 </div>
               </div>
@@ -173,124 +178,135 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
               <div className="flex flex-col gap-3">
                 <div className="grid grid-cols-2 overflow-hidden rounded-xl border">
                   <div className="p-4">
-                    <div className="text-xs text-muted-foreground">Covers on the receipt</div>
+                    <div className="text-xs text-tertiary">Covers on the receipt</div>
                     <div className="text-2xl font-semibold">{covers}</div>
                   </div>
                   <div className="border-l p-4">
-                    <div className="text-xs text-muted-foreground">Attendees on the claim</div>
+                    <div className="text-xs text-tertiary">Attendees on the claim</div>
                     <div className="text-2xl font-semibold">{claim.attendees.count}</div>
                   </div>
                 </div>
-                <RadioGroup value={peopleChoice} onValueChange={(v) => setPeopleChoice(v as "cap" | "ask")} className="gap-2">
-                  <Label htmlFor="people-cap" className="flex cursor-pointer items-start gap-3 rounded-xl border p-3 font-normal">
-                    <RadioGroupItem id="people-cap" value="cap" className="mt-0.5" />
-                    <span>
-                      <span className="block font-semibold">Pay up to the cap for {covers} people</span>
-                      <span className="text-xs text-muted-foreground">{formatUsd(MEAL_CAP)} × {covers} = {formatUsd(capAmount)}</span>
-                    </span>
-                  </Label>
-                  <Label htmlFor="people-ask" className="flex cursor-pointer items-start gap-3 rounded-xl border p-3 font-normal">
-                    <RadioGroupItem id="people-ask" value="ask" className="mt-0.5" />
-                    <span>
-                      <span className="block font-semibold">Ask {name} to explain</span>
-                      <span className="text-xs text-muted-foreground">The claim goes back to waiting on the employee</span>
-                    </span>
-                  </Label>
+                <RadioGroup aria-label="How to correct the cover count" value={peopleChoice} onChange={(v) => setPeopleChoice(v as "cap" | "ask")} className="gap-2">
+                  <RadioButton
+                    id="people-cap"
+                    value="cap"
+                    className={CARD}
+                    label={`Pay up to the cap for ${covers} people`}
+                    hint={`${formatUsd(MEAL_CAP)} × ${covers} = ${formatUsd(capAmount)}`}
+                  />
+                  <RadioButton
+                    id="people-ask"
+                    value="ask"
+                    className={CARD}
+                    label={`Ask ${name} to explain`}
+                    hint="The claim goes back to waiting on the employee"
+                  />
                 </RadioGroup>
               </div>
             ) : null}
 
             {option === "declined_valid" ? (
-              <RadioGroup value={reverseChoice} onValueChange={(v) => setReverseChoice(v as "reverse" | "keep")} className="gap-2">
-                <Label htmlFor="rev-reverse" className="flex cursor-pointer items-start gap-3 rounded-xl border p-3 font-normal">
-                  <RadioGroupItem id="rev-reverse" value="reverse" className="mt-0.5" />
-                  <span>
-                    <span className="block font-semibold">Reverse the decline and approve</span>
-                    <span className="text-xs text-muted-foreground">Pays {formatUsd(claimed)} to {name}</span>
-                  </span>
-                </Label>
-                <Label htmlFor="rev-keep" className="flex cursor-pointer items-start gap-3 rounded-xl border p-3 font-normal">
-                  <RadioGroupItem id="rev-keep" value="keep" className="mt-0.5" />
-                  <span>
-                    <span className="block font-semibold">Keep it declined</span>
-                    <span className="text-xs text-muted-foreground">Nothing changes</span>
-                  </span>
-                </Label>
+              <RadioGroup aria-label="Reverse the decline or keep it" value={reverseChoice} onChange={(v) => setReverseChoice(v as "reverse" | "keep")} className="gap-2">
+                <RadioButton
+                  id="rev-reverse"
+                  value="reverse"
+                  className={CARD}
+                  label="Reverse the decline and approve"
+                  hint={`Pays ${formatUsd(claimed)} to ${name}`}
+                />
+                <RadioButton id="rev-keep" value="keep" className={CARD} label="Keep it declined" hint="Nothing changes" />
               </RadioGroup>
             ) : null}
 
             {option === "linked" ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-tertiary">
                 This sends {claim.id} and its linked claims ({claim.agent.related_claim_ids.join(", ") || "none found"}) to Finance together.
               </p>
             ) : null}
 
             {(option === "amount" || option === "rate" || (option === "other" && otherOutcome === "approved")) ? (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="fix-amount">New approved amount (USD)</Label>
-                <Input id="fix-amount" inputMode="decimal" value={amountText} aria-invalid={touched && Boolean(error)} onChange={(e) => { setAmountText(e.target.value); setTouched(true); }} />
-                <p className={touched && error ? "text-sm text-destructive" : "text-xs text-muted-foreground"}>
-                  {touched && error
+              <Input
+                id="fix-amount"
+                label="New approved amount (USD)"
+                inputMode="decimal"
+                value={amountText}
+                isInvalid={touched && Boolean(error)}
+                onChange={(value) => {
+                  setAmountText(value);
+                  setTouched(true);
+                }}
+                hint={
+                  touched && error
                     ? error
                     : unchanged && (option === "amount" || option === "rate")
                       ? "Same as the approved amount. Enter a different one to correct it."
                       : doc?.total != null && option === "amount"
                         ? "Filled in from the receipt"
-                        : `Up to ${formatUsd(claimed)}`}
-                </p>
-              </div>
+                        : `Up to ${formatUsd(claimed)}`
+                }
+              />
             ) : null}
 
             {option === "other" ? (
               <div className="flex flex-col gap-3">
-                <RadioGroup value={otherOutcome} onValueChange={(v) => setOtherOutcome(v as "approved" | "declined" | "ask")} className="flex gap-2">
+                <RadioGroup aria-label="Corrected outcome" value={otherOutcome} onChange={(v) => setOtherOutcome(v as "approved" | "declined" | "ask")} className="flex-row gap-2">
                   {(["approved", "declined", "ask"] as const).map((o) => (
-                    <Label key={o} htmlFor={`other-${o}`} className="flex flex-1 cursor-pointer items-center gap-2 rounded-xl border p-3 font-normal">
-                      <RadioGroupItem id={`other-${o}`} value={o} />
-                      {o === "approved" ? "Approve" : o === "declined" ? "Decline" : `Ask ${name}`}
-                    </Label>
+                    <RadioButton
+                      key={o}
+                      id={`other-${o}`}
+                      value={o}
+                      className={cx(CARD, "flex-1 items-center")}
+                      label={o === "approved" ? "Approve" : o === "declined" ? "Decline" : `Ask ${name}`}
+                    />
                   ))}
                 </RadioGroup>
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="fix-text">What went wrong?</Label>
-                  <Textarea id="fix-text" rows={3} value={otherText} onChange={(e) => { setOtherText(e.target.value); setTouched(true); }} />
-                  {touched && error && otherText.trim() === "" ? <p className="text-sm text-destructive">{error}</p> : null}
-                </div>
+                <TextArea
+                  id="fix-text"
+                  label="What went wrong?"
+                  rows={3}
+                  value={otherText}
+                  onChange={(value) => {
+                    setOtherText(value);
+                    setTouched(true);
+                  }}
+                  isInvalid={touched && Boolean(error) && otherText.trim() === ""}
+                  hint={touched && error && otherText.trim() === "" ? error : undefined}
+                />
               </div>
             ) : null}
 
             {preview ? <PreviewList preview={preview} title="What happens when confirmed" /> : null}
 
             {option !== "linked" ? (
-              <div className="flex items-start gap-3">
-                <Checkbox id="fix-tell-orvo" checked={tellOrvo} onCheckedChange={(c) => setTellOrvo(c)} className="mt-0.5" />
-                <Label htmlFor="fix-tell-orvo" className="flex flex-col items-start gap-0.5 font-normal">
-                  <span className="font-semibold">Submit feedback</span>
-                  <span className="text-xs text-muted-foreground">Recorded as &quot;{chosen?.tag}&quot; on this claim, so the pattern is on file.</span>
-                </Label>
-              </div>
+              <Checkbox
+                id="fix-tell-orvo"
+                isSelected={tellOrvo}
+                onChange={setTellOrvo}
+                label="Submit feedback"
+                hint={<>Recorded as &quot;{chosen?.tag}&quot; on this claim, so the pattern is on file.</>}
+              />
             ) : null}
           </div>
         )}
 
-        <DialogFooter>
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           {step === 1 ? (
             <>
-              <Button variant="outline" onClick={onCancel}>
+              <Button color="secondary" onPress={onCancel}>
                 Cancel
               </Button>
-              <Button disabled={!option} onClick={() => setStep(2)}>
+              <Button isDisabled={!option} onPress={() => setStep(2)}>
                 Continue
               </Button>
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={() => setStep(1)}>
+              <Button color="secondary" onPress={() => setStep(1)}>
                 Back
               </Button>
               <Button
-                disabled={option === "declined_valid" ? false : !input}
-                onClick={() => {
+                isDisabled={option === "declined_valid" ? false : !input}
+                onPress={() => {
                   if (option === "declined_valid" && reverseChoice === "keep") return onCancel();
                   if (!input) return setTouched(true);
                   onConfirm(input);
@@ -300,8 +316,9 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
               </Button>
             </>
           )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+        </Dialog>
+      </Modal>
+    </ModalOverlay>
   );
 }

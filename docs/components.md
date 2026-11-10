@@ -39,3 +39,7 @@ Every component in `src/components` is listed here. Update this file every time 
 | input-group | shadcn (stock, base-nova), used for the chat message box | 2026-11-09 |
 | collapsible | shadcn (stock, base-nova), used for the folding steps in the chat | 2026-11-09 |
 | spinner | shadcn (stock, base-nova), used for steps in progress | 2026-11-09 |
+
+## Untitled UI (branch explore/untitled-ui-coverage)
+
+Installed with `npx untitledui@latest add <name> --yes` into `src/components/base`, `application`, `foundations` and `shared-assets`. These folders are generated: never hand-edit beyond tokens, and they are not listed one by one. Theme: `src/styles/untitledui.css` (brand colour indigo). Used: buttons, badges, avatar, tooltip, input, textarea, checkbox, radio-buttons, select, dropdown, toggle, tabs, table, modals, empty-state. Unused installs were pruned.

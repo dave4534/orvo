@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Info, Paperclip, Sparkles, X } from "lucide-react";
+import { InfoCircle, Paperclip, Stars01, X } from "@untitledui/icons";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar } from "@/components/base/avatar/avatar";
+import { Badge } from "@/components/base/badges/badges";
+import { Button } from "@/components/base/buttons/button";
+import { Table } from "@/components/application/table/table";
+import { Tabs } from "@/components/application/tabs/tabs";
 import { dataset } from "@/data";
 import type { CheckResult, ClaimEvent } from "@/data/types";
 import { employeeName } from "@/logic/comparison";
@@ -30,12 +30,12 @@ type Props = {
   onOpenPastClaim: (id: string) => void;
 };
 
-const CHECK_STYLE: Record<CheckResult, string> = {
-  pass: "border-success-border text-success",
-  fail: "border-danger-border bg-danger text-danger-foreground",
-  flag: "border-warning-border bg-warning text-warning-foreground",
-  unsure: "border-warning-border bg-warning text-warning-foreground",
-  skipped: "text-muted-foreground",
+const CHECK_COLOR: Record<CheckResult, "success" | "error" | "warning" | "gray"> = {
+  pass: "success",
+  fail: "error",
+  flag: "warning",
+  unsure: "warning",
+  skipped: "gray",
 };
 
 /** The Policy tab answers "did it pass?", so pass and fail read as yes and no. */
@@ -74,7 +74,7 @@ function DocumentRow({
           {sub ? <div className="truncate text-xs text-muted-foreground">{sub}</div> : null}
         </div>
         {onView ? (
-          <Button variant="outline" size="sm" onClick={onView}>
+          <Button color="secondary" size="sm" onPress={onView}>
             View
           </Button>
         ) : null}
@@ -91,15 +91,15 @@ function EventMarker({ actor, name }: { actor: ClaimEvent["actor"]; name: string
   if (actor === "agent") {
     return (
       <span aria-hidden className="flex size-6 shrink-0 items-center justify-center rounded-full border border-info-border bg-info text-info-foreground">
-        <Sparkles className="size-3.5" />
+        <Stars01 className="size-3.5" />
       </span>
     );
   }
   if (actor === "employee" || actor === "noa") {
     return (
-      <Avatar size="sm" aria-hidden className="shrink-0">
-        <AvatarFallback className="text-[10px] font-semibold">{initials(name)}</AvatarFallback>
-      </Avatar>
+      <span aria-hidden className="flex shrink-0">
+        <Avatar size="xs" initials={initials(name)} />
+      </span>
     );
   }
   return (
@@ -165,7 +165,7 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
               // No receipt to show: the inline banner alone says what is missing or unreadable.
               <li className="p-3">
                 <Alert className="border-info-border bg-info text-info-foreground">
-                  <Info />
+                  <InfoCircle />
                   <AlertTitle>{receipt.status === "unreadable" ? "Receipt can't be read" : "Receipt missing"}</AlertTitle>
                   <AlertDescription className="text-info-foreground/90">{missingText}</AlertDescription>
                 </Alert>
@@ -223,27 +223,25 @@ function Policy({ claim }: { claim: LocalClaim }) {
   return (
     <section>
       <SectionLabel>Checks run</SectionLabel>
-      <Table className="table-fixed">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[34%] px-4 py-3 text-left">Check</TableHead>
-            <TableHead className="px-4 py-3 text-left">Policy</TableHead>
-            <TableHead className="w-28 px-4 py-3 text-left">Passed</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+      <Table aria-label="Checks run" size="sm" className="table-fixed">
+        <Table.Header>
+          <Table.Head id="check" isRowHeader label="Check" className="w-[34%] px-4 text-left" />
+          <Table.Head id="policy" label="Policy" className="px-4 text-left" />
+          <Table.Head id="passed" label="Passed" className="w-28 px-4 text-left" />
+        </Table.Header>
+        <Table.Body>
           {claim.agent.checks.map((c) => (
-            <TableRow key={c.id}>
-              <TableCell className="px-4 py-4 font-medium whitespace-normal">{c.label}</TableCell>
-              <TableCell className="px-4 py-4 whitespace-normal text-left text-muted-foreground">{rules.find((r) => r.id === c.rule_id)?.text ?? "No policy number"}</TableCell>
-              <TableCell className="px-4 py-4 text-left">
-                <Badge variant="outline" className={cn("bg-card", CHECK_STYLE[c.result])}>
+            <Table.Row key={c.id} id={c.id} className="h-auto">
+              <Table.Cell className="px-4 py-4 font-medium whitespace-normal text-primary">{c.label}</Table.Cell>
+              <Table.Cell className="px-4 py-4 whitespace-normal text-left">{rules.find((r) => r.id === c.rule_id)?.text ?? "No policy number"}</Table.Cell>
+              <Table.Cell className="px-4 py-4 text-left">
+                <Badge type="pill-color" size="md" color={CHECK_COLOR[c.result]}>
                   {PASSED_LABEL[c.result]}
                 </Badge>
-              </TableCell>
-            </TableRow>
+              </Table.Cell>
+            </Table.Row>
           ))}
-        </TableBody>
+        </Table.Body>
       </Table>
     </section>
   );
@@ -256,37 +254,27 @@ export function MoreInfoPanel({ claim, allClaims, tab, onTab, onClose, onOpenPas
     <aside aria-label="Details" className="flex h-full min-h-0 w-full flex-col bg-card">
       <div className="flex h-16 shrink-0 items-center justify-between px-6">
         <h2 className="text-base font-semibold">Details</h2>
-        <Button variant="ghost" size="icon-sm" aria-label="Close details" onClick={onClose}>
-          <X />
-        </Button>
+        <Button color="tertiary" size="sm" aria-label="Close details" iconLeading={X} onPress={onClose} />
       </div>
-      <Tabs value={tab} onValueChange={(v) => onTab(v as MoreTab)} className="min-h-0 flex-1 gap-0">
-        <TabsList variant="line" className="h-11 w-full shrink-0 justify-start gap-5 border-b px-6">
-          <TabsTrigger value="overview" className="flex-none px-1">
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="policy" className="flex-none px-1">
-            Policy
-          </TabsTrigger>
-          <TabsTrigger value="past" className="flex-none px-1">
-            Past claims
-          </TabsTrigger>
-          <TabsTrigger value="chat" className="flex-none px-1">
-            Chat
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview" className="min-h-0 flex-1 overflow-y-auto p-6">
+      <Tabs selectedKey={tab} onSelectionChange={(k) => onTab(k as MoreTab)} className="min-h-0 flex-1 gap-0">
+        <Tabs.List type="underline" size="sm" aria-label="Details" className="h-11 w-full shrink-0 items-end gap-5 px-6">
+          <Tabs.Item id="overview" label="Overview" />
+          <Tabs.Item id="policy" label="Policy" />
+          <Tabs.Item id="past" label="Past claims" />
+          <Tabs.Item id="chat" label="Chat" />
+        </Tabs.List>
+        <Tabs.Panel id="overview" className="min-h-0 flex-1 overflow-y-auto p-6">
           <Overview claim={claim} onView={setViewing} />
-        </TabsContent>
-        <TabsContent value="policy" className="min-h-0 flex-1 overflow-y-auto p-6">
+        </Tabs.Panel>
+        <Tabs.Panel id="policy" className="min-h-0 flex-1 overflow-y-auto p-6">
           <Policy claim={claim} />
-        </TabsContent>
-        <TabsContent value="past" className="min-h-0 flex-1 overflow-y-auto p-6">
+        </Tabs.Panel>
+        <Tabs.Panel id="past" className="min-h-0 flex-1 overflow-y-auto p-6">
           <PastClaims claim={claim} allClaims={allClaims} onOpenClaim={onOpenPastClaim} />
-        </TabsContent>
-        <TabsContent value="chat" className="flex min-h-0 flex-1 flex-col">
+        </Tabs.Panel>
+        <Tabs.Panel id="chat" className="flex min-h-0 flex-1 flex-col">
           <ClaimChat claim={claim} />
-        </TabsContent>
+        </Tabs.Panel>
       </Tabs>
       {viewing ? <DocumentDialog claim={claim} view={viewing} onClose={() => setViewing(null)} /> : null}
     </aside>

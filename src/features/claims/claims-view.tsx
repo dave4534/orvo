@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, PartyPopper, SearchX, Sparkles } from "lucide-react";
+import { ChevronDown, SearchLg, Stars01 } from "@untitledui/icons";
+import { PartyPopper } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Badge } from "@/components/base/badges/badges";
+import { Button } from "@/components/base/buttons/button";
+import { Dropdown } from "@/components/base/dropdown/dropdown";
+import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs } from "@/components/application/tabs/tabs";
 import type { Status } from "@/data/types";
 import type { ActionId } from "@/logic/actions";
 import { buildDailyBrief, buildDoneBrief, briefSentence, doneBriefSentence } from "@/logic/brief";
@@ -282,54 +283,55 @@ export function ClaimsView() {
       <main className="mx-auto flex min-w-0 w-full max-w-[1400px] flex-1 flex-col gap-6 p-8">
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-3xl font-semibold tracking-tight">Claims</h1>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button variant="ghost" size="sm" className="text-muted-foreground">
-                  Demo <ChevronDown data-icon="inline-end" />
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuCheckboxItem checked={simulateError} onCheckedChange={(c) => setSimulateError(c)}>
-                Simulate a save error
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {
-                  reset();
-                  resetAi();
-                  closeWorkspace();
-                  setTab("needs_review");
-                  setFilters(DEFAULT_FILTERS);
-                  setSelectedIds(new Set());
-                  setBriefDismissed(new Set());
-                }}
+          <Dropdown.Root>
+            <Button color="tertiary" size="sm" className="text-tertiary" iconTrailing={ChevronDown}>
+              Demo
+            </Button>
+            <Dropdown.Popover className="w-56">
+              <Dropdown.Menu
+                selectionMode="multiple"
+                selectedKeys={new Set(simulateError ? ["simulate"] : [])}
+                onSelectionChange={(keys) => setSimulateError(keys === "all" || keys.has("simulate"))}
               >
-                Reset demo
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <Dropdown.Item id="simulate" label="Simulate a save error" selectionIndicator="checkbox" />
+                <Dropdown.Separator />
+                <Dropdown.Item
+                  id="reset"
+                  label="Reset demo"
+                  selectionIndicator="none"
+                  onAction={() => {
+                    reset();
+                    resetAi();
+                    closeWorkspace();
+                    setTab("needs_review");
+                    setFilters(DEFAULT_FILTERS);
+                    setSelectedIds(new Set());
+                    setBriefDismissed(new Set());
+                  }}
+                />
+              </Dropdown.Menu>
+            </Dropdown.Popover>
+          </Dropdown.Root>
         </div>
 
         <Tabs
-          value={tab}
-          onValueChange={(value) => {
-            track("tab_changed", { tab: value });
-            setTab(value as TabId);
+          selectedKey={tab}
+          onSelectionChange={(key) => {
+            track("tab_changed", { tab: String(key) });
+            setTab(String(key) as TabId);
             setSelectedIds(new Set());
           }}
         >
-          <TabsList variant="line" className="h-11 w-full justify-start border-b pb-0">
+          <Tabs.List type="underline" size="md" className="w-full">
             {TABS.map((t) => (
-              <TabsTrigger key={t.id} value={t.id} className="flex-none px-3 text-base">
+              <Tabs.Item key={t.id} id={t.id}>
                 {t.label}
-                <Badge variant="secondary" aria-label={`${counts[t.id]} claims`}>
+                <Badge size="sm" color="gray" aria-label={`${counts[t.id]} claims`}>
                   {counts[t.id]}
                 </Badge>
-              </TabsTrigger>
+              </Tabs.Item>
             ))}
-          </TabsList>
+          </Tabs.List>
         </Tabs>
 
         {tab === "done" ? (
@@ -379,50 +381,52 @@ export function ClaimsView() {
             </p>
           </>
         ) : cleared ? (
-          <Empty className="rounded-xl border bg-card py-16">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">{sessionIds.length > 0 ? <PartyPopper /> : <Sparkles />}</EmptyMedia>
-              <EmptyTitle>{sessionIds.length > 0 ? "Queue cleared" : "Nothing needs review"}</EmptyTitle>
-              <EmptyDescription>
+          <EmptyState size="lg" className="rounded-xl border bg-card py-16">
+            <EmptyState.Header>
+              <EmptyState.FeaturedIcon color="gray" icon={sessionIds.length > 0 ? PartyPopper : Stars01} />
+            </EmptyState.Header>
+            <EmptyState.Content>
+              <EmptyState.Title>{sessionIds.length > 0 ? "Queue cleared" : "Nothing needs review"}</EmptyState.Title>
+              <EmptyState.Description>
                 {sessionIds.length > 0
                   ? `Decided ${decidedCount}, sent ${financeCount} to Finance, ${waitingCount} waiting on employees.`
                   : `${brief.approvedByOrvo} claims were approved automatically. Nothing needs review.`}
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent className="flex-row justify-center">
+              </EmptyState.Description>
+            </EmptyState.Content>
+            <EmptyState.Footer>
               {hasSpotChecks ? (
-                <Button variant="outline" onClick={() => setTab("done")}>
+                <Button color="secondary" onPress={() => setTab("done")}>
                   Spot check automatic approvals
                 </Button>
               ) : (
-                <Button variant="outline" onClick={() => setTab("done")}>
+                <Button color="secondary" onPress={() => setTab("done")}>
                   Look through automatic approvals
                 </Button>
               )}
-              <Button variant="outline" onClick={() => setTab("waiting")}>
+              <Button color="secondary" onPress={() => setTab("waiting")}>
                 See waiting on others
               </Button>
-            </EmptyContent>
-          </Empty>
+            </EmptyState.Footer>
+          </EmptyState>
         ) : (
-          <Empty className="rounded-xl border bg-card py-16">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <SearchX />
-              </EmptyMedia>
-              <EmptyTitle>{filtered ? `No claims match in ${tabLabel}` : `Nothing in ${tabLabel}`}</EmptyTitle>
-              <EmptyDescription>
+          <EmptyState size="lg" className="rounded-xl border bg-card py-16">
+            <EmptyState.Header>
+              <EmptyState.FeaturedIcon color="gray" icon={SearchLg} />
+            </EmptyState.Header>
+            <EmptyState.Content>
+              <EmptyState.Title>{filtered ? `No claims match in ${tabLabel}` : `Nothing in ${tabLabel}`}</EmptyState.Title>
+              <EmptyState.Description>
                 {filtered ? "Try a different search or clear the filters. Other tabs may have matches." : "Claims will show up here when they reach this stage."}
-              </EmptyDescription>
-            </EmptyHeader>
+              </EmptyState.Description>
+            </EmptyState.Content>
             {filtered ? (
-              <EmptyContent>
-                <Button variant="outline" onClick={() => changeFilters(DEFAULT_FILTERS)}>
+              <EmptyState.Footer>
+                <Button color="secondary" onPress={() => changeFilters(DEFAULT_FILTERS)}>
                   Clear search and filters
                 </Button>
-              </EmptyContent>
+              </EmptyState.Footer>
             ) : null}
-          </Empty>
+          </EmptyState>
         )}
       </main>
           )}
