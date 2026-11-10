@@ -24,6 +24,8 @@ type Props = {
   children?: ReactNode;
   /** Buttons shown at the right of the text. */
   actions?: ReactNode;
+  /** Size of the title. Defaults to text-sm. */
+  titleClassName?: string;
   /** Draws the icon on its own, with no tinted circle behind it. */
   plainIcon?: boolean;
   /** When set, a dismiss button shows and the banner evaporates before this is called. */
@@ -36,7 +38,7 @@ type Props = {
  * (src/components/shadcn-space/alert/alert-08.tsx): an icon chip, title and text, and a dismiss button.
  * Composed from the stock Alert and Button. Colors come from the project tokens.
  */
-export function StatusBanner({ icon, tone = "info", title, children, actions, plainIcon = false, onDismiss, className }: Props) {
+export function StatusBanner({ icon, tone = "info", title, children, actions, plainIcon = false, titleClassName = "text-sm", onDismiss, className }: Props) {
   const [visible, setVisible] = useState(true);
   const reduce = useReducedMotion();
   const destructive = tone === "destructive";
@@ -86,7 +88,7 @@ export function StatusBanner({ icon, tone = "info", title, children, actions, pl
             </div>
 
             <div className="flex min-w-0 flex-1 flex-col gap-1 pt-0.5">
-              <AlertTitle className="text-sm font-medium tracking-tight">{title}</AlertTitle>
+              <AlertTitle className={cn("font-medium tracking-tight", titleClassName)}>{title}</AlertTitle>
               {children ? <AlertDescription className={cn("text-sm", destructive ? "text-destructive/90" : "text-muted-foreground")}>{children}</AlertDescription> : null}
             </div>
 
