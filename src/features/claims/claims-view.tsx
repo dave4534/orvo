@@ -58,7 +58,7 @@ const tabOfClaim = (claim: LocalClaim | undefined, now: Date): TabId =>
 
 export function ClaimsView() {
   const { claims, now, skipAhead, sessionIds, undoLast, perform, performBatch, sendMessage } = useClaims();
-  const { aiOpen, setAiOpen, addAiMessage, lastTriageClaim, setChatContext, setUiToolHandler, runAction, controlDialog, callControl, hasControl, setAiWidener, voiceOpen, homeRequest } = useWorkspace();
+  const { aiOpen, setAiOpen, addAiMessage, lastTriageClaim, setChatContext, setUiToolHandler, runAction, controlDialog, callControl, hasControl, setAiWidener, voiceOpen, setVoiceOpen, homeRequest } = useWorkspace();
   const seenHome = useRef(homeRequest);
   const aiPanel = usePanelRef();
 
@@ -517,6 +517,51 @@ export function ClaimsView() {
     const visible = sections.flatMap((s) => (s.collapsible && !expanded.has(s.id) ? [] : s.claims));
     setSelectedIds(checked ? new Set(visible.map((c) => c.id)) : new Set());
   }
+
+  // The walkthrough's chips open a state of this view. Any open panel or dialog is closed first.
+  useEffect(() => {
+    const onPlace = (event: Event) => {
+      const id = (event as CustomEvent<string>).detail;
+      const firstReview = sortClaims(inTab(applyFilters(claims, DEFAULT_FILTERS, now), "needs_review", now), defaultSortFor("needs_review"))[0]?.id ?? null;
+      setPastId(null);
+      setDetailsOpen(false);
+      switch (id) {
+        case "review-tab":
+        case "claims-page":
+          setTab("needs_review");
+          setOpenId(null);
+          break;
+        case "done-tab":
+        case "done-queue":
+          setTab("done");
+          setOpenId(null);
+          break;
+        case "claims-queue":
+          setTab("needs_review");
+          if (firstReview) openClaimById(firstReview);
+          break;
+        case "queue-ai-voice":
+          setTab("needs_review");
+          if (firstReview) openClaimById(firstReview);
+          setAiOpen(true);
+          setVoiceOpen(true);
+          break;
+        case "chat-cards":
+          setTab("needs_review");
+          if (firstReview) openClaimById(firstReview);
+          setAiOpen(true);
+          break;
+        case "more-options":
+          setTab("needs_review");
+          if (firstReview) openClaimById(firstReview);
+          setMoreTab("overview");
+          setDetailsOpen(true);
+          break;
+      }
+    };
+    window.addEventListener("walkthrough:place", onPlace);
+    return () => window.removeEventListener("walkthrough:place", onPlace);
+  });
 
   const inTriage = openClaim !== null && position !== null;
 
