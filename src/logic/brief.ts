@@ -68,7 +68,7 @@ export function buildDoneBrief(claims: LocalClaim[], now: Date = NOW): DoneBrief
 
 export function doneBriefSentence(b: DoneBrief): string {
   if (b.done === 0) return "Nothing is done yet.";
-  return `${b.done} ${b.done === 1 ? "claim is" : "claims are"} done. I approved ${b.approvedByOrvo} on my own and declined ${b.declinedByOrvo} automatically, and ${b.decidedByYou} ${b.decidedByYou === 1 ? "was" : "were"} decided by hand.`;
+  return `${b.done} ${b.done === 1 ? "claim is" : "claims are"} done: ${b.approvedByOrvo} approved automatically, ${b.declinedByOrvo} declined automatically, and ${b.decidedByYou} decided by hand.`;
 }
 
 export function briefSentence(b: DailyBrief): string {
@@ -83,8 +83,11 @@ export function briefSentence(b: DailyBrief): string {
     parts.push(`${b.needsYou} ${b.needsYou === 1 ? "claim needs" : "claims need"} review${split}.`);
     if (b.pastTarget > 0) parts.push(`${b.pastTarget} of ${b.needsYou} are past the ${WAIT_TARGET_DAYS}-day target.`);
   }
-  const did = `I approved ${b.approvedByOrvo} on my own`;
-  const chase = b.chasing > 0 ? ` and am chasing ${b.chasing} ${b.chasingReceipts ? "receipts" : "claims"}` : "";
-  parts.push(`${did}${chase}.`);
+  const approved = `${b.approvedByOrvo} approved automatically`;
+  const chase =
+    b.chasing > 0
+      ? `, and ${b.chasing} ${b.chasingReceipts ? (b.chasing === 1 ? "receipt" : "receipts") : b.chasing === 1 ? "claim" : "claims"} ${b.chasing === 1 ? "is" : "are"} being chased`
+      : "";
+  parts.push(`${approved}${chase}.`);
   return parts.join(" ");
 }
