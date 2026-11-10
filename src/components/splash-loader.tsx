@@ -3,10 +3,13 @@
 import * as React from "react"
 
 const SRC = "/brand/orvo-logo-animation.svg"
-// The file's own loop: every keyframe and animation in it is 5.255s.
-// Its first and last frames are the same (wordmark, no coin), so ending on
-// the last frame of one cycle leaves the same picture the cycle starts on.
-const CYCLE_MS = 5255
+// The file loops every 5.255s: wordmark, collapse into the coin, coin settles
+// (from about 3.46s), coin fades (from about 4.06s), wordmark returns. The
+// wordmark returning is the loop, so the page stops on the settled coin and
+// never lets the file get that far.
+const END_MS = 3900
+// Hold the settled coin briefly, then dissolve.
+const HOLD_MS = 500
 // Reduced motion: the file turns its animations off and shows the wordmark.
 const STATIC_HOLD_MS = 1200
 const FADE_MS = 800
@@ -45,18 +48,20 @@ export function SplashLoader() {
     let hold: number | undefined
     let cancelled = false
 
-    const finish = () => {
-      if (cancelled) return
-      // Freeze every animation on frame 0 (the wordmark) before fading.
-      if (root) {
-        for (const a of document.getAnimations()) {
-          const target = (a.effect as KeyframeEffect | null)?.target
-          if (target && root.contains(target)) {
-            a.pause()
-            a.currentTime = 0
-          }
+    // Freeze every animation of the file on the settled coin frame.
+    const freeze = () => {
+      if (!root) return
+      for (const a of document.getAnimations()) {
+        const target = (a.effect as KeyframeEffect | null)?.target
+        if (target && root.contains(target)) {
+          a.pause()
+          a.currentTime = END_MS
         }
       }
+    }
+
+    const finish = () => {
+      if (cancelled) return
       setPhase("fading")
       hold = window.setTimeout(() => setPhase("done"), FADE_MS)
     }
@@ -75,8 +80,9 @@ export function SplashLoader() {
           const tick = () => {
             const t = clock?.currentTime
             const elapsed = typeof t === "number" ? t : performance.now() - started
-            if (elapsed >= CYCLE_MS) {
-              finish()
+            if (elapsed >= END_MS) {
+              freeze()
+              hold = window.setTimeout(finish, HOLD_MS)
               return
             }
             raf = requestAnimationFrame(tick)
@@ -105,10 +111,10 @@ export function SplashLoader() {
         pointerEvents: phase === "fading" ? "none" : "auto",
       }}
     >
-      <style>{`.orvo-splash-paused, .orvo-splash-paused * { animation-play-state: paused !important; } .orvo-splash-paused svg { display: block; width: 100%; height: auto; }`}</style>
+      <style>{`.orvo-splash-paused, .orvo-splash-paused * { animation-play-state: paused !important; } .orvo-splash svg { display: block; width: 100%; height: auto; }`}</style>
       <div
         ref={rootRef}
-        className="orvo-splash-paused"
+        className="orvo-splash orvo-splash-paused"
         style={{ width: "min(440px, 60vw)", height: "auto" }}
         dangerouslySetInnerHTML={{ __html: svg ?? "" }}
       />
