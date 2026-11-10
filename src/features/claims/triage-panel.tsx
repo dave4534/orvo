@@ -293,7 +293,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
               </Avatar>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[1.375rem] leading-7 font-semibold">{full}</div>
-                {flat ? null : <div className="text-xs text-muted-foreground">{subtitle}</div>}
+                {flat ? null : <div className="mt-1 text-xs text-muted-foreground">{subtitle}</div>}
               </div>
               <div className="text-right text-3xl leading-9 font-semibold tabular-nums">{formatUsd(claimed)}</div>
             </div>
