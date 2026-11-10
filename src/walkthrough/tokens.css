@@ -1,0 +1,9 @@
+/* Maps the shared walkthrough's variables onto this prototype's theme. */
+:root {
+  --wt-surface: var(--background);
+  --wt-border: var(--border);
+  --wt-text: var(--foreground);
+  --wt-muted: var(--muted-foreground);
+  --wt-primary: var(--primary);
+  --wt-left: 32px;
+}

@@ -82,6 +82,7 @@ Two voices live in this product. Keep them apart.
 
 Static text written ahead of time: labels, buttons, status lines, empty states, messages to employees, and the summary the chat posts when a claim opens.
 
+- **Designer walkthrough exception.** The walkthrough (`src/components/walkthrough/` and `src/walkthrough/`) is a presentation layer for reviewers, written in Dave's own voice, so it may use "I", "me" and "my". It is not product text, and its chips only open the product's own screens.
 - **No first person outside the chat.** Product text does not talk about the product or about what it did. Do not write "I", "me", "my", "we" or "our" in banners, briefs, labels, status lines, comparison sentences, empty states or summaries. Say what happened, neutrally, with the product's own status words: "26 approved automatically, and 3 receipts are being chased." Not "I approved 26 on my own and am chasing 3 receipts." Only the Ask Orvo AI chat (section 2), including the notes it posts such as the triage note, may say "I".
 - **Same words everywhere.** Use the status labels the app already uses: "Approved automatically", "Declined automatically", "Decided by hand", "Needs review", "Waiting on employee". A status means the same thing in every banner, column and summary.
 - **Briefs** lead with the counts and the next step. No greeting except the one below, no self-reference, no sign-offs.

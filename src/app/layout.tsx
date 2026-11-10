@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils";
+import { WalkthroughHost } from "@/walkthrough/WalkthroughHost"
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'})
 
@@ -30,6 +31,7 @@ export default function RootLayout({
         <ThemeProvider defaultTheme="light" enableSystem={false}>
           <TooltipProvider>{children}</TooltipProvider>
           <Toaster position="bottom-left" />
+          <WalkthroughHost />
         </ThemeProvider>
       </body>
     </html>

@@ -1,0 +1,299 @@
+/* Shared walkthrough styles. Colours and the left offset come from the host project through
+   these variables (set once in the host's tokens file):
+     --wt-surface, --wt-border, --wt-text, --wt-muted, --wt-primary
+     --wt-left (where the face sits from the left edge of the window)
+   The stepper colours and the rainbow stroke are fixed here, so every project looks the same. */
+/* Walkthrough. The blue is local to this guide on purpose: the Appcharge theme's
+   primary is purple, and the guide should read as separate from the product. */
+.walkthrough {
+  --walkthrough-blue: #0073ea;
+  --walkthrough-gray: #d0d4e4;
+  position: fixed;
+  /* Above dialogs (z-50) so the guide stays readable while a place is open in one. */
+  z-index: 60;
+  /* 32px right of the sidebar, 32px above the bottom of the view. */
+  left: var(--wt-left, 32px);
+  bottom: 32px;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.walkthrough-anchor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.walkthrough-avatar {
+  display: block;
+  /* 58px = 1px stroke + 8px padding + 40px face + 8px padding + 1px stroke */
+  width: 58px;
+  height: 58px;
+  padding: 8px; /* breathing room around the face */
+  border: 1px solid transparent; /* the stroke; shows as a rainbow while attention is needed */
+  border-radius: 50%;
+  background: var(--wt-surface, #ffffff);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.2);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.walkthrough-avatar:active {
+  cursor: grabbing;
+}
+
+.walkthrough-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.walkthrough-avatar:focus-visible {
+  outline: 2px solid var(--walkthrough-blue);
+  outline-offset: 2px;
+}
+
+.walkthrough-hint {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--walkthrough-blue);
+  color: #fff;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.walkthrough-panel {
+  position: absolute;
+  bottom: 72px; /* avatar 56px + 16px gap */
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  width: 360px;
+  max-width: calc(100vw - 16px);
+  padding: 20px 24px 16px;
+  border: 1px solid var(--wt-border, #d0d4e4);
+  border-radius: 12px;
+  background: var(--wt-surface, #ffffff);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.18);
+  text-align: left;
+}
+
+.walkthrough-panel[data-below='true'] {
+  top: 72px;
+  bottom: auto;
+}
+
+.walkthrough-panel[data-align='right'] {
+  right: 0;
+  left: auto;
+}
+
+.walkthrough-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* Long steps scroll inside the card; the steps and the buttons stay put. */
+.walkthrough-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 32px; /* keeps text clear of the scrollbar */
+}
+
+.walkthrough-steps {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.walkthrough-steps li {
+  flex: 1;
+}
+
+/* One solid line per step: gray by default, blue when it is the current one.
+   The button is taller than the line so it is easy to click. */
+.walkthrough-dash {
+  display: block;
+  width: 100%;
+  height: 12px;
+  padding: 0;
+  border: 0;
+  background: linear-gradient(var(--walkthrough-gray), var(--walkthrough-gray)) center / 100% 3px no-repeat;
+  cursor: pointer;
+}
+
+.walkthrough-dash[data-active='true'] {
+  background-image: linear-gradient(var(--walkthrough-blue), var(--walkthrough-blue));
+}
+
+.walkthrough-dash:focus-visible {
+  outline: 2px solid var(--walkthrough-blue);
+  outline-offset: 2px;
+}
+
+.walkthrough-title {
+  flex: none;
+  margin: 0 0 12px; /* stays put while the text below scrolls */
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 700;
+  color: var(--wt-text, #161616);
+}
+
+.walkthrough-body p {
+  margin: 0 0 10px;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--wt-text, #161616);
+}
+
+.walkthrough-actions {
+  display: flex;
+  flex: none;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.walkthrough-body a {
+  color: var(--wt-primary, #0073ea);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Places: chips that open a spot in the prototype. */
+.walkthrough-places {
+  margin-top: 4px;
+}
+
+.walkthrough-places-label {
+  margin-bottom: 8px;
+  color: var(--wt-muted, #5c6370);
+  font-size: 15px;
+}
+
+.walkthrough-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+
+/* Bullets: a 16px icon beside each point. */
+.walkthrough-list {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.walkthrough-list li {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 10px;
+  align-items: start;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--wt-text, #161616);
+}
+
+.walkthrough-bullet {
+  margin-top: 3px; /* centres the 16px icon on the first line of 22px text */
+  color: var(--wt-muted, #5c6370);
+}
+
+/* A link that opens an image: looks like the other links. */
+.walkthrough-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--wt-primary, #0073ea);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* Lightbox: above the card (60) and dialogs. */
+.walkthrough-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 48px;
+  background: rgb(0 0 0 / 0.75);
+}
+
+.walkthrough-lightbox img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(100%, 1200px);
+  max-height: 80vh; /* a comfortable size with room around it */
+  margin: auto;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 40px rgb(0 0 0 / 0.4);
+  object-fit: contain;
+}
+
+.walkthrough-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.walkthrough-lightbox-missing {
+  margin: 0;
+  padding: 16px 20px;
+  border-radius: 8px;
+  background: var(--wt-surface, #ffffff);
+  font-size: 15px;
+}
+
+/* The inline GIF sits in the text, about four spaces after the smiley, at text size. */
+.walkthrough-inline-gif {
+  display: inline-block;
+  height: 1.5em;
+  width: auto;
+  margin-left: 0.9em;
+  vertical-align: middle;
+}
+
+/* Attention stroke: the same technique as Magic UI's Rainbow Button. The border is
+   transparent, and a gradient behind it is scrolled, so only the stroke shows colour.
+   The face and its fill are unchanged. It runs while the guide is closed. */
+@keyframes walkthrough-rainbow {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 200% 0%;
+  }
+}
+
+.walkthrough-avatar[data-attention='true'] {
+  background:
+    linear-gradient(var(--wt-surface, #ffffff), var(--wt-surface, #ffffff)) padding-box,
+    linear-gradient(90deg, hsl(0 100% 63%), hsl(270 100% 63%), hsl(210 100% 63%), hsl(195 100% 63%), hsl(90 100% 63%), hsl(0 100% 63%)) border-box;
+  background-size: 200% 100%;
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  animation: walkthrough-rainbow 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .walkthrough-avatar[data-attention='true'] {
+    animation: none;
+  }
+}
