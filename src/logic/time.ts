@@ -1,4 +1,4 @@
-/** Small date helpers for the policy and flag logic. Dataset timestamps are local company time with no offset. Pure. */
+/** Small date helpers for the policy logic. Dataset timestamps are local company time with no offset. Pure. */
 export const DAY_MS = 86_400_000;
 
 export const isoLocal = (d: Date) => {

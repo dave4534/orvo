@@ -28,7 +28,6 @@ import { bulkActionsFor, type BulkActionId } from "@/logic/bulk";
 import { isSpotCheck, isWaitOver, type LocalClaim } from "@/logic/local";
 import { sectionsFor } from "@/logic/sections";
 import { buildChatContext } from "@/logic/chat-context";
-import { canRemoveFlag } from "@/logic/flags";
 import { isoLocal } from "@/logic/time";
 import { triageNote } from "@/logic/summary";
 import { firstName } from "@/logic/actions";
@@ -253,15 +252,6 @@ export function ClaimsView() {
           const days = Math.max(1, Math.min(60, Math.round(Number(input.days) || 14)));
           skipAhead(days);
           return { ok: true, days };
-        }
-        case "removeFlag": {
-          const id = String(input.claimId ?? "");
-          const claim = claims.find((c) => c.id === id);
-          if (!claim) return { ok: false, error: `No claim ${id}.` };
-          const flag = [...(claim.local?.flags ?? [])].reverse().find((f) => canRemoveFlag(f, now));
-          if (!flag) return { ok: false, error: "That claim has no flag Noa added that can still be removed. Automatic flags cannot be removed." };
-          const result = perform(id, { id: "unflag", flagId: flag.id });
-          return result.ok ? { ok: true, removed: flag.note } : { ok: false, error: "The flag could not be removed." };
         }
         case "openPastClaim": {
           if (openId === null) return claimOnly;

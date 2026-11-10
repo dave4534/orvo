@@ -25,7 +25,7 @@ export const UI_TOOLS = [
   { name: "nextClaim", surface: "Claim page", control: "Next" },
   { name: "previousClaim", surface: "Claim page", control: "Previous" },
   { name: "backToClaims", surface: "Claim page", control: "Back to claims" },
-  { name: "takeAction", surface: "Claim page", control: "Every button in the action bar and More options: approve, decline, wait for receipt, ask, send to Finance, different amount, flag claim, decide now, continue waiting" },
+  { name: "takeAction", surface: "Claim page", control: "Every button in the action bar and More options: approve, decline, wait for receipt, ask, send to Finance, different amount, decide now, continue waiting" },
   { name: "changeDecision", surface: "Claim page and past claim window", control: "Changing a decision that is already made (status menu, Edit decision, Fix)" },
   { name: "confirmDialog", surface: "Pop-ups and chat", control: "Send or Confirm in a pop-up, and Send in the employee chat" },
   { name: "cancelDialog", surface: "Pop-ups and chat", control: "Cancel in a pop-up, and clearing an unsent message" },
@@ -35,8 +35,7 @@ export const UI_TOOLS = [
   { name: "closeDetails", surface: "Details panel", control: "Close (X)" },
   { name: "viewDocument", surface: "Details panel", control: "View on the receipt, the card statement and attachments" },
   { name: "closeDocument", surface: "Details panel", control: "Close on the document window" },
-  { name: "openPastClaim", surface: "Details panel", control: "A row in Past claims, and a row in the Flags list under it. The flag chip beside the employee's name opens that tab (openDetails)" },
-  { name: "removeFlag", surface: "Details panel", control: "Remove on a flag Noa added, in the Flags list under Past claims" },
+  { name: "openPastClaim", surface: "Details panel", control: "A row in Past claims" },
   { name: "closePastClaim", surface: "Past claim window", control: "Close on the past claim window" },
   // Anywhere: the general hands. They reach anything on screen the specific tools do not name.
   { name: "lookAtScreen", surface: "Anywhere", control: "Reading what is on screen: open dialogs and every visible control" },

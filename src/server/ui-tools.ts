@@ -110,10 +110,6 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
       inputSchema: z.object({ which: z.enum(["receipt", "attachment"]), label: z.string().max(80).optional().describe("Part of the attachment's name, if there is more than one") }),
     });
     tools.closeDocument = tool({ description: "Close the receipt or attachment window.", inputSchema: z.object({}) });
-    tools.removeFlag = tool({
-      description: "Remove the flag Noa added to a claim, as Remove in the Flags list under Past claims does. Only a flag Noa added by hand within the last 60 days can be removed. Automatic flags cannot.",
-      inputSchema: z.object({ claimId: z.enum(ids) }),
-    });
     tools.openPastClaim = tool({ description: "Open one of the employee's other claims in a window over the review, as the Past claims tab does.", inputSchema: z.object({ claimId: z.enum(ids) }) });
     if (opts.pastOpen) tools.closePastClaim = tool({ description: "Close the past claim window and return to the review.", inputSchema: z.object({}) });
   }
@@ -121,7 +117,7 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
   if (active && labels.length > 0) {
     tools.takeAction = tool({
       description:
-        "Carry out one of the buttons on the claim now: approve, decline, wait for a receipt (the label names the days), send to Finance, flag the claim (needs a reason in message), approve a different amount, or for a claim waiting on the employee Decide now or Continue waiting. Only call it when Noa has asked for that or accepted your suggestion. The decision is applied at once, and Noa can undo it. The button that asks the employee a question opens the Chat tab in Details with the question typed in for Noa to send, instead of sending at once.",
+        "Carry out one of the buttons on the claim now: approve, decline, wait for a receipt (the label names the days), send to Finance, approve a different amount, or for a claim waiting on the employee Decide now or Continue waiting. Only call it when Noa has asked for that or accepted your suggestion. The decision is applied at once, and Noa can undo it. The button that asks the employee a question opens the Chat tab in Details with the question typed in for Noa to send, instead of sending at once.",
       inputSchema: z.object({
         buttonLabel: z.enum(labels as [string, ...string[]]).describe("Exact label of the button"),
         amount: z.number().positive().optional().describe('Only for "Approve a different amount": the amount in USD that Noa said. Required there.'),
@@ -129,7 +125,7 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
           .string()
           .max(300)
           .optional()
-          .describe('For Wait, Ask, Flag claim and Decline: the wording Noa dictated for the employee, written as a short imperative with no "you", "your" or "could you" (for example: "Resend the card statement as a PDF."). Leave out to send the standard wording (Hold and Ask) or no note (Decline).'),
+          .describe('For Wait, Ask and Decline: the wording Noa dictated for the employee, written as a short imperative with no "you", "your" or "could you" (for example: "Resend the card statement as a PDF."). Leave out to send the standard wording (Hold and Ask) or no note (Decline).'),
       }),
     });
   }

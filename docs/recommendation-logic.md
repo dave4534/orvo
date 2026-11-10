@@ -6,7 +6,6 @@ Where it lives:
 - `src/logic/policy.ts` has every limit and the facts built on them (weekly total, same-day claims, receipt exception, wait days). All values are read from the dataset (`policy.rules` for the assignment's three rules, `policy.agent_settings` for our assumptions). Nothing is typed in the code.
 - `src/logic/recommendations.ts` is the one table. For each reason type it gives the recommended action, the other actions, the policy gap, a short reason (8 words, for the triage note) and the full reasoning: why the recommended action is right and why each other action is weaker.
 - The triage note in the chat, the Policy tab, the assistant's `getRecommendedAction` and the scripted replies all read that one record, so they never disagree.
-- `src/logic/flags.ts` derives the agent's flags from the claims. The manager's flags are kept on the claim (`local.flags`).
 - Data changes (new limits, labels) are made in `../Data Generation/_source/build.py`, then `npm run prep:data`.
 
 ## What the assignment says, and what is our assumption
@@ -19,7 +18,6 @@ The assignment has three rules: meals up to $60 per person, receipt above $25, F
 | Same-day allowance | $200 per person, same employee, same category, same day | Two or more claims over it are looked at. A single claim is never "over". Per person, so a team dinner is not counted as one person's spend. |
 | Receipt exception ceiling | $100, needs a card statement and both requests unanswered | The most the manager can approve without a receipt. |
 | Wait windows | receipt 14 days, unreadable 7, question 7, unusual amount 3, Finance 5 working days | A wait ends, the claim returns to Needs review, the manager decides. |
-| Flags | shown for 90 days, a flag added by hand can be removed for 60 days | No count of flags triggers anything. |
 
 ## The table
 
@@ -34,7 +32,3 @@ The assignment has three rules: meals up to $60 per person, receipt above $25, F
 | Unusual amount | Approve if the receipt supports it, otherwise ask | An unusual amount is not a policy breach, it needs support. | Decline: no rule is broken. |
 | No rule covers it | Ask | The claim cannot be checked against policy. | Approve: a guess. Decline: may reject an agreed event. |
 | Possible duplicate | Ask | A question settles whether it is the same trip. | Approve: may pay twice. Decline: may be a second trip. |
-
-## Flags
-
-A flag is a mark on a claim that counts toward an employee's pattern. The agent raises them from failed checks (missing receipt after the requests, over the meal cap, week over the limit, same-day claims over the allowance, unusual amount, duplicate, unusual pattern), and an agent flag goes away when the thing behind it is corrected. The manager can add one from More options, with a reason, and remove one she added for 60 days. They show as a chip beside the employee's name and as a list under Past claims. A flag decides nothing.

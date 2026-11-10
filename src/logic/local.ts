@@ -1,4 +1,4 @@
-import type { Claim, ClaimEvent, PersonId } from "@/data/types";
+import type { Claim, ClaimEvent } from "@/data/types";
 import { dataset } from "@/data";
 
 // The policy limits now live in policy.ts. They are re-exported so existing imports keep working.
@@ -11,38 +11,12 @@ export type LocalEventType =
   | "noa_asked"
   | "noa_routed_finance"
   | "noa_correction"
-  | "noa_flagged"
-  | "noa_unflagged"
   | "agent_feedback"
   | "undo";
 
 export type LocalEvent = Omit<ClaimEvent, "type"> & { type: LocalEventType };
 
 export type ThreadMessage = { at: string; from: "manager"; text: string };
-
-/** The kinds of flag. The labels are `enums.flag_type` in the dataset. */
-export type FlagType =
-  | "missing_receipt"
-  | "over_meal_cap"
-  | "weekly_over_limit"
-  | "same_day_over_allowance"
-  | "unusual_amount"
-  | "possible_duplicate"
-  | "unusual_pattern"
-  | "manager";
-
-/** A mark on a claim that counts toward the employee's pattern. The agent's flags are derived from the claims; the manager's are kept here. */
-export type ClaimFlag = {
-  id: string;
-  type: FlagType;
-  claimId: string;
-  employeeId: PersonId;
-  by: "agent" | "noa";
-  /** When it was raised. */
-  at: string;
-  /** One line of why. */
-  note: string;
-};
 
 /** A claim parked while it waits on someone. It returns to the manager's queue at `until`. */
 export type ClaimWait = {
@@ -62,8 +36,6 @@ export type LocalClaim = Omit<Claim, "events"> & {
     feedback?: { option: string; text?: string; at: string }[];
     /** Messages the manager sent to the employee from this claim. Kept locally, in the claim chat. */
     thread?: ThreadMessage[];
-    /** Flags the manager added to this claim. The agent's flags are derived (see flags.ts). */
-    flags?: ClaimFlag[];
     /** Set while the claim waits on the employee or Finance. */
     wait?: ClaimWait | null;
   };

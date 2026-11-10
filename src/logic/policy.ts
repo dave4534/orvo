@@ -19,8 +19,6 @@ type AgentSettings = {
   receipt_exception_ceiling_usd: number;
   finance_nudge_working_days: number;
   wait_days: Record<string, number>;
-  flag_display_days: number;
-  flag_removal_days: number;
 };
 
 const settings = dataset.policy.agent_settings as unknown as AgentSettings;
@@ -43,8 +41,6 @@ export const WEEKLY_LIMIT = settings.weekly_total_limit_usd;
 export const DAILY_ALLOWANCE = settings.daily_allowance_usd;
 export const EXCEPTION_CEILING = settings.receipt_exception_ceiling_usd;
 export const FINANCE_NUDGE_WORKING_DAYS = settings.finance_nudge_working_days;
-export const FLAG_DISPLAY_DAYS = settings.flag_display_days;
-export const FLAG_REMOVAL_DAYS = settings.flag_removal_days;
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 

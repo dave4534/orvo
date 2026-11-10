@@ -24,7 +24,7 @@ export type ActionSpec = {
   /** Collects a typed amount in the dialog. */
   askAmount?: boolean;
   /** Collects a message in the dialog. */
-  askMessage?: "decline" | "ask" | "wait" | "flag";
+  askMessage?: "decline" | "ask" | "wait";
   /** Visual weight of a destructive choice. */
   destructive?: boolean;
 };
@@ -89,8 +89,6 @@ const toFinance = (label = "Send to Finance"): ActionSpec => ({ id: "to_finance"
 
 const toFinanceBoth = (): ActionSpec => ({ id: "to_finance_both", label: "Send both claims to Finance", input: { id: "to_finance_both" }, confirm: true });
 
-/** A mark on the claim that counts toward the employee's pattern. It decides nothing, so it sits in More options. */
-export const flagSpec = (): ActionSpec => ({ id: "flag", label: "Flag claim", input: { id: "flag" }, confirm: true, askMessage: "flag" });
 
 const extendWait = (): ActionSpec => ({
   id: "extend_wait",
@@ -346,11 +344,11 @@ export function reasoningText(a: Assessment): string {
   return [a.why, ...a.others.map((o) => `${o.label}: ${upper(o.why)}`)].join("\n");
 }
 
-/** Every action offered for a claim that needs a decision: the buttons, the entries in More options, and the flag. */
+/** Every action offered for a claim that needs a decision: the buttons and the entries in More options. */
 export function allActionsFor(claim: LocalClaim, all: LocalClaim[] = [], now: Date = NOW): ActionSpec[] {
   const rec = recommendationFor(claim, all, now);
   const shown = [rec.recommended, ...rec.secondary].filter((s): s is ActionSpec => Boolean(s));
-  return [...shown, ...rec.more, ...moreOptionsFor(claim, [...shown, ...rec.more]), flagSpec()];
+  return [...shown, ...rec.more, ...moreOptionsFor(claim, [...shown, ...rec.more])];
 }
 
 /** Menu entries for the "More options" menu that are not already shown as buttons. */

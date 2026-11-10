@@ -15,9 +15,3 @@ A custom component is allowed only when no shadcn component, Studio or reui bloc
 - **What:** the Ask Orvo AI sparkle, the Material "Auto awesome" icon, drawn as an inline SVG.
 - **Why no shadcn part fits:** shadcn has no icon components; it uses lucide icons. Noa asked for this specific icon.
 - **Built from:** nothing. It is one SVG path from Google Material Icons (Apache 2.0), used with currentColor.
-
-## flag (src/components/icons/flag.tsx)
-
-- **What:** the solid flag shown on a claim card (the chip beside the employee's name) and in the Flags list, the Material "Flag" icon, drawn as an inline SVG.
-- **Why no shadcn part fits:** shadcn has no icon components and lucide's flag is an outline. Noa asked for the solid Material version for any flag that appears on a card. The menu item "Flag claim" keeps the lucide `Flag`, because it is a menu entry and not a card.
-- **Built from:** nothing. It is one SVG path from Google Material Icons (Apache 2.0), used with currentColor.

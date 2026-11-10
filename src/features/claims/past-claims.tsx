@@ -5,7 +5,6 @@ import { PILL } from "@/lib/blocks";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { claimStatusLabel, formatSubmitted, formatUsd } from "@/logic/format";
 import type { LocalClaim } from "@/logic/local";
-import { FlagList } from "./flag-list";
 
 type Props = { claim: LocalClaim; allClaims: LocalClaim[]; onOpenClaim: (id: string) => void };
 
@@ -76,7 +75,6 @@ export function PastClaims({ claim, allClaims, onOpenClaim }: Props) {
         </TableBody>
       </Table>
     </div>
-    <FlagList claim={claim} allClaims={allClaims} onOpenClaim={onOpenClaim} />
     </>
   );
 }

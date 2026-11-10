@@ -48,8 +48,7 @@
     "Payout is out of scope. 'approved' means approved, not paid.",
     "Noa does not attend the concert. Kwame bought 9 tickets for the team of 9, so Noa is not approving her own spend.",
     "Merchant names are fictional except the MONO Music Conference and the Red Hot Chili Peppers, which come from Story.md.",
-    "The recommendation rules add four assumptions the assignment does not state, all in policy.agent_settings: a weekly Finance limit (an employee's claims over a rolling 7 days above $1,000 go to Finance), a daily allowance of $200 per person for same-category claims on one day, a $100 ceiling for approving without a receipt on a card statement, and wait windows after which a waiting claim returns to the manager's queue.",
-    "Flags are derived from the claims by the app, not stored in the data. The agent raises them from failed checks. The manager can add one and remove one she added within flag_removal_days."
+    "The recommendation rules add four assumptions the assignment does not state, all in policy.agent_settings: a weekly Finance limit (an employee's claims over a rolling 7 days above $1,000 go to Finance), a daily allowance of $200 per person for same-category claims on one day, a $100 ceiling for approving without a receipt on a card statement, and wait windows after which a waiting claim returns to the manager's queue."
   ],
   "policy": {
     "version": "v3",
@@ -104,9 +103,7 @@
         "possible_duplicate": 7,
         "unusual_amount": 3,
         "ask": 7
-      },
-      "flag_display_days": 90,
-      "flag_removal_days": 60
+      }
     }
   },
   "people": [
@@ -206,16 +203,6 @@
       "possible_split": "Two claims may be one purchase",
       "unusual_amount": "Unusual amount",
       "unusual_pattern": "Unusual pattern"
-    },
-    "flag_type": {
-      "missing_receipt": "Missing receipt",
-      "over_meal_cap": "Over meal cap",
-      "weekly_over_limit": "Week over the Finance limit",
-      "same_day_over_allowance": "Same-day claims over allowance",
-      "unusual_amount": "Unusual amount",
-      "possible_duplicate": "Possible duplicate",
-      "unusual_pattern": "Unusual pattern",
-      "manager": "Flagged by hand"
     },
     "category": {
       "meals": "Meals",

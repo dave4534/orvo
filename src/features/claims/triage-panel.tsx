@@ -2,9 +2,8 @@
 
 import { Kbd } from "@/components/ui/kbd";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, ArrowUpRight, Ban, Check, ChevronDown, Command, CornerDownLeft, CircleDollarSign, Clock, Flag, Info, Landmark, ListChecks, MessageSquare, Pencil, TriangleAlert, Wrench, type LucideIcon } from "lucide-react";
+import { ArrowRight, Ban, Check, ChevronDown, Command, CornerDownLeft, CircleDollarSign, Clock, Info, Landmark, ListChecks, MessageSquare, Pencil, TriangleAlert, Wrench, type LucideIcon } from "lucide-react";
 
-import { FlagIcon } from "@/components/icons/flag";
 import { StatusBanner } from "@/components/status-banner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -26,9 +25,8 @@ import { actionPreview, firstName, type ActionId, type ActionInput } from "@/log
 import { buildComparison, employeeName } from "@/logic/comparison";
 import { claimStatusLabel, formatUsd, initials } from "@/logic/format";
 import { daysOverTarget, formatDuration, isOpen, WAIT_TARGET_DAYS, waitingFor } from "@/logic/wait";
-import { flagsForEmployee } from "@/logic/flags";
 import { isAgentDecided, isSpotCheck, isWaitOver, type LocalClaim } from "@/logic/local";
-import { allActionsFor, flagSpec, moreOptionsFor, recommendationFor, type ActionSpec } from "@/logic/recommendations";
+import { allActionsFor, moreOptionsFor, recommendationFor, type ActionSpec } from "@/logic/recommendations";
 import { photoFor } from "@/logic/photos";
 import { track } from "@/logic/track";
 import { cn } from "@/lib/utils";
@@ -73,7 +71,6 @@ const ACTION_ICON: Partial<Record<ActionId, LucideIcon>> = {
   to_finance: Landmark,
   to_finance_both: Landmark,
   extend_wait: Clock,
-  flag: Flag,
   correct: Pencil,
 };
 
@@ -119,7 +116,6 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
   const decidedByNoa = claim.status === "approved_by_noa" || claim.status === "declined_by_noa";
   const spot = isSpotCheck(claim) && !claim.local?.spot_checked && claim.status === "approved_by_agent";
   const rec = needsReview ? recommendationFor(claim, allClaims, now) : null;
-  const flags = flagsForEmployee(allClaims, claim.employee_id, now);
   const wait = claim.local?.wait;
 
   function run(input: ActionInput): boolean {
@@ -186,8 +182,6 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
             const spec = allActionsFor(claim, allClaims, now).find((s) => s.label === label);
             if (!spec) return { ok: false, error: "That button is not available." };
             const target = retarget(spec, claim);
-            // A flag keeps a reason on the claim. The wording has to come from Noa.
-            if (spec.askMessage === "flag" && !extra?.message?.trim()) return { ok: false, error: "A reason for the flag is needed. Ask Noa for one line." };
             // Asking the employee a question opens the message pop-up with the wording filled in, so it can be read and sent or cancelled.
             if (spec.askMessage === "ask") {
               if (asksInChat) {
@@ -297,23 +291,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                 <AvatarFallback>{initials(full)}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
-                <div className="flex min-w-0 items-center gap-2">
-                  <div className="truncate text-[1.375rem] leading-7 font-semibold">{full}</div>
-                  {flags.length > 0 && onOpenMore ? (
-                    // The employee's flags. The chip opens them in the Past claims tab, so it points up and to the right.
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0 rounded-full"
-                      aria-label={`${flags.length} ${flags.length === 1 ? "flag" : "flags"} for ${full}. Open them in Past claims`}
-                      onClick={() => onOpenMore("past")}
-                    >
-                      <FlagIcon data-icon="inline-start" className="text-gap" />
-                      {flags.length} {flags.length === 1 ? "flag" : "flags"}
-                      <ArrowUpRight data-icon="inline-end" />
-                    </Button>
-                  ) : null}
-                </div>
+                <div className="truncate text-[1.375rem] leading-7 font-semibold">{full}</div>
                 {flat ? null : <div className="text-xs text-muted-foreground">{subtitle}</div>}
               </div>
               <div className="text-right text-3xl leading-9 font-semibold tabular-nums">{formatUsd(claimed)}</div>
@@ -474,17 +452,6 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                     </span>
                   </DropdownMenuItem>
                 ) : null}
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>FLAG</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => choose(flagSpec())}>
-                  <Flag />
-                  <span className="flex flex-col">
-                    <span>Flag claim</span>
-                    <span className="text-xs text-muted-foreground">Mark it for the pattern. Decides nothing</span>
-                  </span>
-                </DropdownMenuItem>
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -2,8 +2,7 @@ import type { PersonId } from "@/data/types";
 import { personById } from "./claims";
 import { displayName, formatUsd } from "./format";
 import { NOW } from "@/data";
-import { canRemoveFlag } from "./flags";
-import { isAgentDecided, type ClaimFlag, type ClaimWait, type LocalClaim, type LocalEvent } from "./local";
+import { isAgentDecided, type ClaimWait, type LocalClaim, type LocalEvent } from "./local";
 import { FINANCE_LIMIT, FINANCE_NUDGE_WORKING_DAYS, needsFinance, waitDays, weeklyFacts } from "./policy";
 import { addDays, addWorkingDays, formatDay, isoLocal } from "./time";
 
@@ -19,8 +18,6 @@ export type ActionId =
   | "extend_wait"
   | "to_finance"
   | "to_finance_both"
-  | "flag"
-  | "unflag"
   | "decide_now"
   | "confirm"
   | "correct";
@@ -39,8 +36,6 @@ export type ActionInput = {
   linkTo?: string;
   /** Short description for the event log, for example the cited rule when approving an exception. */
   reason?: string;
-  /** The flag to remove, for "unflag". */
-  flagId?: string;
 };
 
 export type ActionResult = {
@@ -114,9 +109,9 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
   const claimed = claim.amount.usd_claimed;
   const wasAgent = isAgentDecided(claim);
   const changed: LocalClaim[] = [claim];
-  // A decision ends any wait. A new wait set below counts the old one as an extension. Flags do not touch the wait.
+  // A decision ends any wait. A new wait set below counts the old one as an extension.
   const previousWait = claim.local?.wait ?? null;
-  if (input.id !== "flag" && input.id !== "unflag" && input.id !== "confirm" && input.id !== "extend_wait") claim.local = { ...claim.local, wait: null };
+  if (input.id !== "confirm" && input.id !== "extend_wait") claim.local = { ...claim.local, wait: null };
 
   switch (input.id) {
     case "approve":
@@ -166,20 +161,6 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
       const until = setWait(claim, at, current.kind, current);
       claim.events.push(event(at, "noa_asked", `Kept waiting. Back in the queue ${formatDay(until)}.`));
       return { changed, summary: `Kept waiting on ${current.kind === "finance" ? "Finance" : name}. Back in the queue ${formatDay(until)}` };
-    }
-    case "flag": {
-      const note = (input.message ?? "").trim();
-      const flag: ClaimFlag = { id: `${claim.id}:manager:${at}`, type: "manager", claimId: claim.id, employeeId: claim.employee_id, by: "noa", at, note };
-      claim.local = { ...claim.local, flags: [...(claim.local?.flags ?? []), flag] };
-      claim.events.push(event(at, "noa_flagged", `Flagged: ${note}`));
-      return { changed, summary: `Flagged ${name}'s claim ${claim.id}` };
-    }
-    case "unflag": {
-      const flag = claim.local?.flags?.find((f) => f.id === input.flagId);
-      if (!flag || !canRemoveFlag(flag, now)) return { changed, summary: "That flag can't be removed" };
-      claim.local = { ...claim.local, flags: (claim.local?.flags ?? []).filter((f) => f.id !== flag.id) };
-      claim.events.push(event(at, "noa_unflagged", `Removed a flag: ${flag.note}`));
-      return { changed, summary: `Removed the flag from ${name}'s claim ${claim.id}` };
     }
     case "to_finance":
     case "to_finance_both": {
@@ -315,10 +296,6 @@ export function actionPreview(claim: LocalClaim, input: ActionInput, all: LocalC
       return { summary: `Nothing is paid until a receipt arrives. ${toldInChat("and asked for the receipt")} The claim returns to the queue on ${backOn(waitDays(claim.agent.reason_type, "wait"))}.` };
     case "extend_wait":
       return { summary: `Nothing changes except the date. The claim returns to the queue on ${backOn(FINANCE_NUDGE_WORKING_DAYS, true)}.` };
-    case "flag":
-      return { summary: `Nothing changes on the claim. A flag is added to ${name}'s record and shows with the other flags, so the pattern is visible.` };
-    case "unflag":
-      return { summary: `The flag is removed from ${name}'s record.` };
     case "to_finance":
       return { summary: `${name} is paid nothing until Finance approves ${formatUsd(claimed)}. ${toldInChat("that it is with Finance")} The claim returns to the queue on ${backOn(FINANCE_NUDGE_WORKING_DAYS, true)} to check on Finance.` };
     case "to_finance_both": {
