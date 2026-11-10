@@ -14,7 +14,6 @@ import {
 import { RailNav, type RailItem } from "@/components/ui/c-sidebar-2";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarRail } from "@/components/ui/sidebar";
 import { useClaims } from "@/store/claims-store";
-import { notInPrototype } from "./not-in-prototype";
 
 const MAIN = [
   { id: "home", label: "Home", icon: House },
@@ -42,7 +41,6 @@ export function AppSidebar() {
       icon: <Icon />,
       isActive: active,
       badge: active && needsReview > 0 ? needsReview : undefined,
-      onSelect: () => notInPrototype(label),
     }));
 
   return (
