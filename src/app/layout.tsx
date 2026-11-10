@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google"
 
 import "../tailwind.css"
+import { SplashLoader } from "@/components/splash-loader"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -25,6 +26,7 @@ export default function RootLayout({
       className={cn("antialiased", fontMono.variable, "font-sans", geist.variable)}
     >
       <body>
+        <SplashLoader />
         <ThemeProvider defaultTheme="light" enableSystem={false}>
           <TooltipProvider>{children}</TooltipProvider>
           <Toaster position="bottom-left" />
