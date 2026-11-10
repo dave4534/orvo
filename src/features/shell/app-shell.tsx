@@ -23,7 +23,7 @@ function TopBar() {
         onClick={goHome}
         className="-ml-2 h-10 px-2"
       >
-        <Image src="/brand/orvo-logo.svg" alt="" aria-hidden width={79} height={28} unoptimized className="h-7 w-auto dark:invert" />
+        <Image src="/brand/orvo-logo.svg" alt="" aria-hidden width={85} height={30} unoptimized className="h-[30px] w-auto dark:invert" />
       </Button>
       <div className="flex items-center gap-4">
         <Tooltip>
