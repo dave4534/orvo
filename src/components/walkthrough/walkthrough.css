@@ -164,7 +164,7 @@
 }
 
 .walkthrough-body a {
-  color: var(--wt-primary, #0073ea);
+  color: inherit;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -216,7 +216,8 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--wt-primary, #0073ea);
+  color: inherit;
+  text-align: inherit; /* a link inside a centred or wrapped line keeps the text's own alignment */
   font: inherit;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -296,4 +297,30 @@
   .walkthrough-avatar[data-attention='true'] {
     animation: none;
   }
+}
+
+/* Arrows at the sides of the lightbox move to the previous or next image in the step. */
+.walkthrough-lightbox-prev,
+.walkthrough-lightbox-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.walkthrough-lightbox-prev {
+  left: 16px;
+}
+
+.walkthrough-lightbox-next {
+  right: 16px;
+}
+
+/* A profile photo on its own line, 50px square, 32px below the step's header (12px header margin + 20px). */
+.walkthrough-photo {
+  display: block;
+  width: 50px;
+  height: 50px;
+  margin: 20px 0 12px;
+  border-radius: 50%;
+  object-fit: cover;
 }

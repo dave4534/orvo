@@ -30,11 +30,13 @@ export type WalkthroughProps<P extends string> = {
   avatarSrc: string
   // The small GIF that sits inline in text wherever {inline-gif} appears.
   inlineGifSrc?: string
-  // The element the face starts above on landing (for example a sidebar button). Without it, the
-  // face starts at the CSS default position.
-  anchorSelector?: string
+  // The element the face starts above on landing (for example a sidebar button), by selector or by
+  // a function. Without it, the face starts at the CSS default position.
+  anchorSelector?: string | (() => Element | null)
   // Gap between the face and that anchor, in px.
   anchorGap?: number
+  // Put the face's left edge on the anchor's left edge too.
+  anchorAlignLeft?: boolean
   // If the face is not touched within this time, the guide opens on its own. 0 turns this off.
   autoOpenMs?: number
 }
@@ -108,7 +110,8 @@ function RichText({ text, onImage, inlineGifSrc }: { text: string; onImage: (src
 function Blocks({ blocks, onImage, inlineGifSrc }: { blocks: WalkthroughBlock[]; onImage: (src: string) => void; inlineGifSrc?: string }) {
   const groups: Array<{ list: boolean; items: WalkthroughBlock[] }> = []
   for (const b of blocks) {
-    const list = typeof b !== 'string'
+    // Bullets (with an icon) share one list; paragraphs and photos stand on their own.
+    const list = typeof b !== 'string' && 'icon' in b
     const tail = groups[groups.length - 1]
     if (tail && tail.list === list && list) tail.items.push(b)
     else groups.push({ list, items: [b] })
@@ -118,10 +121,10 @@ function Blocks({ blocks, onImage, inlineGifSrc }: { blocks: WalkthroughBlock[];
       {groups.map((g, gi) =>
         g.list ? (
           <ul className="walkthrough-list" key={gi}>
-            {g.items.map((b) => {
-              const { icon: Icon, text } = b as Exclude<WalkthroughBlock, string>
+            {g.items.map((b, i) => {
+              const { icon: Icon, text } = b as Extract<WalkthroughBlock, { icon: unknown }>
               return (
-                <li key={text}>
+                <li key={i}>
                   <Icon className="walkthrough-bullet" size={16} aria-hidden="true" />
                   <span>
                     <RichText text={text} onImage={onImage} inlineGifSrc={inlineGifSrc} />
@@ -131,11 +134,15 @@ function Blocks({ blocks, onImage, inlineGifSrc }: { blocks: WalkthroughBlock[];
             })}
           </ul>
         ) : (
-          g.items.map((b) => (
-            <p key={b as string}>
-              <RichText text={b as string} onImage={onImage} inlineGifSrc={inlineGifSrc} />
-            </p>
-          ))
+          g.items.map((b) =>
+            typeof b !== 'string' && 'photo' in b ? (
+              <img key={b.photo} className="walkthrough-photo" src={b.photo} alt={b.alt} draggable={false} />
+            ) : (
+              <p key={b as string}>
+                <RichText text={b as string} onImage={onImage} inlineGifSrc={inlineGifSrc} />
+              </p>
+            ),
+          )
         ),
       )}
     </>
@@ -150,6 +157,7 @@ export function Walkthrough<P extends string>({
   inlineGifSrc,
   anchorSelector,
   anchorGap = 32,
+  anchorAlignLeft = false,
   autoOpenMs = DEFAULT_AUTO_OPEN_MS,
 }: WalkthroughProps<P>) {
   const [initial] = useState(() => load(storageKey))
@@ -158,14 +166,14 @@ export function Walkthrough<P extends string>({
   const [step, setStep] = useState(0)
   // Where the circle was dragged to. Null until then, so it keeps its default spot.
   const [pos, setPos] = useState<Point | null>(() => (initial.pos ? clampToWindow(initial.pos) : null))
-  // The image open in the lightbox, if any.
-  const [image, setImage] = useState<string | null>(null)
+  // The images open in the lightbox, and which one is showing.
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null)
   // First visit: open once on the first step. After that the guide stays closed.
   const [open, setOpen] = useState(!initial.seen)
   // Which side of the circle the card sits on, and how tall it may be there.
   const [layout, setLayout] = useState<{ below: boolean; alignRight: boolean; maxHeight: number }>({ below: false, alignRight: false, maxHeight: 480 })
   // Where the face starts on landing, when an anchor is given.
-  const [anchorTop, setAnchorTop] = useState<number | null>(null)
+  const [anchorPos, setAnchorPos] = useState<{ top: number; left: number | null } | null>(null)
 
   const rootRef = useRef<HTMLDivElement>(null)
   // The scrolling text of the current step, which starts again at the top on every step.
@@ -195,14 +203,17 @@ export function Walkthrough<P extends string>({
   useLayoutEffect(() => {
     if (!anchorSelector) return
     const place = () => {
-      const anchor = document.querySelector<HTMLElement>(anchorSelector)
+      const anchor = typeof anchorSelector === 'string' ? document.querySelector<HTMLElement>(anchorSelector) : anchorSelector()
       if (!anchor) return
-      setAnchorTop(anchor.getBoundingClientRect().top - anchorGap - AVATAR)
+      const r = anchor.getBoundingClientRect()
+      const next = { top: r.top - anchorGap - AVATAR, left: anchorAlignLeft ? r.left : null }
+      // Only update when the position really changed, so this cannot loop.
+      setAnchorPos((prev) => (prev && prev.top === next.top && prev.left === next.left ? prev : next))
     }
     place()
     window.addEventListener('resize', place)
     return () => window.removeEventListener('resize', place)
-  }, [anchorSelector, anchorGap])
+  }, [anchorSelector, anchorGap, anchorAlignLeft])
 
   // A smaller window can leave the circle out of view; pull it back in.
   useEffect(() => {
@@ -297,6 +308,13 @@ export function Walkthrough<P extends string>({
 
   const current = steps[step]
 
+  // Every image link in the current step, so the lightbox arrows can move between them.
+  const openImage = (src: string) => {
+    const found = imagesIn(current.body)
+    const images = found.includes(src) ? found : [...found, src]
+    setLightbox({ images, index: images.indexOf(src) })
+  }
+
   return (
     <div
       className="walkthrough"
@@ -304,8 +322,8 @@ export function Walkthrough<P extends string>({
       style={
         pos
           ? { left: pos.x, top: pos.y, bottom: 'auto' }
-          : anchorTop !== null
-            ? { top: anchorTop, bottom: 'auto' }
+          : anchorPos
+            ? { top: anchorPos.top, bottom: 'auto', ...(anchorPos.left !== null ? { left: anchorPos.left } : {}) }
             : undefined
       }
     >
@@ -342,7 +360,7 @@ export function Walkthrough<P extends string>({
 
           <div className="walkthrough-scroll" ref={scrollRef} aria-live="polite">
             <div className="walkthrough-body">
-              <Blocks blocks={current.body} onImage={setImage} inlineGifSrc={inlineGifSrc} />
+              <Blocks blocks={current.body} onImage={openImage} inlineGifSrc={inlineGifSrc} />
             </div>
 
             {current.places && onShowPlace && (
@@ -384,7 +402,14 @@ export function Walkthrough<P extends string>({
         </div>
       )}
 
-      {image && <Lightbox src={image} onClose={() => setImage(null)} />}
+      {lightbox && (
+        <Lightbox
+          images={lightbox.images}
+          index={lightbox.index}
+          onIndex={(index) => setLightbox((l) => (l ? { ...l, index } : l))}
+          onClose={() => setLightbox(null)}
+        />
+      )}
 
       <div className="walkthrough-anchor">
         <button
@@ -408,6 +433,12 @@ export function Walkthrough<P extends string>({
       </div>
     </div>
   )
+}
+
+// The image links in a step's text, in order.
+function imagesIn(blocks: WalkthroughBlock[]): string[] {
+  const texts = blocks.map((b) => (typeof b === 'string' ? b : 'text' in b ? b.text : ''))
+  return texts.flatMap((t) => [...t.matchAll(/\[[^\]]+\]\(image:([^)\s]+)\)/g)].map((m) => m[1]))
 }
 
 function clampToWindow({ x, y }: Point): Point {

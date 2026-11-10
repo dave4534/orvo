@@ -11,6 +11,11 @@ function showPlace(id: PlaceId) {
   window.dispatchEvent(new CustomEvent("walkthrough:place", { detail: id }));
 }
 
+// The Settings item in the sidebar footer. The face starts 52px above it, on its left edge.
+function findSettings(): Element | null {
+  return [...document.querySelectorAll<HTMLElement>("button")].find((b) => b.textContent?.trim() === "Settings") ?? null;
+}
+
 // Mounts the shared walkthrough after the page has loaded in the browser, so the saved
 // state is read on the client only and the server and browser render the same page.
 export function WalkthroughHost() {
@@ -24,7 +29,10 @@ export function WalkthroughHost() {
       onShowPlace={showPlace}
       avatarSrc="/walkthrough/dave.svg"
       inlineGifSrc="/walkthrough/carlton.gif"
-      autoOpenMs={45_000}
+      anchorSelector={findSettings}
+      anchorGap={52}
+      anchorAlignLeft
+      autoOpenMs={30_000}
     />
   );
 }

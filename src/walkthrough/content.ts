@@ -16,6 +16,7 @@ export const walkthroughSteps: WalkthroughStep<PlaceId>[] = [
   {
     title: "The story",
     body: [
+      { photo: "/walkthrough/melio/noa.jpg", alt: "Noa" },
       "Noa leads a team of marketing creatives at Spotify. She’s a mother of 3, devoted to her family or to herself, but she also has a high bar for her work. Last week she and her team went to an offsite in San Francisco that included a music-tech conference and a red hot chili peppers concert. Noa is surprised by the scale and variety of claims in this round. She dreads how long it will take and is bummed out by the receipt chasing.",
     ],
   },
@@ -107,7 +108,7 @@ export const walkthroughSteps: WalkthroughStep<PlaceId>[] = [
   {
     title: "Thanks for joining me!",
     body: [
-      "Thanks for joining me on this journey! I hope you have a great {timeOfDay} and I really look forward to coming in and presenting this in person :)",
+      "Thanks for joining me on this journey! I hope you have a great {timeOfDay} and I really look forward to coming in and presenting this in person :) {inline-gif}",
     ],
   },
 ];

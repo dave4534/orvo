@@ -552,10 +552,12 @@ export function ClaimsView() {
           setAiOpen(true);
           break;
         case "more-options":
+          // Opens the claim, then the "More options" menu in its footer.
           setTab("needs_review");
           if (firstReview) openClaimById(firstReview);
-          setMoreTab("overview");
-          setDetailsOpen(true);
+          window.setTimeout(() => {
+            [...document.querySelectorAll<HTMLButtonElement>("button")].find((b) => b.textContent?.includes("More options"))?.click();
+          }, 350);
           break;
       }
     };
