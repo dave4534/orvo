@@ -8,6 +8,7 @@ import {
   Plane,
   Presentation,
   Receipt,
+  Sparkles,
   Ticket,
   Utensils,
   type LucideIcon,
@@ -18,8 +19,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { dataset } from "@/data";
 import type { Category } from "@/data/types";
+import { basisFor } from "@/logic/basis";
 import { employeeName } from "@/logic/comparison";
 import { claimStatusLabel, formatSubmitted, formatUsd, initials } from "@/logic/format";
 import type { LocalClaim } from "@/logic/local";
@@ -55,10 +58,32 @@ function statusStyle(claim: LocalClaim): string {
   return "bg-card text-muted-foreground";
 }
 
+/** Why a decided claim was decided. Shown on Done and All only, since open claims have no decision yet. */
+function BasisPill({ claim }: { claim: LocalClaim }) {
+  const basis = basisFor(claim);
+  if (!basis) return null;
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Badge variant="outline" tabIndex={0} className="bg-card text-muted-foreground">
+            {basis.label}
+            {basis.byOrvo ? <Sparkles aria-hidden data-icon="inline-end" /> : null}
+          </Badge>
+        }
+      />
+      <TooltipContent>{basis.tooltip}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function ClaimsTable({ sections, expanded, onToggleSection, selectedIds, activeId, onToggle, onToggleAll, onReview }: Props) {
   const visible = sections.flatMap((s) => (s.collapsible && !expanded.has(s.id) ? [] : s.claims));
   const allSelected = visible.length > 0 && visible.every((c) => selectedIds.has(c.id));
   const someSelected = !allSelected && visible.some((c) => selectedIds.has(c.id));
+  // The Basis column exists only when at least one visible claim has a decision to explain.
+  const showBasis = visible.some((c) => basisFor(c) !== null);
+  const colCount = showBasis ? 8 : 7;
 
   return (
     <div className="overflow-hidden rounded-xl border bg-card">
@@ -73,11 +98,12 @@ export function ClaimsTable({ sections, expanded, onToggleSection, selectedIds, 
                 onCheckedChange={(checked) => onToggleAll(checked)}
               />
             </TableHead>
-            <TableHead className="w-[24%]">Employee</TableHead>
-            <TableHead className="w-[19%]">Submitted</TableHead>
-            <TableHead className="w-[19%]">Category</TableHead>
-            <TableHead className="w-[12%] text-right">Amount</TableHead>
-            <TableHead className="w-[18%]">Status</TableHead>
+            <TableHead className={showBasis ? "w-[20%]" : "w-[24%]"}>Employee</TableHead>
+            <TableHead className={showBasis ? "w-[15%]" : "w-[19%]"}>Submitted</TableHead>
+            <TableHead className={showBasis ? "w-[15%]" : "w-[19%]"}>Category</TableHead>
+            <TableHead className={showBasis ? "w-[10%] text-right" : "w-[12%] text-right"}>Amount</TableHead>
+            <TableHead className={showBasis ? "w-[17%]" : "w-[18%]"}>Status</TableHead>
+            {showBasis ? <TableHead className="w-[17%]">Basis</TableHead> : null}
             <TableHead className="w-28 pr-5">
               <span className="sr-only">Actions</span>
             </TableHead>
@@ -91,6 +117,8 @@ export function ClaimsTable({ sections, expanded, onToggleSection, selectedIds, 
                 key={section.id}
                 section={section}
                 collapsed={collapsed}
+                showBasis={showBasis}
+                colCount={colCount}
                 onToggleSection={onToggleSection}
                 selectedIds={selectedIds}
                 activeId={activeId}
@@ -108,6 +136,8 @@ export function ClaimsTable({ sections, expanded, onToggleSection, selectedIds, 
 function SectionRows({
   section,
   collapsed,
+  showBasis,
+  colCount,
   onToggleSection,
   selectedIds,
   activeId,
@@ -116,6 +146,8 @@ function SectionRows({
 }: {
   section: Section;
   collapsed: boolean;
+  showBasis: boolean;
+  colCount: number;
   onToggleSection: (id: string) => void;
   selectedIds: Set<string>;
   activeId: string | null;
@@ -126,7 +158,7 @@ function SectionRows({
     <>
       {section.label ? (
         <TableRow className="bg-muted/50 hover:bg-muted/50">
-          <TableCell colSpan={7} className="px-5 py-2 text-xs font-semibold tracking-wide text-muted-foreground">
+          <TableCell colSpan={colCount} className="px-5 py-2 text-xs font-semibold tracking-wide text-muted-foreground">
             {section.collapsible ? (
               <Button
                 variant="ghost"
@@ -188,6 +220,11 @@ function SectionRows({
                     {claim.local?.spot_checked ? <Badge variant="outline" className="bg-card text-muted-foreground">Reviewed</Badge> : null}
                   </div>
                 </TableCell>
+                {showBasis ? (
+                  <TableCell>
+                    <BasisPill claim={claim} />
+                  </TableCell>
+                ) : null}
                 <TableCell className="pr-5 text-right" onClick={(e) => e.stopPropagation()}>
                   <Button variant="outline" onClick={() => onReview(claim.id)} aria-label={`Review claim ${claim.id} from ${name}`}>
                     Review
