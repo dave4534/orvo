@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Ban, Check, ChevronDown, CircleDollarSign, Clock, Info, Landmark, ListChecks, MessageSquare, Pencil, Wrench, type LucideIcon } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +25,7 @@ import { buildComparison, employeeName } from "@/logic/comparison";
 import { claimStatusLabel, formatUsd, initials } from "@/logic/format";
 import { isAgentDecided, isSpotCheck, type LocalClaim } from "@/logic/local";
 import { allActionsFor, moreOptionsFor, recommendationFor, type ActionSpec } from "@/logic/recommendations";
+import { photoFor } from "@/logic/photos";
 import { track } from "@/logic/track";
 import { cn } from "@/lib/utils";
 import { useClaims } from "@/store/claims-store";
@@ -262,6 +263,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
           <div className={cn("relative flex flex-1 flex-col overflow-hidden", !flat && "rounded-2xl border bg-card shadow-md")}>
             <div className="flex items-center gap-3.5 border-b px-6 py-[18px]">
               <Avatar size="lg">
+                <AvatarImage src={photoFor(claim.employee_id)} alt="" />
                 <AvatarFallback>{initials(full)}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">

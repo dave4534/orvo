@@ -3,7 +3,8 @@
 import type { ReactNode } from "react";
 import { Sparkles } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { photoFor } from "@/logic/photos";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ function TopBar() {
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">Noa Levi</span>
           <Avatar>
+            <AvatarImage src={photoFor("noa")} alt="" />
             <AvatarFallback>NL</AvatarFallback>
           </Avatar>
         </div>
