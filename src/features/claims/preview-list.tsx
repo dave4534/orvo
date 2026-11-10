@@ -13,7 +13,7 @@ export function PreviewList({ preview, title }: { preview: Preview; title: strin
       <dl className="flex flex-col gap-1.5 text-sm">
         {rows.map(([label, value]) => (
           <div key={label} className="grid grid-cols-[4rem_1fr] gap-3">
-            <dt className="text-tertiary">{label}</dt>
+            <dt className="text-muted-foreground">{label}</dt>
             <dd className="min-w-0 break-words">{value}</dd>
           </div>
         ))}

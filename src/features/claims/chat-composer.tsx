@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { AudioLines, Square } from "lucide-react";
-import { CornerDownLeft, Microphone01 } from "@untitledui/icons";
+import { ArrowUp, AudioLines, Mic, Square } from "lucide-react";
 
-import { Button } from "@/components/base/buttons/button";
-import { Tooltip } from "@/components/base/tooltip/tooltip";
-import { InputGroup, InputGroupAddon, InputGroupTextarea } from "@/components/ui/input-group";
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from "@/components/ui/input-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSpeechInput } from "@/hooks/use-speech-input";
 import { AI_MODEL_LABEL } from "@/lib/ai-model";
 import { cn } from "@/lib/utils";
@@ -45,7 +43,7 @@ export function ChatComposer({ busy, onSend, onStop, onVoiceChat }: Props) {
 
   return (
     <div className="shrink-0 px-4 pt-2 pb-3">
-      <InputGroup className="rounded-xl border-border bg-muted/40 shadow-none has-disabled:bg-muted/40 has-disabled:opacity-100 dark:has-disabled:bg-muted/40">
+      <InputGroup className="rounded-2xl bg-card shadow-sm has-disabled:bg-card has-disabled:opacity-100 dark:has-disabled:bg-card">
         <InputGroupTextarea
           aria-label="Message to Ask Orvo AI"
           placeholder={speech.listening ? "Listening" : "Ask about claims, history or policy"}
@@ -66,26 +64,42 @@ export function ChatComposer({ busy, onSend, onStop, onVoiceChat }: Props) {
         <InputGroupAddon align="block-end" className="justify-end gap-1">
           {speech.supported ? (
             <>
-              <Tooltip title={speech.listening ? "Stop dictating" : "Dictate"}>
-                <Button
-                  color="tertiary"
-                  size="sm"
-                  className={cn("rounded-full text-primary", speech.listening && "animate-pulse bg-error-primary text-error-primary hover:bg-error-primary")}
-                  aria-label={speech.listening ? "Stop dictating" : "Dictate"}
-                  aria-pressed={speech.listening}
-                  iconLeading={Microphone01}
-                  onPress={toggleMic}
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <InputGroupButton
+                      size="icon-sm"
+                      className={cn("rounded-full text-foreground hover:text-foreground", speech.listening && "animate-pulse bg-destructive/15 text-destructive hover:bg-destructive/20 hover:text-destructive")}
+                      aria-label={speech.listening ? "Stop dictating" : "Dictate"}
+                      aria-pressed={speech.listening}
+                      onClick={toggleMic}
+                    >
+                      <Mic />
+                    </InputGroupButton>
+                  }
                 />
+                <TooltipContent>{speech.listening ? "Stop dictating" : "Dictate"}</TooltipContent>
               </Tooltip>
-              <Tooltip title="Voice chat">
-                <Button color="tertiary" size="sm" className="rounded-full text-primary" aria-label="Start voice chat" iconLeading={AudioLines} onPress={onVoiceChat} />
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <InputGroupButton size="icon-sm" className="rounded-full text-foreground hover:text-foreground" aria-label="Start voice chat" onClick={onVoiceChat}>
+                      <AudioLines />
+                    </InputGroupButton>
+                  }
+                />
+                <TooltipContent>Voice chat</TooltipContent>
               </Tooltip>
             </>
           ) : null}
           {busy ? (
-            <Button color="tertiary" size="sm" className="text-primary" aria-label="Stop" iconLeading={<Square className="size-4 fill-current" />} onPress={onStop} />
+            <InputGroupButton variant="default" size="icon-sm" className="rounded-full" aria-label="Stop" onClick={onStop}>
+              <Square className="fill-current" />
+            </InputGroupButton>
           ) : (
-            <Button color="tertiary" size="sm" className="text-primary" aria-label="Send (Enter)" isDisabled={!shown.trim()} iconLeading={CornerDownLeft} onPress={send} />
+            <InputGroupButton variant="default" size="icon-sm" className="rounded-full" aria-label="Send" disabled={!shown.trim()} onClick={send}>
+              <ArrowUp />
+            </InputGroupButton>
           )}
         </InputGroupAddon>
       </InputGroup>

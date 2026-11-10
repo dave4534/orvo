@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, Check, Copy01, RefreshCcw01, Stars01, X } from "@untitledui/icons";
+import { ArrowDown, Check, Copy, RotateCcw, Sparkles, X } from "lucide-react";
 
-import { Button } from "@/components/base/buttons/button";
-import { Tooltip, TooltipTrigger } from "@/components/base/tooltip/tooltip";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { LocalClaim } from "@/logic/local";
 import { track } from "@/logic/track";
 import { allActionsFor } from "@/logic/recommendations";
@@ -39,7 +39,7 @@ function suggestionOf(m: AiMessage): { claimId: string; label: string } | null {
 /** The default small outline button under a message that suggests an action. It runs the same action as the one in the action bar. */
 function SuggestedAction({ label, onAct }: { label: string; onAct: (label: string) => void }) {
   return (
-    <Button color="secondary" size="sm" className="self-start" onPress={() => onAct(label)}>
+    <Button variant="outline" size="sm" className="self-start" onClick={() => onAct(label)}>
       {label}
     </Button>
   );
@@ -47,10 +47,15 @@ function SuggestedAction({ label, onAct }: { label: string; onAct: (label: strin
 
 function IconAction({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
   return (
-    <Tooltip title={label}>
-      <TooltipTrigger aria-label={label} onPress={onClick} className="flex size-7 cursor-pointer items-center justify-center rounded-md text-fg-quaternary transition hover:bg-primary_hover hover:text-fg-quaternary_hover [&_svg]:size-4">
-        {children}
-      </TooltipTrigger>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button variant="ghost" size="icon-xs" aria-label={label} onClick={onClick}>
+            {children}
+          </Button>
+        }
+      />
+      <TooltipContent>{label}</TooltipContent>
     </Tooltip>
   );
 }
@@ -71,7 +76,7 @@ function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry }: { m: A
   const enter = "animate-in fade-in-0 slide-in-from-bottom-1 duration-200";
 
   if (m.role === "user") {
-    return <div className={`${enter} ml-8 max-w-[85%] self-end rounded-2xl bg-tertiary px-3.5 py-2 text-sm whitespace-pre-wrap`}>{text}</div>;
+    return <div className={`${enter} ml-8 max-w-[85%] self-end rounded-2xl bg-muted px-3.5 py-2 text-sm whitespace-pre-wrap`}>{text}</div>;
   }
 
   // Notes the app posts on its own (claim summary and recommendation, offline reply). Plain text like every other answer.
@@ -83,7 +88,7 @@ function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry }: { m: A
         <ChatMarkdown>{text}</ChatMarkdown>
         {noteSuggest ? <SuggestedAction label={noteSuggest} onAct={onAct} /> : null}
         {action ? (
-          <Button color="secondary" size="sm" className="self-start" onPress={() => onOpenMore(action.kind)}>
+          <Button variant="outline" size="sm" className="self-start" onClick={() => onOpenMore(action.kind)}>
             {action.label}
           </Button>
         ) : null}
@@ -110,11 +115,11 @@ function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry }: { m: A
               window.setTimeout(() => setCopied(false), 1500);
             }}
           >
-            {copied ? <Check /> : <Copy01 />}
+            {copied ? <Check /> : <Copy />}
           </IconAction>
           {isLast ? (
             <IconAction label="Try again" onClick={onRetry}>
-              <RefreshCcw01 />
+              <RotateCcw />
             </IconAction>
           ) : null}
         </div>
@@ -166,11 +171,13 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
     <aside aria-label="Ask Orvo AI" className="relative flex h-full min-h-0 w-full flex-col bg-card">
       <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
         <h2 className="flex items-center gap-2 text-base font-semibold">
-          <Stars01 aria-hidden className="size-4 text-brand-secondary" />
+          <Sparkles aria-hidden className="size-4 text-(--primary)" />
           Ask Orvo AI
         </h2>
         <div className="flex items-center gap-1">
-          <Button color="tertiary" size="sm" aria-label="Close Ask Orvo AI" iconLeading={X} onPress={onClose} />
+          <Button variant="ghost" size="icon-sm" aria-label="Close Ask Orvo AI" onClick={onClose}>
+            <X />
+          </Button>
         </div>
       </div>
 
@@ -187,8 +194,8 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
         >
           {aiMessages.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-              <span aria-hidden className="flex size-11 items-center justify-center rounded-full bg-info text-brand-secondary">
-                <Stars01 className="size-5" />
+              <span aria-hidden className="flex size-11 items-center justify-center rounded-full bg-info text-(--primary)">
+                <Sparkles className="size-5" />
               </span>
               <div>
                 <p className="text-base font-semibold">How can I help?</p>
@@ -196,7 +203,7 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
               </div>
               <div className="flex flex-col items-center gap-2">
                 {suggestedPrompts(claim).map((p) => (
-                  <Button key={p} color="secondary" size="sm" onPress={() => send(p)}>
+                  <Button key={p} variant="outline" size="sm" onClick={() => send(p)}>
                     {p}
                   </Button>
                 ))}
@@ -209,13 +216,14 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
         </div>
         {!atBottom && aiMessages.length > 0 ? (
           <Button
-            color="secondary"
-            size="sm"
+            variant="outline"
+            size="icon-sm"
             aria-label="Scroll to latest"
-            className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full shadow-md"
-            iconLeading={ArrowDown}
-            onPress={() => setAtBottom(true)}
-          />
+            className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-card shadow-md"
+            onClick={() => setAtBottom(true)}
+          >
+            <ArrowDown />
+          </Button>
         ) : null}
       </div>
 

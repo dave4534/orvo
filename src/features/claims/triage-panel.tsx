@@ -226,8 +226,9 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
         <div className={cn("relative flex flex-1 flex-col", !flat && "pb-5")}>
           {stacked ? (
             <>
-              <div aria-hidden className="absolute inset-x-7 bottom-0 h-10 rounded-[14px] border bg-card" />
-              <div aria-hidden className="absolute inset-x-3.5 bottom-2.5 h-10 rounded-[14px] border bg-card" />
+              {/* Each card sits 2px lower and is 4px narrower than the one in front: the back card is 8px narrower than the front one. */}
+              <div aria-hidden className="absolute inset-x-8 -bottom-0.5 h-10 rounded-[14px] border bg-card" />
+              <div aria-hidden className="absolute inset-x-4 bottom-2 h-10 rounded-[14px] border bg-card" />
             </>
           ) : null}
           <div className={cn("relative flex flex-1 flex-col overflow-hidden", !flat && "rounded-2xl border bg-card shadow-md")}>

@@ -1,4 +1,4 @@
-import { AlertTriangle, Check } from "@untitledui/icons";
+import { Check, TriangleAlert } from "lucide-react";
 
 import { formatUsd } from "@/logic/format";
 import type { Comparison, Half } from "@/logic/comparison";
@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 const DOT: Record<Half["tone"], string> = {
   neutral: "bg-muted-foreground",
   good: "bg-success",
-  info: "bg-brand-solid",
+  info: "bg-(--primary)",
 };
 
 /** Same colors as the scale bar: the lower value is the green part, the higher one is the red gap. */
@@ -84,7 +84,7 @@ export function ComparisonView({ comparison }: { comparison: Comparison }) {
             comparison.matches === true ? "bg-success text-success-foreground" : "bg-warning text-warning-foreground",
           )}
         >
-          {comparison.matches === true ? <Check className="size-3.5" strokeWidth={3} /> : <AlertTriangle className="size-3" strokeWidth={2.5} />}
+          {comparison.matches === true ? <Check className="size-3.5" strokeWidth={3} /> : <TriangleAlert className="size-3" strokeWidth={2.5} />}
         </span>
         {comparison.sentence}
       </p>

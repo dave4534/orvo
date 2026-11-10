@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Send01 } from "@untitledui/icons";
+import { Send } from "lucide-react";
 
-import { Button } from "@/components/base/buttons/button";
-import { TextArea } from "@/components/base/textarea/textarea";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { firstName } from "@/logic/actions";
 import { formatSubmitted } from "@/logic/format";
 import type { LocalClaim } from "@/logic/local";
@@ -70,7 +70,7 @@ export function ClaimChat({ claim }: { claim: LocalClaim }) {
         ) : (
           lines.map((l, i) => (
             <div key={`${l.at}-${i}`} className={cn("flex max-w-[85%] flex-col gap-1", l.from === "manager" ? "self-end items-end" : "self-start")}>
-              <div className={cn("rounded-xl px-3.5 py-2.5 text-sm", l.from === "manager" ? "bg-brand-solid text-white" : "border bg-card")}>{l.text}</div>
+              <div className={cn("rounded-xl px-3.5 py-2.5 text-sm", l.from === "manager" ? "bg-(--primary) text-primary-foreground" : "border bg-card")}>{l.text}</div>
               <div className="text-xs text-muted-foreground">
                 {l.from === "manager" ? "Sent" : name}, {formatSubmitted(l.at)}
               </div>
@@ -86,8 +86,9 @@ export function ClaimChat({ claim }: { claim: LocalClaim }) {
           setDraft("");
         }}
       >
-        <TextArea aria-label={`Message to ${name}`} placeholder={`Message ${name}`} rows={2} value={draft} onChange={setDraft} className="flex-1" textAreaClassName="resize-none" />
-        <Button type="submit" size="md" isDisabled={!draft.trim()} iconLeading={Send01}>
+        <Textarea aria-label={`Message to ${name}`} placeholder={`Message ${name}`} rows={2} value={draft} onChange={(e) => setDraft(e.target.value)} />
+        <Button type="submit" disabled={!draft.trim()}>
+          <Send data-icon="inline-start" />
           Send
         </Button>
       </form>
