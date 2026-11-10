@@ -189,6 +189,16 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    }
+  ::selection {
+    background: var(--highlight);
+    color: var(--highlight-foreground);
+    }
+  input,
+  textarea {
+    caret-color: var(--primary);
     }
   body {
     @apply bg-background text-foreground;

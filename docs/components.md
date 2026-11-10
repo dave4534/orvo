@@ -50,3 +50,5 @@ Theme from shadcn preset `b6G3fhm1g` applied as theme only plus the Manrope font
 | `src/components/ui/badge.tsx` | `rounded-full` pills | Requested: all badges and chips are pills |
 | `src/components/ui/dropdown-menu.tsx`, `select.tsx`, `tooltip.tsx`, `sonner.tsx` | Raised surfaces use `rounded-card` and `shadow-surface` | Requested: cards, menus, popovers, tooltips and toasts are 8px with a subtle shadow |
 | `src/components/ui/input.tsx` | Height 40px | Matches the default button height |
+| `src/components/ui/sidebar.tsx` | Active nav item is lime with black text and semibold; the count badge is a green pill | Polish pass: nav follows the theme (lime light colour, green main colour) |
+| `src/tailwind.css` (base layer) | Text selection in lime, green caret, thin scrollbars | Polish pass: browser surfaces carry the palette |

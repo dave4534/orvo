@@ -154,7 +154,7 @@ function SectionRows({
               <TableRow
                 key={claim.id}
                 data-state={active ? "selected" : undefined}
-                className={cn("h-[72px] cursor-pointer", active && "bg-info shadow-[inset_3px_0_0_var(--primary)]")}
+                className={cn("h-[72px] cursor-pointer", active && "bg-info")}
                 onClick={() => onReview(claim.id)}
               >
                 <TableCell className="pl-5" onClick={(e) => e.stopPropagation()}>
