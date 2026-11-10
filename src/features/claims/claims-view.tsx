@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { usePanelRef } from "react-resizable-panels";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Status } from "@/data/types";
 import type { ActionId } from "@/logic/actions";
@@ -51,8 +52,18 @@ const tabOfStatus = (status: Status): TabId =>
 
 export function ClaimsView() {
   const { claims, sessionIds, undoLast, perform, performBatch, sendMessage } = useClaims();
-  const { aiOpen, setAiOpen, addAiMessage, lastTriageClaim, setChatContext, setUiToolHandler, runAction, controlDialog, callControl, hasControl, voiceOpen, homeRequest } = useWorkspace();
+  const { aiOpen, setAiOpen, addAiMessage, lastTriageClaim, setChatContext, setUiToolHandler, runAction, controlDialog, callControl, hasControl, setAiWidener, voiceOpen, homeRequest } = useWorkspace();
   const seenHome = useRef(homeRequest);
+  const aiPanel = usePanelRef();
+
+  // A card in the chat that needs room (the policy table) asks for a wider chat. It only ever widens, and never past the panel's limit.
+  useEffect(() => {
+    setAiWidener((px) => {
+      const panel = aiPanel.current;
+      if (panel && panel.getSize().inPixels < px) panel.resize(px);
+    });
+    return () => setAiWidener(null);
+  });
 
   const [tab, setTab] = useState<TabId>("needs_review");
   const [filters, setFilters] = useState<ClaimFilters>(DEFAULT_FILTERS);
@@ -632,7 +643,7 @@ export function ClaimsView() {
         {aiOpen ? (
           <>
             <ResizableHandle />
-            <ResizablePanel id="ai" defaultSize={352} minSize={280} maxSize={560} groupResizeBehavior="preserve-pixel-size" style={{ overflow: "hidden" }}>
+            <ResizablePanel id="ai" panelRef={aiPanel} defaultSize={352} minSize={280} maxSize={720} groupResizeBehavior="preserve-pixel-size" style={{ overflow: "hidden" }}>
               <AiPanel
                 claim={openClaim}
                 allClaims={claims}

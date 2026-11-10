@@ -12,6 +12,8 @@ import { allActionsFor } from "@/logic/recommendations";
 import { replyTo, suggestedPrompts } from "@/mocks/ai-replies";
 import { isUndoable, undoDecision, useClaims } from "@/store/claims-store";
 import { useWorkspace, type AiMessage } from "@/store/workspace-store";
+import { isCardTool } from "@/logic/chat-cards";
+import { cardsOf, ChatCard } from "./chat-cards";
 import { ChatComposer } from "./chat-composer";
 import { ChatMarkdown } from "./chat-markdown";
 import { VoiceBar } from "./voice-chat";
@@ -30,7 +32,7 @@ const textOf = (m: AiMessage) =>
     .filter((p) => p.type === "text")
     .map((p) => (p as { text: string }).text)
     .join("\n\n");
-const stepsOf = (m: AiMessage) => m.parts.filter((p) => p.type.startsWith("tool-") && p.type !== "tool-suggestAction") as StepPart[];
+const stepsOf = (m: AiMessage) => m.parts.filter((p) => p.type.startsWith("tool-") && p.type !== "tool-suggestAction" && !isCardTool(p.type.slice(5))) as StepPart[];
 
 /** The action the model suggested in this message, if any. */
 function suggestionOf(m: AiMessage): { claimId: string; label: string } | null {
@@ -121,13 +123,17 @@ function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry, shortcut
   }
 
   const suggestion = suggestionOf(m);
-  if (!text && steps.length === 0 && !suggestion) return null;
+  const cards = cardsOf(m.parts);
+  if (!text && steps.length === 0 && !suggestion && cards.length === 0) return null;
   const stepsRunning = isLast && busy && steps.some((s) => !isStepDone(s));
   const finished = !(isLast && busy);
   return (
     <div className={`${enter} flex flex-col gap-2 text-sm leading-relaxed`}>
       {steps.length > 0 ? <ToolSteps steps={steps} running={stepsRunning} /> : null}
       {text ? <ChatMarkdown>{text}</ChatMarkdown> : null}
+      {cards.map((c, i) => (
+        <ChatCard key={i} tool={c.tool} output={c.output} />
+      ))}
       {suggestion && finished && canAct(suggestion.claimId, suggestion.label) ? <SuggestedAction label={suggestion.label} onAct={onAct} shortcut={shortcutLabel === suggestion.label} /> : null}
       {text && finished ? (
         <div className="-ml-1.5 flex items-center gap-0.5 text-muted-foreground">

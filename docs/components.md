@@ -44,4 +44,5 @@ Every component in `src/components` is listed here. Update this file every time 
 | input-group | shadcn (stock, base-nova), used for the chat message box | 2026-11-09 |
 | collapsible | shadcn (stock, base-nova), used for the folding steps in the chat | 2026-11-09 |
 | kbd | shadcn (stock, base-nova), the Command and Enter hint on the recommended action button | 2026-11-10 |
+| card | shadcn (stock, base-nova), the cards the chat shows (transaction, receipt, policy breakdown, message) | 2026-11-10 |
 | spinner | shadcn (stock, base-nova), used for steps in progress | 2026-11-09 |

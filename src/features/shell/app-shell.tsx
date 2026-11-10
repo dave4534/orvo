@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Image from "next/image";
 import { Sparkles } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,10 +21,9 @@ function TopBar() {
         variant="ghost"
         aria-label="Orvo home, go to Expenses"
         onClick={goHome}
-        className="-ml-2 h-10 gap-2.5 px-2 text-lg font-semibold tracking-tight"
+        className="-ml-2 h-10 px-2"
       >
-        <span aria-hidden className="size-6 rounded-md bg-primary" />
-        Orvo
+        <Image src="/brand/orvo-logo.svg" alt="" aria-hidden width={61} height={24} unoptimized className="h-6 w-auto dark:invert" />
       </Button>
       <div className="flex items-center gap-4">
         <Tooltip>

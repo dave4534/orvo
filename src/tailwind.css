@@ -22,8 +22,6 @@
     --font-heading: var(--font-sans);
     --font-sans: var(--font-sans);
     --color-sidebar-ring: var(--sidebar-ring);
-    --color-sidebar-selected: var(--sidebar-selected);
-    --color-sidebar-selected-foreground: var(--sidebar-selected-foreground);
     --color-sidebar-hover: var(--sidebar-hover);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -127,9 +125,7 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: #D0D4E4;
     --sidebar-ring: oklch(0.708 0 0);
-    /* Nav rail, from the Appcharge back-office sidebar: selected row, hover tint, selected label. */
-    --sidebar-selected: #CCE4FF;
-    --sidebar-selected-foreground: #0073EA;
+    /* Nav rail hover tint, from the Appcharge back-office sidebar. */
     --sidebar-hover: #6768791A;
 }
 
@@ -179,8 +175,6 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
-    --sidebar-selected: #133774;
-    --sidebar-selected-foreground: #0073EA;
     --sidebar-hover: #63636359;
 }
 
