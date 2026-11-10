@@ -63,7 +63,8 @@ export const walkthroughSteps: WalkthroughStep<PlaceId>[] = [
   {
     title: "Increasing Clarity",
     body: [
-      "Noa’s previous Process of opening an item, checking documentation, comparing to the policy, approving, and going back to the list cost time and overwhelmed her. I distilled information to a comparison mental model where Noa could visually understand at a glance what she needs to drive her decision. Proactive clarity is also intentionally designed, intentionally baked into the AI chat experience where Noa can ask questions and get visual cards instead of having to go search for more information.",
+      { icon: Layers, text: "Noa’s previous process of opening an item, checking documentation, comparing to the policy, approving, and going back to the list cost time and overwhelmed her. I distilled information to a comparison mental model where Noa could visually understand at a glance what she needs to drive her decision." },
+      { icon: MessageCircle, text: "Proactive clarity is also intentionally designed, intentionally baked into the AI chat experience where Noa can ask questions and get visual cards instead of having to go search for more information." },
     ],
     places: [
       { id: "claims-queue", label: "Claims Queue" },
@@ -102,7 +103,7 @@ export const walkthroughSteps: WalkthroughStep<PlaceId>[] = [
     title: "What I’d do next",
     body: [
       { icon: Route, text: "Logic: Logic was the most challenging part of the prototype. I would explore different ways of communicating the logic visually to the user, test those directions and continuously iterate it. I found myself thinking about the logic around fraudulent activity and deciding what number of raised flags per employee is too many flags. I spec’ed out an entire aspect of AI and manually added flags to claims but ultimately I removed this feature because time would not allow the polish level for the logic and behavior of the claim flags feature." },
-      { icon: Telescope, text: "I’m really curious to what extent users need the list view. It would be a fun and interesting experiment to try and distill the experience even more and see where the breakpoints are, and what would be too minimal. From my pattern research of seeing [Airwallex](image:/walkthrough/melio/airwallex.png) / [Expensify](image:/walkthrough/melio/expensify.png) and others use list views with a side panel for triage, I’d wonder if they would feel that someone is moving their cheese." },
+      { icon: Telescope, text: "I’m really curious to what extent users need the list view. It would be a fun and interesting experiment to try and distill the experience even more and see where the breakpoints are, and what would be too minimal. From my pattern research of seeing [Airwallex](image:/walkthrough/melio/airwallex.png?zoom=2) / [Expensify](image:/walkthrough/melio/expensify.png?zoom=2) and others use list views with a side panel for triage, I’d wonder if they would feel that someone is moving their cheese." },
     ],
   },
   {

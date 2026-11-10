@@ -16,10 +16,16 @@ type LightboxProps = {
 // the arrow keys move between images and do not step the guide.
 export function Lightbox({ images, index, onIndex, onClose }: LightboxProps) {
   const [missing, setMissing] = useState(false)
-  const src = images[index]
+  const [natural, setNatural] = useState<number | null>(null)
+  // An image link can carry ?zoom=2 to show the picture at twice its natural width.
+  const [src, query] = images[index].split('?')
+  const zoom = Number(new URLSearchParams(query ?? '').get('zoom')) || 1
   const count = images.length
 
-  useEffect(() => setMissing(false), [src])
+  useEffect(() => {
+    setMissing(false)
+    setNatural(null)
+  }, [src])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -80,7 +86,14 @@ export function Lightbox({ images, index, onIndex, onClose }: LightboxProps) {
           This image hasn’t been added yet.
         </p>
       ) : (
-        <img src={src} alt="" onError={() => setMissing(true)} onClick={(e) => e.stopPropagation()} />
+        <img
+          src={src}
+          alt=""
+          style={zoom > 1 && natural ? { width: natural * zoom, maxWidth: 'none', maxHeight: 'none' } : undefined}
+          onLoad={(e) => setNatural(e.currentTarget.naturalWidth)}
+          onError={() => setMissing(true)}
+          onClick={(e) => e.stopPropagation()}
+        />
       )}
     </div>
   )
