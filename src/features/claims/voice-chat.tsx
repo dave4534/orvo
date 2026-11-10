@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Mic, MicOff, X } from "lucide-react";
+import { Mic, MicOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from "@/components/ui/input-group";
@@ -11,22 +11,16 @@ import { startVoiceActivity, type VoiceActivity } from "@/lib/voice-activity";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/store/workspace-store";
 
-/** Bars that move while the assistant listens or speaks. Same look in the chat and in the bar. */
-export function Wave({ phase }: { phase: "listening" | "thinking" | "speaking" | "muted" }) {
-  const bars = [0, 1, 2, 3, 4, 5, 6];
+/**
+ * The voice glyph in the Stop button, like Claude's: two bars and a dot in the button's own colour. The bars move while the assistant
+ * listens or speaks, and rest while it thinks or the microphone is off.
+ */
+function VoiceGlyph({ active }: { active: boolean }) {
   return (
-    <span aria-hidden className="flex h-6 items-center gap-0.5">
-      {bars.map((i) => (
-        <span
-          key={i}
-          className={cn(
-            "w-1 origin-center rounded-full",
-            phase === "muted" ? "h-1 bg-muted-foreground" : phase === "thinking" ? "h-1.5 animate-pulse bg-muted-foreground" : "h-6 bg-primary",
-            (phase === "listening" || phase === "speaking") && "animate-wave",
-          )}
-          style={{ animationDelay: `${i * 110}ms`, animationDuration: phase === "speaking" ? "0.55s" : "1.1s" }}
-        />
-      ))}
+    <span aria-hidden className="flex h-4 items-center gap-[3px]">
+      <span className={cn("h-3 w-[3px] origin-center rounded-full bg-current", active && "animate-wave")} />
+      <span className={cn("h-4 w-[3px] origin-center rounded-full bg-current", active && "animate-wave")} style={{ animationDelay: "180ms" }} />
+      <span className="size-[5px] rounded-full bg-current" />
     </span>
   );
 }
@@ -259,22 +253,6 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [busy]);
 
-  function interrupt() {
-    if (speakingRef.current) {
-      stopWatching();
-      queue.current = [];
-      cancelSpeech();
-      speakingRef.current = false;
-      setSpeaking(false);
-      pending.current = false;
-      setWaiting(false);
-      keep.current = !mutedRef.current;
-      listen();
-    } else if (latest.current.busy) {
-      latest.current.onStopAnswer();
-    }
-  }
-
   function toggleMute() {
     if (mutedRef.current) {
       mutedRef.current = false;
@@ -305,7 +283,6 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
   const phase = speaking ? "speaking" : busy || waiting ? "thinking" : muted ? "muted" : "listening";
   const label = { speaking: "Speaking", thinking: "Thinking", muted: "Microphone is off", listening: "Listening" }[phase];
 
-  const live = speaking || busy;
   return (
     <div className="shrink-0 px-4 pt-2 pb-3">
       <InputGroup className="rounded-2xl bg-card shadow-sm has-disabled:bg-card has-disabled:opacity-100 dark:has-disabled:bg-card">
@@ -317,34 +294,21 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
           placeholder={label}
           className="max-h-40 min-h-14 field-sizing-content px-4 pt-4 text-[15px] italic"
         />
-        <InputGroupAddon align="block-end" className="justify-between gap-1">
-          <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={end}>
-            <X data-icon="inline-start" />
-            End voice
+        <InputGroupAddon align="block-end" className="justify-end gap-1">
+          <InputGroupButton
+            size="icon-sm"
+            className="rounded-lg text-foreground hover:text-foreground"
+            aria-label={muted ? "Turn microphone on" : "Turn microphone off"}
+            aria-pressed={muted}
+            onClick={toggleMute}
+          >
+            {muted ? <MicOff /> : <Mic />}
+          </InputGroupButton>
+          {/* Stop ends voice mode: it stops speech and the answer and puts the normal message box back, like Claude. */}
+          <Button type="button" size="sm" variant="ghost" className="h-8 gap-2 rounded-lg bg-info px-3 font-medium text-info-foreground hover:bg-info/80" aria-label="Stop voice chat" onClick={end}>
+            <VoiceGlyph active={phase === "listening" || phase === "speaking"} />
+            Stop
           </Button>
-          <div className="flex items-center gap-1">
-            <InputGroupButton
-              size="icon-sm"
-              className="rounded-lg text-foreground hover:text-foreground"
-              aria-label={muted ? "Turn microphone on" : "Turn microphone off"}
-              aria-pressed={muted}
-              onClick={toggleMute}
-            >
-              {muted ? <MicOff /> : <Mic />}
-            </InputGroupButton>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className={cn("h-8 gap-2 rounded-lg px-3 font-medium", live ? "bg-info text-brand-secondary hover:bg-info/80" : "text-muted-foreground")}
-              aria-label={speaking ? "Stop speaking" : "Stop the answer"}
-              disabled={!live}
-              onClick={interrupt}
-            >
-              <Wave phase={phase} />
-              Stop
-            </Button>
-          </div>
         </InputGroupAddon>
       </InputGroup>
       {speech.error === "blocked" ? <p className="mt-2 text-center text-xs text-destructive">Microphone access is blocked. Allow it in the browser&apos;s site settings.</p> : null}
