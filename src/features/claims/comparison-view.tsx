@@ -1,6 +1,7 @@
 import type * as React from "react";
 import { Check } from "lucide-react";
 
+import { Card, CardContent } from "@/components/ui/card";
 import { formatUsd } from "@/logic/format";
 import type { Comparison, Half } from "@/logic/comparison";
 import { cn } from "@/lib/utils";
@@ -76,7 +77,9 @@ export function ComparisonView({ comparison }: { comparison: Comparison }) {
   // Duplicates: the earlier claim is green (it was paid), this claim is red (it was declined).
   const isDuplicate = comparison.kind === "identity";
   const leftDot = isDuplicate ? SCALE_DOT.low : comparison.scale ? (noGap || lowIsLeft ? SCALE_DOT.low : SCALE_DOT.high) : DOT[comparison.left.tone];
-  const rightDot = isDuplicate ? SCALE_DOT.high : comparison.scale ? (noGap || !lowIsLeft ? SCALE_DOT.low : SCALE_DOT.high) : DOT[comparison.right.tone];
+  const rightDot = isDuplicate ? (comparison.matches ? SCALE_DOT.low : SCALE_DOT.high) : comparison.scale ? (noGap || !lowIsLeft ? SCALE_DOT.low : SCALE_DOT.high) : DOT[comparison.right.tone];
+  // The amount is already at the top right of the card, so it is never repeated as a tile.
+  const evidence = comparison.evidence.filter((e) => !/^amount$/i.test(e.label));
   return (
     <div>
       <div className="grid grid-cols-[1fr_1px_1fr] border-y">
@@ -96,15 +99,18 @@ export function ComparisonView({ comparison }: { comparison: Comparison }) {
         )}
         {comparison.sentence}
       </p>
-      {comparison.evidence.length > 0 ? (
-        <dl className="mx-6 mb-4 flex flex-col gap-1.5 rounded-lg bg-muted/60 p-3 text-sm">
-          {comparison.evidence.map((e) => (
-            <div key={`${e.label}-${e.value}`} className="grid grid-cols-[8.5rem_1fr] gap-3">
-              <dt className="text-muted-foreground">{e.label}</dt>
-              <dd className="min-w-0 break-words">{e.value}</dd>
-            </div>
+      {evidence.length > 0 ? (
+        // One small card per fact, in a row that wraps. Label above, value below, so each fact can be scanned on its own.
+        <div className="mx-6 mb-4 flex flex-wrap gap-2">
+          {evidence.map((e) => (
+            <Card key={`${e.label}-${e.value}`} size="sm" className="min-w-36 flex-1 basis-36 gap-1 bg-muted/40 shadow-none">
+              <CardContent className="flex min-w-0 flex-col gap-1">
+                <span className="text-xs text-muted-foreground">{e.label}</span>
+                <span className="text-base leading-snug font-semibold break-words">{e.value}</span>
+              </CardContent>
+            </Card>
           ))}
-        </dl>
+        </div>
       ) : null}
     </div>
   );

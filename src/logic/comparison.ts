@@ -65,29 +65,33 @@ const RIDE_LABELS: Record<string, string> = {
   invoice: "Invoice",
 };
 
+/**
+ * A possible duplicate. The two halves show the one thing that decides it, the ride ID, never the claim numbers, which always differ.
+ * The sentence says whether that ID is the same, and the tiles below give the other fields of the trip. The amount is left out of the
+ * tiles because the card already shows it.
+ */
 function identityComparison(claim: LocalClaim, other: LocalClaim): Comparison {
   const a = other.receipt.document?.details ?? {};
   const b = claim.receipt.document?.details ?? {};
-  const keys = Array.from(new Set([...Object.keys(a), ...Object.keys(b)])).filter((k) => k in RIDE_LABELS);
-  const rows: ComparisonRow[] = [
-    { label: "Amount", left: formatUsd(other.amount.usd_claimed), right: formatUsd(claim.amount.usd_claimed), differs: other.amount.usd_claimed !== claim.amount.usd_claimed },
-    ...keys.map((k) => ({
-      label: RIDE_LABELS[k],
-      left: String(a[k] ?? "None"),
-      right: String(b[k] ?? "None"),
-      differs: String(a[k]) !== String(b[k]),
-    })),
-  ];
-  const sameRide = rows.find((r) => r.label === "Ride ID")?.differs === false;
-  const otherName = firstName(other);
+  const keys = Array.from(new Set([...Object.keys(a), ...Object.keys(b)])).filter((k) => k in RIDE_LABELS && k !== "ride_id");
+  const rows: ComparisonRow[] = keys.map((k) => ({
+    label: RIDE_LABELS[k],
+    left: String(a[k] ?? "None"),
+    right: String(b[k] ?? "None"),
+    differs: String(a[k]) !== String(b[k]),
+  }));
+  const idA = a.ride_id !== undefined ? String(a.ride_id) : null;
+  const idB = b.ride_id !== undefined ? String(b.ride_id) : null;
+  const sameRide = idA !== null && idA === idB;
+  const who = (c: LocalClaim) => `${firstName(c)}, ${c.id}, ${formatSubmitted(c.submitted_at)}`;
   return {
     kind: "identity",
-    left: { label: "Earlier claim", tone: "neutral", text: other.id, sub: `${otherName}, ${formatSubmitted(other.submitted_at)}` },
-    right: { label: "This claim", tone: "info", text: claim.id, sub: `${firstName(claim)}, ${formatSubmitted(claim.submitted_at)}` },
-    sentence: sameRide
-      ? `Possible duplicate of ${other.id}. Same ride ID on both.`
-      : `Possible duplicate of ${other.id}. Ride ID and pickup differ.`,
-    // The fields side by side, one line each: the earlier value, then this claim's value when it differs.
+    left: { label: "Earlier claim", tone: "neutral", text: idA ? `Ride ${idA}` : other.id, sub: who(other) },
+    right: { label: "This claim", tone: "info", text: idB ? `Ride ${idB}` : claim.id, sub: who(claim) },
+    sentence: sameRide ? "Same ride ID on both, so the trip is claimed twice." : "Ride IDs differ, so these look like two rides.",
+    // Two different rides pass the duplicate check. Two claims for one ride do not.
+    matches: !sameRide,
+    // The other fields of the trip, one tile each: the earlier value, then this claim's value when it differs.
     evidence: rows.map((r) => ({ label: r.label, value: r.differs ? `${r.left}, now ${r.right}` : r.left })),
   };
 }
@@ -99,8 +103,9 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
   const reason = claim.agent.reason_type;
   const note = claim.employee_note ? [{ label: "Employee note", value: `"${claim.employee_note}"` }] : [];
 
-  // 1. Claims that reached Noa, by the reason the agent gave.
-  if (claim.status === "waiting_on_noa" || claim.status === "waiting_on_employee") {
+  // 1. Claims that reached Noa, by the reason the agent gave. A claim she declined keeps the same comparison: it shows what the decision
+  // was about, never "claim versus declined", because the status bar already says declined.
+  if (claim.status === "waiting_on_noa" || claim.status === "waiting_on_employee" || claim.status === "declined_by_noa") {
     switch (reason) {
       case "over_finance_threshold": {
         const gap = claimed - FINANCE_LIMIT;
@@ -179,6 +184,21 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
             ...note,
             ...(requests ? [{ label: "Requests sent", value: `${requests} of ${claim.agent.chase?.max_attempts}` }] : []),
           ],
+        };
+      }
+      case "unusual_pattern": {
+        // A repeat purchase. The halves are the two purchases, so the sentence about "a second one" is about what is on screen.
+        const earlier = fact(claim, /earlier claim/i) ?? "";
+        const [item, , when] = earlier.split(",").map((part) => part.trim());
+        const days = fact(claim, /days apart/i);
+        const earlierAmount = parseMoney(earlier);
+        const declineNote = claim.noa?.decision === "declined" && claim.noa.note ? [{ label: "Decline note", value: claim.noa.note }] : [];
+        return {
+          kind: "money",
+          left: { label: "Earlier claim", tone: "neutral", ...(earlierAmount !== null ? { amount: earlierAmount } : { text: earlier }), sub: [item, when].filter(Boolean).join(", ") },
+          right: { label: "This claim", tone: "info", amount: claimed, sub: `${claim.description}, ${formatSubmitted(claim.expense_date).split(",")[0]}` },
+          sentence: days ? `Second ${(item ?? "purchase").toLowerCase()} in ${days} days. No rule covers repeats.` : "A repeat purchase. No rule covers repeats.",
+          evidence: [...note, ...declineNote],
         };
       }
       case "no_matching_rule": {

@@ -305,14 +305,21 @@ export function assess(claim: LocalClaim, all: LocalClaim[] = [], now: Date = NO
     }
 
     case "possible_duplicate": {
+      // The same facts the comparison shows: a matching ride ID is one trip claimed twice, a different one is two rides that look alike.
+      const other = all.find((c) => c.id === claim.agent.related_claim_ids[0]);
+      const idA = other?.receipt.document?.details?.ride_id;
+      const idB = claim.receipt.document?.details?.ride_id;
+      const sameRide = idA !== undefined && idA === idB;
       return make({
         recommendation: { recommended: ask(claim), secondary: [decline()], more: [approve(claim), otherAmount()] },
-        gap: "Looks like a duplicate claim",
-        short: "Fare and route match another claim",
-        why: `The claim matches another one, so a question to ${name} settles whether it is the same trip.`,
+        gap: sameRide ? "Same ride claimed twice" : "Looks like a duplicate claim",
+        short: sameRide ? "Same ride ID on both claims" : "Same fare and route, ride IDs differ",
+        why: sameRide
+          ? `The ride ID is on another claim, so paying both pays one trip twice. A question to ${name} settles whose claim it is.`
+          : `The fare and route match another claim, but the ride IDs differ. A question to ${name} settles whether it is the same trip.`,
         others: [
-          { label: `Approve ${formatUsd(claimed)}`, why: "It may pay the same trip twice." },
-          { label: "Decline claim", why: "It may be a second, real trip." },
+          { label: `Approve ${formatUsd(claimed)}`, why: sameRide ? "It pays the same trip twice." : "It may pay the same trip twice." },
+          { label: "Decline claim", why: sameRide ? "The ride is already paid on the other claim, but the question comes first." : "The ride IDs differ, so it may be a second, real trip." },
         ],
       });
     }
@@ -320,8 +327,9 @@ export function assess(claim: LocalClaim, all: LocalClaim[] = [], now: Date = NO
     case "unusual_pattern":
       return make({
         recommendation: { recommended: null, secondary: [approve(claim), decline(), ask(claim)], more: [otherAmount()] },
-        gap: "Unusual pattern, no limit broken",
-        short: "Pattern flagged, no rule broken",
+        // The agent's own headline names the pattern, for example "Second monitor claimed in 34 days", so the note matches the comparison.
+        gap: claim.agent.headline,
+        short: "Repeat purchase, no rule covers repeats",
         why: "",
       });
 
