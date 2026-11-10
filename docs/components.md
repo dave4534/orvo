@@ -17,6 +17,7 @@ Every component in `src/components` is listed here. Update this file every time 
 | separator | shadcn (stock, base-nova) | 2026-11-09 |
 | sheet | shadcn (pulled in by sidebar) | 2026-11-09 |
 | sidebar | shadcn (stock, base-nova) | 2026-11-09 |
+| c-sidebar-2 | reUI block (`shadcn add @reui/c-sidebar-2`), trimmed to `RailNav`: the rail nav of the app sidebar. Demo data, brand header and account footer left out | 2026-11-10 |
 | skeleton | shadcn (pulled in by sidebar) | 2026-11-09 |
 | sonner | shadcn (stock, base-nova) | 2026-11-09 |
 | undo-toast | Composition of sonner (toast.custom) and button (stock), drains the Undo button over 10 s | 2026-11-10 |
