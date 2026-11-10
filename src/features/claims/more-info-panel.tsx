@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { Info, Paperclip, Sparkles, X } from "lucide-react";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { StatusBanner } from "@/components/status-banner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +15,7 @@ import type { CheckResult, ClaimEvent } from "@/data/types";
 import { employeeName } from "@/logic/comparison";
 import { formatSubmitted, formatUsd, initials } from "@/logic/format";
 import type { LocalClaim } from "@/logic/local";
+import { PILL, TABS_LIST, TABS_TRIGGER } from "@/lib/blocks";
 import { cn } from "@/lib/utils";
 import { ClaimChat } from "./claim-chat";
 import { DocumentDialog, type DocumentView } from "./document-dialog";
@@ -183,11 +184,9 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
             ) : (
               // No receipt to show: the inline banner alone says what is missing or unreadable.
               <li className="p-3">
-                <Alert className="border-info-border bg-info text-info-foreground">
-                  <Info />
-                  <AlertTitle>{receipt.status === "unreadable" ? "Receipt can't be read" : "Receipt missing"}</AlertTitle>
-                  <AlertDescription className="text-info-foreground/90">{missingText}</AlertDescription>
-                </Alert>
+                <StatusBanner icon={<Info />} title={receipt.status === "unreadable" ? "Receipt can't be read" : "Receipt missing"}>
+                  {missingText}
+                </StatusBanner>
               </li>
             )}
             {receipt.attachments.map((a) => (
@@ -245,7 +244,7 @@ function Policy({ claim }: { claim: LocalClaim }) {
               <TableCell className="px-4 py-4 font-medium whitespace-normal">{c.label}</TableCell>
               <TableCell className="px-4 py-4 whitespace-normal text-left text-muted-foreground">{rules.find((r) => r.id === c.rule_id)?.text ?? "No policy number"}</TableCell>
               <TableCell className="px-4 py-4 text-left">
-                <Badge variant="outline" className={cn("bg-card", CHECK_STYLE[c.result])}>
+                <Badge variant="outline" className={cn(PILL, "bg-card", CHECK_STYLE[c.result])}>
                   {PASSED_LABEL[c.result]}
                 </Badge>
               </TableCell>
@@ -294,17 +293,17 @@ export function MoreInfoPanel({ claim, allClaims, tab, onTab, onClose, onOpenPas
         </Button>
       </div>
       <Tabs value={tab} onValueChange={(v) => onTab(v as MoreTab)} className="min-h-0 flex-1 gap-0">
-        <TabsList variant="line" className="h-11 w-full shrink-0 justify-start gap-5 border-b px-6">
-          <TabsTrigger value="overview" className="flex-none px-1">
+        <TabsList variant="line" className={cn(TABS_LIST, "h-11 w-full shrink-0 justify-start gap-5 px-6")}>
+          <TabsTrigger value="overview" className={cn(TABS_TRIGGER, "flex-none px-1")}>
             Overview
           </TabsTrigger>
-          <TabsTrigger value="policy" className="flex-none px-1">
+          <TabsTrigger value="policy" className={cn(TABS_TRIGGER, "flex-none px-1")}>
             Policy
           </TabsTrigger>
-          <TabsTrigger value="past" className="flex-none px-1">
+          <TabsTrigger value="past" className={cn(TABS_TRIGGER, "flex-none px-1")}>
             Past claims
           </TabsTrigger>
-          <TabsTrigger value="chat" className="flex-none px-1">
+          <TabsTrigger value="chat" className={cn(TABS_TRIGGER, "flex-none px-1")}>
             Chat
           </TabsTrigger>
         </TabsList>

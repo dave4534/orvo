@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { PILL } from "@/lib/blocks";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { claimStatusLabel, formatSubmitted, formatUsd } from "@/logic/format";
 import type { LocalClaim } from "@/logic/local";
@@ -63,7 +64,7 @@ export function PastClaims({ claim, allClaims, onOpenClaim }: Props) {
                 </TableCell>
                 <TableCell className="px-4 py-4 text-left tabular-nums">{formatUsd(c.amount.usd_claimed)}</TableCell>
                 <TableCell className="px-4 py-4 whitespace-normal">
-                  <Badge variant="outline" className="bg-card text-muted-foreground">
+                  <Badge variant="outline" className={`${PILL} bg-card text-muted-foreground`}>
                     {rowStatus(c)}
                   </Badge>
                 </TableCell>

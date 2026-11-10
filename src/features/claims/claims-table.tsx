@@ -8,7 +8,7 @@ import {
   Plane,
   Presentation,
   Receipt,
-  Sparkles,
+  Sparkle,
   Ticket,
   Utensils,
   type LucideIcon,
@@ -27,6 +27,7 @@ import { employeeName } from "@/logic/comparison";
 import { claimStatusLabel, formatSubmitted, formatUsd, initials } from "@/logic/format";
 import type { LocalClaim } from "@/logic/local";
 import type { Section } from "@/logic/sections";
+import { PILL } from "@/lib/blocks";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_ICON: Record<Category, LucideIcon> = {
@@ -66,9 +67,9 @@ function BasisPill({ claim }: { claim: LocalClaim }) {
     <Tooltip>
       <TooltipTrigger
         render={
-          <Badge variant="outline" tabIndex={0} className="bg-card text-muted-foreground">
+          <Badge variant="outline" tabIndex={0} className={cn(PILL, "bg-card text-muted-foreground")}>
             {basis.label}
-            <Sparkles aria-hidden data-icon="inline-end" />
+            <Sparkle aria-hidden data-icon="inline-end" />
           </Badge>
         }
       />
@@ -214,10 +215,10 @@ function SectionRows({
                 <TableCell className="text-right font-medium tabular-nums">{formatUsd(claim.amount.usd_claimed)}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    <Badge variant="outline" className={statusStyle(claim)}>
+                    <Badge variant="outline" className={cn(PILL, statusStyle(claim))}>
                       {claimStatusLabel(claim)}
                     </Badge>
-                    {claim.local?.spot_checked ? <Badge variant="outline" className="bg-card text-muted-foreground">Reviewed</Badge> : null}
+                    {claim.local?.spot_checked ? <Badge variant="outline" className={cn(PILL, "bg-card text-muted-foreground")}>Reviewed</Badge> : null}
                   </div>
                 </TableCell>
                 {showBasis ? (

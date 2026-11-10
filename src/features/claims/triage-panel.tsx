@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Ban, Check, ChevronDown, CircleDollarSign, Clock, Info, Landmark, ListChecks, MessageSquare, Pencil, Wrench, type LucideIcon } from "lucide-react";
+import { ArrowRight, Ban, Check, ChevronDown, CircleDollarSign, Clock, Info, Landmark, ListChecks, MessageSquare, Pencil, TriangleAlert, Wrench, type LucideIcon } from "lucide-react";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { StatusBanner } from "@/components/status-banner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -337,19 +337,14 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
         ) : null}
 
         {changed ? (
-          <Alert>
-            <Info aria-hidden />
-            <AlertTitle>What happens when you save</AlertTitle>
-            <AlertDescription>
-              {savedPreview ? savedPreview.summary : null}
-            </AlertDescription>
-          </Alert>
+          <StatusBanner icon={<Info />} title="What happens when you save">
+            {savedPreview ? savedPreview.summary : null}
+          </StatusBanner>
         ) : null}
 
         {error ? (
-          <Alert variant="destructive">
-            <AlertTitle>Decision not saved</AlertTitle>
-            <AlertDescription className="flex flex-col gap-2">
+          <StatusBanner tone="destructive" icon={<TriangleAlert />} title="Decision not saved">
+            <span className="flex flex-col gap-2">
               <span>Nothing was sent to {name} and the claim is unchanged. Try again, or leave it in the queue.</span>
               <span className="flex gap-2">
                 <Button size="sm" onClick={() => run(error)}>
@@ -359,8 +354,8 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                   Dismiss
                 </Button>
               </span>
-            </AlertDescription>
-          </Alert>
+            </span>
+          </StatusBanner>
         ) : null}
 
         {needsReview && rec && !rec.recommended ? (

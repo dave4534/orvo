@@ -24,7 +24,7 @@ shadcn/ui on Base UI is the only UI source for this project. Not Radix, not Mond
 
 Order of preference for every UI element:
 1. A stock shadcn component (https://ui.shadcn.com/docs/components), installed with the CLI.
-2. A shadcn Studio (https://shadcnstudio.com) or reui (https://reui.io) block, installed with the CLI into src/components/ui. After install it is part of the system.
+2. A shadcn Studio (https://shadcnstudio.com), reui (https://reui.io) or shadcn-space (https://shadcnspace.com) block, installed with the CLI into src/components. After install it is part of the system.
 3. A composition of 1 and 2.
 4. A custom component, only when 1 to 3 cannot do it, and only with an entry in docs/exceptions.md (what it is, why no shadcn part fits, which shadcn parts it is built from).
 
@@ -36,7 +36,7 @@ Never use horizontal scroll anywhere (pages, dialogs, tables). Use wrapping, tru
 
 ### Registries
 
-`components.json` registers `@ss-components` (shadcn Studio) and `@reui`, both with the `{style}` placeholder, on style `base-nova`. For any block the user asks for, check that it has a Base UI version before installing, and say so if it does not. Free items need no key. Premium items need a license key in `.env.local`, which the user must provide.
+`components.json` registers `@ss-components` (shadcn Studio) and `@reui`, both with the `{style}` placeholder, on style `base-nova`, and `@shadcn-space` (shadcn-space, `https://shadcnspace.com/r/{name}.json`, no style placeholder, so read each block for Radix imports before using it). For any block the user asks for, check that it has a Base UI version before installing, and say so if it does not. Free items need no key. Premium items need a license key in `.env.local`, which the user must provide.
 
 ## Reporting rule
 

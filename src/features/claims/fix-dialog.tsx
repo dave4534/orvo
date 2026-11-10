@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { PILL } from "@/lib/blocks";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -153,7 +154,7 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
                     <span className="font-semibold">{o.title}</span>
                     <span className="text-xs text-muted-foreground">{o.description}</span>
                   </span>
-                  {finding && FINDING_TO_OPTION[finding] === o.id ? <Badge variant="outline" className="ml-auto border-warning-border bg-warning text-warning-foreground">Differs on screen</Badge> : null}
+                  {finding && FINDING_TO_OPTION[finding] === o.id ? <Badge variant="outline" className={`${PILL} ml-auto border-warning-border bg-warning text-warning-foreground`}>Differs on screen</Badge> : null}
                 </Label>
               ))}
             </RadioGroup>
@@ -161,7 +162,7 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
         ) : (
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <Badge variant="outline" className="border-warning-border bg-warning text-warning-foreground">
+              <Badge variant="outline" className={`${PILL} border-warning-border bg-warning text-warning-foreground`}>
                 {chosen?.title}
               </Badge>
               <Button variant="ghost" size="sm" onClick={() => setStep(1)}>

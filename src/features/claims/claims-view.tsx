@@ -29,6 +29,7 @@ import { isSpotCheck } from "@/logic/local";
 import { sectionsFor } from "@/logic/sections";
 import { buildChatContext } from "@/logic/chat-context";
 import { claimSummary, openingLine } from "@/logic/summary";
+import { TABS_LIST, TABS_TRIGGER } from "@/lib/blocks";
 import { cn } from "@/lib/utils";
 import { track } from "@/logic/track";
 import { useClaims } from "@/store/claims-store";
@@ -540,9 +541,9 @@ export function ClaimsView() {
             setSelectedIds(new Set());
           }}
         >
-          <TabsList variant="line" className="h-11 w-full justify-start border-b pb-0">
+          <TabsList variant="line" className={cn(TABS_LIST, "h-11 w-full justify-start")}>
             {TABS.map((t) => (
-              <TabsTrigger key={t.id} value={t.id} className="flex-none px-3 text-base">
+              <TabsTrigger key={t.id} value={t.id} className={cn(TABS_TRIGGER, "flex-none px-3 text-base")}>
                 {t.label}
                 <Badge variant="secondary" aria-label={`${counts[t.id]} claims`}>
                   {counts[t.id]}

@@ -28,6 +28,10 @@ Every component in `src/components` is listed here. Update this file every time 
 | radio-group | shadcn (stock, base-nova) | 2026-11-09 |
 | scroll-area | shadcn (stock, base-nova), installed, not used yet | 2026-11-09 |
 | textarea | shadcn (stock, base-nova) | 2026-11-09 |
+| badge-12 | shadcn-space block (`@shadcn-space/badge-12`, removable filter chip). Its pill classes are shared through `src/lib/blocks.ts`. Needs `motion`. | 2026-11-10 |
+| tabs-26 | shadcn Studio block (`@ss-components/tabs-26`, underline tabs). Its classes are shared through `src/lib/blocks.ts`. | 2026-11-10 |
+| alert-08 | shadcn-space block (`@shadcn-space/alert-08`, evaporate dismiss). Layout and motion reused by status-banner. Needs `motion`. | 2026-11-10 |
+| status-banner | Composition of alert and button (stock) with the layout and evaporate motion of alert-08. Used for the brief banner and the inline alerts. | 2026-11-10 |
 
 ## Changes to stock files
 
