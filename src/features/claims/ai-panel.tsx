@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowDown, Check, Command, Copy, CornerDownLeft, RotateCcw, Sparkles, X } from "lucide-react";
+import { AutoAwesome } from "@/components/icons/auto-awesome";
 
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
@@ -228,7 +229,7 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
     <aside aria-label="Ask Orvo AI" className="relative flex h-full min-h-0 w-full flex-col bg-card">
       <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
         <h2 className="flex items-center gap-2 text-base font-semibold">
-          <Sparkles aria-hidden className="size-4 text-foreground" />
+          <AutoAwesome className="size-4 text-foreground" />
           Ask Orvo AI
         </h2>
         <div className="flex items-center gap-1">

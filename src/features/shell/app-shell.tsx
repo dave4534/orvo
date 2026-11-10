@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Image from "next/image";
-import { Sparkles } from "lucide-react";
+import { AutoAwesome } from "@/components/icons/auto-awesome";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { photoFor } from "@/logic/photos";
@@ -37,7 +37,7 @@ function TopBar() {
                 className={cn(aiOpen && "border-primary bg-info text-foreground hover:bg-info hover:text-foreground")}
                 onClick={() => setAiOpen(!aiOpen)}
               >
-                <Sparkles />
+                <AutoAwesome className="size-4" />
               </Button>
             }
           />
