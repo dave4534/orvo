@@ -15,6 +15,17 @@ const GAP = 16 // between the circle and the card
 const CARD_WIDTH = 360
 const AVATAR = 58 // 1px stroke + 8px padding + 40px face + 8px padding + 1px stroke
 const DEFAULT_AUTO_OPEN_MS = 45_000
+// The automatic opening only happens within this long of landing on the page.
+const DEFAULT_AUTO_OPEN_WINDOW_MS = 5 * 60_000
+// ...and only once no modal has been open for this long.
+const DEFAULT_MODAL_QUIET_MS = 30_000
+
+// A modal, menu or listbox is open when one is on the page outside the walkthrough itself.
+const defaultIsModalOpen = () =>
+  [...document.querySelectorAll('[role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"]')].some(
+    // Only dialogs that are on screen count; the walkthrough's own panel and lightbox never do.
+    (el) => el.isConnected && el.getClientRects().length > 0 && !el.closest('.walkthrough'),
+  )
 
 type Point = { x: number; y: number }
 type Saved = { seen: boolean; pos: Point | null }
@@ -39,6 +50,12 @@ export type WalkthroughProps<P extends string> = {
   anchorAlignLeft?: boolean
   // If the face is not touched within this time, the guide opens on its own. 0 turns this off.
   autoOpenMs?: number
+  // The automatic opening only happens within this long of landing on the page.
+  autoOpenWindowMs?: number
+  // The automatic opening waits until no modal has been open for this long.
+  modalQuietMs?: number
+  // Says whether a modal is open. The default looks for dialogs, alert dialogs, menus and listboxes.
+  isModalOpen?: () => boolean
 }
 
 function load(storageKey: string): Saved {
@@ -172,6 +189,9 @@ export function Walkthrough<P extends string>({
   anchorGap = 32,
   anchorAlignLeft = false,
   autoOpenMs = DEFAULT_AUTO_OPEN_MS,
+  autoOpenWindowMs = DEFAULT_AUTO_OPEN_WINDOW_MS,
+  modalQuietMs = DEFAULT_MODAL_QUIET_MS,
+  isModalOpen = defaultIsModalOpen,
 }: WalkthroughProps<P>) {
   const [initial] = useState(() => load(storageKey))
   const [seen, setSeen] = useState(initial.seen)
@@ -199,13 +219,38 @@ export function Walkthrough<P extends string>({
 
   useEffect(() => save(storageKey, { seen, pos }), [storageKey, seen, pos])
 
+  // Keep the latest open state and modal check, so the timer below always reads current values.
+  const openRef = useRef(open)
+  const isModalOpenRef = useRef(isModalOpen)
+  useEffect(() => {
+    openRef.current = open
+    isModalOpenRef.current = isModalOpen
+  }, [open, isModalOpen])
+
+  // The automatic opening: after autoOpenMs, once the face is untouched, no modal is open and none
+  // has been open for modalQuietMs. Only checked within autoOpenWindowMs of landing.
   useEffect(() => {
     if (!autoOpenMs) return
-    const timer = window.setTimeout(() => {
-      if (!touchedFace.current) setOpen(true)
-    }, autoOpenMs)
-    return () => window.clearTimeout(timer)
-  }, [autoOpenMs])
+    const landed = Date.now()
+    let lastModalAt = 0
+    const check = window.setInterval(() => {
+      const now = Date.now()
+      if (isModalOpenRef.current()) {
+        lastModalAt = now
+        return
+      }
+      if (now - landed > autoOpenWindowMs) {
+        window.clearInterval(check)
+        return
+      }
+      if (touchedFace.current || openRef.current) return
+      if (now - landed < autoOpenMs) return
+      if (now - lastModalAt < modalQuietMs) return
+      window.clearInterval(check)
+      setOpen(true)
+    }, 1000)
+    return () => window.clearInterval(check)
+  }, [autoOpenMs, autoOpenWindowMs, modalQuietMs])
 
   // Opening counts as seeing it, so the hint goes away and it won't auto-open again.
   useEffect(() => {
