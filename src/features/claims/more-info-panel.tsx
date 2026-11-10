@@ -293,7 +293,7 @@ export function MoreInfoPanel({ claim, allClaims, tab, onTab, onClose, onOpenPas
         </Button>
       </div>
       <Tabs value={tab} onValueChange={(v) => onTab(v as MoreTab)} className="min-h-0 flex-1 gap-0">
-        <TabsList variant="line" className={cn(TABS_LIST, "h-11 w-full shrink-0 justify-start gap-5 px-6")}>
+        <TabsList variant="line" className={cn(TABS_LIST, "w-full shrink-0 justify-start gap-5 px-6")}>
           <TabsTrigger value="overview" className={cn(TABS_TRIGGER, "flex-none px-1")}>
             Overview
           </TabsTrigger>

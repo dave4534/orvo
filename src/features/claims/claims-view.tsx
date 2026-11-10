@@ -541,9 +541,9 @@ export function ClaimsView() {
             setSelectedIds(new Set());
           }}
         >
-          <TabsList variant="line" className={cn(TABS_LIST, "h-11 w-full justify-start")}>
+          <TabsList variant="line" className={cn(TABS_LIST, "w-full justify-start gap-4")}>
             {TABS.map((t) => (
-              <TabsTrigger key={t.id} value={t.id} className={cn(TABS_TRIGGER, "flex-none px-3 text-base")}>
+              <TabsTrigger key={t.id} value={t.id} className={cn(TABS_TRIGGER, "flex-none px-1.5")}>
                 {t.label}
                 <Badge variant="secondary" aria-label={`${counts[t.id]} claims`}>
                   {counts[t.id]}
