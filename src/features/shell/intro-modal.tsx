@@ -9,8 +9,6 @@ import { useWorkspace } from "@/store/workspace-store";
 
 // Set once the first-visit intro has been seen. Per viewer, in this browser only.
 const SEEN_KEY = "melio-prototype:intro-seen";
-// Set by the splash loader when its dissolve has finished (see splash-loader.tsx).
-export const SPLASH_DONE_EVENT = "orvo:splash-done";
 
 function alreadySeen(): boolean {
   try {
@@ -28,17 +26,16 @@ function markSeen() {
   }
 }
 
-/** First-visit intro. It opens once the launch splash has dissolved, and only the first time in this browser. */
+/** First-visit intro. It is already open when the page loads, under the launch splash, so it is there when the splash fades. Only the first time in this browser. */
 export function IntroModal() {
   const { setAiOpen } = useWorkspace();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (alreadySeen()) return;
-    const show = () => setOpen(true);
-    if (document.documentElement.dataset.splashDone === "true") show();
-    window.addEventListener(SPLASH_DONE_EVENT, show);
-    return () => window.removeEventListener(SPLASH_DONE_EVENT, show);
+    // Opened straight after mount, so it is waiting under the splash rather than appearing after it.
+    const timer = window.setTimeout(() => setOpen(true), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   function close() {
@@ -55,13 +52,13 @@ export function IntroModal() {
   return (
     <Dialog open={open} onOpenChange={(next) => (next ? setOpen(true) : close())}>
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-lg">
-        <div className="relative aspect-[960/500] w-full overflow-hidden bg-muted">
-          {/* The animated card carousel from the brand kit (Brand/Modal). */}
-          <img src="/intro/card-carousel-960.gif" alt="" className="size-full object-cover" />
+        <div className="flex justify-center px-6 pt-6">
+          {/* The animated card carousel from the brand kit (Brand/Modal), at 80% of the card width. */}
+          <img src="/intro/card-carousel-960.gif" alt="" className="block w-4/5 rounded-md" />
         </div>
         <DialogHeader className="gap-3 px-6 pt-6 pb-2">
           <div>
-            <Badge variant="secondary">New</Badge>
+            <Badge className="border-0 bg-success/15 text-success hover:bg-success/15">New</Badge>
           </div>
           <DialogTitle className="text-xl leading-7">Meet your new claims sidekick</DialogTitle>
           <DialogDescription className="text-base leading-6">
@@ -69,7 +66,7 @@ export function IntroModal() {
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end px-6 pt-4 pb-6">
-          <Button variant="ghost" size="lg" onClick={checkItOut}>
+          <Button size="lg" className="bg-brief text-brief-foreground hover:bg-brief/90" onClick={checkItOut}>
             Check it out
           </Button>
         </div>
