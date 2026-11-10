@@ -17,9 +17,11 @@ type LightboxProps = {
 export function Lightbox({ images, index, onIndex, onClose }: LightboxProps) {
   const [missing, setMissing] = useState(false)
   const [natural, setNatural] = useState<number | null>(null)
-  // An image link can carry ?zoom=2 to show the picture at twice its natural width.
+  // An image link can carry ?zoom=2 (twice its natural width) or ?vh=90 (90% of the view height).
   const [src, query] = images[index].split('?')
-  const zoom = Number(new URLSearchParams(query ?? '').get('zoom')) || 1
+  const params = new URLSearchParams(query ?? '')
+  const zoom = Number(params.get('zoom')) || 1
+  const vh = Number(params.get('vh')) || 0
   const count = images.length
 
   useEffect(() => {
@@ -89,7 +91,13 @@ export function Lightbox({ images, index, onIndex, onClose }: LightboxProps) {
         <img
           src={src}
           alt=""
-          style={zoom > 1 && natural ? { width: natural * zoom, maxWidth: 'none', maxHeight: 'none' } : undefined}
+          style={
+            vh
+              ? { height: `${vh}vh`, width: 'auto', maxWidth: 'none', maxHeight: 'none' }
+              : zoom > 1 && natural
+                ? { width: natural * zoom, maxWidth: 'none', maxHeight: 'none' }
+                : undefined
+          }
           onLoad={(e) => setNatural(e.currentTarget.naturalWidth)}
           onError={() => setMissing(true)}
           onClick={(e) => e.stopPropagation()}

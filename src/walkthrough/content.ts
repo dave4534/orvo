@@ -38,7 +38,7 @@ export const walkthroughSteps: WalkthroughStep<PlaceId>[] = [
   {
     title: "Crafting the Experience",
     body: [
-      { icon: Map, text: "UX Artifacts ([Journey Map](image:/walkthrough/melio/journey-map.png) skill + User Flows based on research documents)" },
+      { icon: Map, text: "UX Artifacts ([Journey Map](image:/walkthrough/melio/journey-map.png?vh=90) skill + User Flows based on research documents)" },
       { icon: Scissors, text: "Wireframing: Researching existing patterns I saw that most of them consisted of a list view and of a panel for triage. I explored a few different directions by hand, trying to rethink the list view and the triage." },
       { icon: Eye, text: "[Wireframe 1](image:/walkthrough/melio/wireframe-1.png)" },
       { icon: Eye, text: "[Wireframe 2](image:/walkthrough/melio/wireframe-2.png)" },
