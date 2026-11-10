@@ -5,11 +5,9 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useWorkspace } from "@/store/workspace-store";
 
 /** Intro modal. Opens on every landing, already open under the launch splash, so it is there when the splash fades. Demo behaviour: not remembered between visits. */
 export function IntroModal() {
-  const { setAiOpen } = useWorkspace();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -31,12 +29,6 @@ export function IntroModal() {
     setOpen(false);
   }
 
-  // "Check it out" opens the sidekick: the Ask Orvo AI chat.
-  function checkItOut() {
-    close();
-    setAiOpen(true);
-  }
-
   return (
     <Dialog open={open} onOpenChange={(next) => (next ? setOpen(true) : close())}>
       <DialogContent initialFocus={false} className="gap-0 overflow-hidden p-0 sm:max-w-lg">
@@ -54,7 +46,7 @@ export function IntroModal() {
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end px-6 pt-4 pb-6">
-          <Button size="lg" className="bg-brief text-brief-foreground hover:bg-brief/90" onClick={checkItOut}>
+          <Button size="lg" className="bg-brief text-brief-foreground hover:bg-brief/90" onClick={close}>
             Check it out
           </Button>
         </div>
