@@ -36,7 +36,7 @@ export function RailNav({ label, items }: { label?: string; items: RailItem[] })
           {items.map((item) => (
             <SidebarMenuItem key={item.id}>
               <SidebarMenuButton
-                className="gap-3"
+                className="gap-3 py-[7px] text-sm font-normal text-sidebar-foreground hover:bg-sidebar-hover data-active:bg-sidebar-selected data-active:font-semibold data-active:text-sidebar-selected-foreground [&_svg]:size-[18px]"
                 isActive={item.isActive}
                 tooltip={item.label}
                 aria-current={item.isActive ? "page" : undefined}
