@@ -32,7 +32,9 @@ export function IntroModal() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (alreadySeen()) return;
+    // "?intro" in the address opens it again for review, even after it has been seen.
+    const forced = new URLSearchParams(window.location.search).has("intro");
+    if (alreadySeen() && !forced) return;
     // Opened straight after mount, so it is waiting under the splash rather than appearing after it.
     const timer = window.setTimeout(() => setOpen(true), 0);
     return () => window.clearTimeout(timer);
