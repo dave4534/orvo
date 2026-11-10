@@ -1,5 +1,5 @@
 import type { TabId } from "./claims";
-import { isSpotCheck, type LocalClaim } from "./local";
+import type { LocalClaim } from "./local";
 
 export type Section = {
   id: string;
@@ -13,7 +13,7 @@ export type Section = {
 };
 
 /** Groups the visible rows of a tab. PRD 6.6. Empty groups are dropped. */
-export function sectionsFor(tab: TabId, rows: LocalClaim[], approvedByOrvoTotal: number): Section[] {
+export function sectionsFor(tab: TabId, rows: LocalClaim[]): Section[] {
   const where = (fn: (c: LocalClaim) => boolean) => rows.filter(fn);
   const sections: Section[] =
     tab === "needs_review"
@@ -24,31 +24,7 @@ export function sectionsFor(tab: TabId, rows: LocalClaim[], approvedByOrvoTotal:
             { id: "waiting_finance", label: "WAITING ON FINANCE", noun: "with Finance", claims: where((c) => c.status === "waiting_on_finance") },
           ]
         : tab === "done"
-          ? [
-              (() => {
-                const spot = where((c) => c.status === "approved_by_agent" && isSpotCheck(c));
-                const toReview = spot.filter((c) => !c.local?.spot_checked).length;
-                return {
-                  id: "spot",
-                  label: `SPOT CHECK, ${spot.length} OF ${approvedByOrvoTotal} APPROVED BY ORVO${toReview > 0 && toReview < spot.length ? `, ${toReview} TO REVIEW` : ""}`,
-                  noun: "spot checks",
-                  claims: spot,
-                };
-              })(),
-              {
-                id: "decided",
-                label: "DECIDED",
-                noun: "decided",
-                claims: where((c) => c.status === "declined_by_agent" || c.status === "approved_by_noa" || c.status === "declined_by_noa"),
-              },
-              {
-                id: "approved",
-                label: "APPROVED BY ORVO",
-                noun: "approved automatically",
-                claims: where((c) => c.status === "approved_by_agent" && !isSpotCheck(c)),
-                collapsible: true,
-              },
-            ]
+          ? [{ id: "done", noun: "done", claims: rows }]
           : [{ id: "all", noun: "claims", claims: rows }];
   return sections.filter((s) => s.claims.length > 0);
 }

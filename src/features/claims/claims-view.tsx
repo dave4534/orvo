@@ -328,8 +328,7 @@ export function ClaimsView() {
   const doneBrief = useMemo(() => buildDoneBrief(claims), [claims]);
   const counts = useMemo(() => tabCounts(claims, filters), [claims, filters]);
   const rows = useMemo(() => sortForTab(inTab(applyFilters(claims, filters), tab), tab), [claims, filters, tab]);
-  const approvedTotal = claims.filter((c) => c.status === "approved_by_agent").length;
-  const sections = useMemo(() => sectionsFor(tab, rows, approvedTotal), [tab, rows, approvedTotal]);
+  const sections = useMemo(() => sectionsFor(tab, rows), [tab, rows]);
 
   const filtered = isFiltered(filters);
   const tabLabel = TABS.find((t) => t.id === tab)?.label ?? "";

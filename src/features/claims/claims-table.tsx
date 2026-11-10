@@ -68,7 +68,7 @@ function BasisPill({ claim }: { claim: LocalClaim }) {
         render={
           <Badge variant="outline" tabIndex={0} className="bg-card text-muted-foreground">
             {basis.label}
-            {basis.byOrvo ? <Sparkles aria-hidden data-icon="inline-end" /> : null}
+            <Sparkles aria-hidden data-icon="inline-end" />
           </Badge>
         }
       />

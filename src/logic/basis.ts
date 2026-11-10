@@ -5,13 +5,12 @@ import type { LocalClaim } from "./local";
 /**
  * The "basis" pill on decided claims (Done and All tabs): one short label that says why the claim was decided,
  * and a one-line tooltip (80 characters at most) with the detail. Everything is derived from `agent.checks`,
- * so nothing here is claim-specific.
+ * so nothing here is claim-specific. The sparkle is always shown, because Orvo's checks produced the basis,
+ * including for claims Noa decided after Orvo escalated them.
  */
 export type Basis = {
   label: string;
   tooltip: string;
-  /** Orvo made the decision, so the pill carries the sparkle. Claims Noa decided do not. */
-  byOrvo: boolean;
 };
 
 export const TOOLTIP_MAX = 80;
@@ -49,18 +48,18 @@ export function basisFor(claim: LocalClaim): Basis | null {
   if (claim.status === "approved_by_agent") {
     const check = approvalCheck(checks);
     // The currency tolerance is Orvo's own setting, not company policy, so it gets its own wording.
-    if (check?.id === "fx_match") return { label: "Within tolerance", tooltip: clip(check.detail), byOrvo: true };
-    return { label: "Policy match", tooltip: clip(check ? `Within policy. ${check.detail}` : "Within policy."), byOrvo: true };
+    if (check?.id === "fx_match") return { label: "Within tolerance", tooltip: clip(check.detail) };
+    return { label: "Policy match", tooltip: clip(check ? `Within policy. ${check.detail}` : "Within policy.") };
   }
 
   if (claim.status === "declined_by_agent") {
     const check = problemCheck(checks);
-    return { label: reasonLabel(reason_type), tooltip: clip(check?.detail ?? claim.agent.headline), byOrvo: true };
+    return { label: reasonLabel(reason_type), tooltip: clip(check?.detail ?? claim.agent.headline) };
   }
 
   if (claim.status === "approved_by_noa" || claim.status === "declined_by_noa") {
     const check = problemCheck(checks);
-    return { label: reasonLabel(reason_type), tooltip: clip(check?.detail ?? claim.agent.headline), byOrvo: false };
+    return { label: reasonLabel(reason_type), tooltip: clip(check?.detail ?? claim.agent.headline) };
   }
 
   return null;
