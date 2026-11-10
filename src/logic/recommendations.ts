@@ -115,6 +115,32 @@ export function recommendationFor(claim: LocalClaim): Recommendation {
   }
 }
 
+/**
+ * Why the recommended action is recommended, and why the other options make less sense. Plain text for the chat note that is posted when
+ * a claim opens. When there is no recommended action, it says the choice is close and what it depends on. Pure.
+ */
+export function recommendationReason(claim: LocalClaim): { text: string; tossUp: boolean } {
+  const claimed = formatUsd(claim.amount.usd_claimed);
+  switch (claim.agent.reason_type) {
+    case "over_finance_threshold":
+      return { text: "the claim itself is fine and only the amount needs Finance after this decision. Declining would reject a valid claim, and asking would only slow it down.", tossUp: false };
+    case "unusual_amount":
+      return { text: "the amount is higher than usual but nothing breaks the policy. Asking is the careful second choice, and there is no ground to decline.", tossUp: false };
+    case "currency_mismatch": {
+      const receiptAmount = formatUsd(claim.amount.fx?.usd_computed ?? claim.amount.usd_claimed);
+      return { text: `the receipt supports ${receiptAmount} at the exchange rate. Paying ${claimed} only makes sense if the card fee is confirmed, so asking comes second.`, tossUp: false };
+    }
+    case "possible_split":
+      return { text: "the two receipts read as separate purchases. Sending both to Finance or asking adds a step without a clear reason to doubt them.", tossUp: false };
+    case "receipt_missing_unresolved":
+      return { text: `the card statement shows ${claimed} was spent and a reminder is already out. Holding waits for a receipt that may not come, and declining is harsh for a documented spend.`, tossUp: false };
+    case "over_meal_cap":
+      return { text: "the cap is the most the policy allows for this meal. Approving everything needs an exception, and declining the whole bill is too strict.", tossUp: false };
+    default:
+      return { text: "approving, declining and asking are all reasonable. It comes down to whether the spend was agreed in advance, so a short question to the employee is the easiest way to settle it.", tossUp: true };
+  }
+}
+
 /** Every action offered for a claim that is waiting for review: the buttons and the entries in More options. */
 export function allActionsFor(claim: LocalClaim): ActionSpec[] {
   const rec = recommendationFor(claim);

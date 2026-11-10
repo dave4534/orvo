@@ -22,6 +22,7 @@ export function ChatComposer({ busy, onSend, onStop, onVoiceChat }: Props) {
   const [draft, setDraft] = useState("");
   const [interim, setInterim] = useState("");
   const speech = useSpeechInput();
+  const hasText = draft.trim() !== "" || interim.trim() !== "";
   const shown = interim ? `${draft}${draft ? " " : ""}${interim}` : draft;
 
   function send() {
@@ -59,7 +60,7 @@ export function ChatComposer({ busy, onSend, onStop, onVoiceChat }: Props) {
               send();
             }
           }}
-          className="max-h-40 min-h-11 field-sizing-content px-3.5 pt-3"
+          className="max-h-40 min-h-14 field-sizing-content px-4 pt-4 text-[15px]"
         />
         <InputGroupAddon align="block-end" className="justify-end gap-1">
           {speech.supported ? (
@@ -69,7 +70,7 @@ export function ChatComposer({ busy, onSend, onStop, onVoiceChat }: Props) {
                   render={
                     <InputGroupButton
                       size="icon-sm"
-                      className={cn("rounded-full text-foreground hover:text-foreground", speech.listening && "animate-pulse bg-destructive/15 text-destructive hover:bg-destructive/20 hover:text-destructive")}
+                      className={cn("rounded-lg text-foreground hover:text-foreground", speech.listening && "animate-pulse bg-destructive/15 text-destructive hover:bg-destructive/20 hover:text-destructive")}
                       aria-label={speech.listening ? "Stop dictating" : "Dictate"}
                       aria-pressed={speech.listening}
                       onClick={toggleMic}
@@ -80,27 +81,29 @@ export function ChatComposer({ busy, onSend, onStop, onVoiceChat }: Props) {
                 />
                 <TooltipContent>{speech.listening ? "Stop dictating" : "Dictate"}</TooltipContent>
               </Tooltip>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <InputGroupButton size="icon-sm" className="rounded-full text-foreground hover:text-foreground" aria-label="Start voice chat" onClick={onVoiceChat}>
-                      <AudioLines />
-                    </InputGroupButton>
-                  }
-                />
-                <TooltipContent>Voice chat</TooltipContent>
-              </Tooltip>
+              {hasText || busy ? null : (
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <InputGroupButton size="icon-sm" className="rounded-lg text-foreground hover:text-foreground" aria-label="Start voice chat" onClick={onVoiceChat}>
+                        <AudioLines />
+                      </InputGroupButton>
+                    }
+                  />
+                  <TooltipContent>Voice chat</TooltipContent>
+                </Tooltip>
+              )}
             </>
           ) : null}
           {busy ? (
-            <InputGroupButton variant="default" size="icon-sm" className="rounded-full" aria-label="Stop" onClick={onStop}>
+            <InputGroupButton variant="default" size="icon-sm" className="rounded-lg" aria-label="Stop" onClick={onStop}>
               <Square className="fill-current" />
             </InputGroupButton>
-          ) : (
-            <InputGroupButton variant="default" size="icon-sm" className="rounded-full" aria-label="Send" disabled={!shown.trim()} onClick={send}>
+          ) : hasText ? (
+            <InputGroupButton variant="default" size="icon-sm" className="rounded-lg" aria-label="Send (Enter)" onClick={send}>
               <ArrowUp />
             </InputGroupButton>
-          )}
+          ) : null}
         </InputGroupAddon>
       </InputGroup>
       <p className="mt-2 flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">

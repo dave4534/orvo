@@ -1,7 +1,7 @@
 import { employeeName } from "./comparison";
 import { formatUsd } from "./format";
 import { isAgentDecided, type LocalClaim } from "./local";
-import { recommendationFor } from "./recommendations";
+import { recommendationFor, recommendationReason } from "./recommendations";
 
 export type ClaimSummary = {
   /** Who and which claim the messages are about. */
@@ -23,7 +23,10 @@ export function claimSummary(claim: LocalClaim): ClaimSummary {
   if (claim.status === "waiting_on_noa") {
     const next = agent.needs_from_noa ? ` Next: ${agent.needs_from_noa}` : "";
     const label = recommendationFor(claim).recommended?.label;
-    return { heading, summary: `${agent.headline}. ${agent.explanation}${next}`, recommendation: label ? "I recommend this next step:" : null, recommendationLabel: label ?? null };
+    const why = recommendationReason(claim);
+    // Always says why: the reasoning for the recommended step and the weaker options, or that it is a toss-up and what it depends on.
+    const recommendation = label ? `I recommend this next step because ${why.text}` : `There is no clear favorite. ${why.text.charAt(0).toUpperCase()}${why.text.slice(1)}`;
+    return { heading, summary: `${agent.headline}. ${agent.explanation}${next}`, recommendation, recommendationLabel: label ?? null };
   }
 
   if (decidedByNoa && claim.noa) {

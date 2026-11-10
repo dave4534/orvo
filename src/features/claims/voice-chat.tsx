@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { stopAllListening, useSpeechInput } from "@/hooks/use-speech-input";
 import { useVoices } from "@/hooks/use-voices";
 import { cancelSpeech, plainForSpeech, speak } from "@/lib/speech";
+import { startVoiceActivity, type VoiceActivity } from "@/lib/voice-activity";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/store/workspace-store";
 import { Shimmer } from "./chat-steps";
@@ -70,6 +71,8 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
   const queue = useRef<string[]>([]);
   const timers = useRef<{ grace?: number; watchdog?: number }>({});
   const wasBusy = useRef(false);
+  const activity = useRef<VoiceActivity | null>(null);
+  const activityToken = useRef(0);
   // Always the latest props, since listeners created earlier would otherwise keep old ones.
   const latest = useRef({ busy, onAsk, onStopAnswer });
   useEffect(() => {
@@ -98,8 +101,29 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
     latest.current.onAsk(text);
   }
 
-  // While the assistant speaks the microphone stays on, so Noa can talk over it. Words that are not part of what is being said
-  // (so not the speaker's own sound coming back) or a word like "stop" cut the speech off, and the rest of the phrase is then sent.
+  // Talking over the assistant cuts it off. Same reset as the Stop button, so the next phrase is sent normally.
+  function bargeIn(heardText = "") {
+    if (!speakingRef.current) return;
+    stopWatching();
+    clearTimers();
+    queue.current = [];
+    cancelSpeech();
+    speakingRef.current = false;
+    setSpeaking(false);
+    pending.current = false;
+    setWaiting(false);
+    keep.current = true;
+    if (heardText) setHeard(heardText);
+  }
+
+  // While the assistant speaks the microphone stays on, so Noa can talk over it. Two signals count: the sound level
+  // (see src/lib/voice-activity.ts) and words that are not part of what is being said (or "stop"). Short interjections arrive
+  // as finished phrases, so those are checked too.
+  const isBarge = (text: string, known: Set<string>) => {
+    const words = wordsOf(text);
+    return words.filter((w) => !known.has(w)).length >= 2 || words.some((w) => STOP_WORDS.has(w));
+  };
+
   function bargeListen(spoken: string) {
     if (!alive.current || mutedRef.current) return;
     const known = new Set(wordsOf(spoken));
@@ -109,23 +133,11 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
           setHeard(t);
           return;
         }
-        const words = wordsOf(t);
-        const fresh = words.filter((w) => !known.has(w));
-        if (fresh.length >= 3 || words.some((w) => STOP_WORDS.has(w))) {
-          // Same reset as the Stop button: nothing is pending any more, so the next phrase is sent normally.
-          clearTimers();
-          queue.current = [];
-          cancelSpeech();
-          speakingRef.current = false;
-          setSpeaking(false);
-          pending.current = false;
-          setWaiting(false);
-          keep.current = true;
-          setHeard(t);
-        }
+        if (isBarge(t, known)) bargeIn(t);
       },
       onFinal: (text) => {
         setHeard("");
+        if (speakingRef.current && isBarge(text, known)) bargeIn();
         if (!speakingRef.current) submit(text);
       },
       onEnded: () => {
@@ -134,6 +146,30 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
         else if (keep.current) listen();
       },
     });
+  }
+
+  // Watches the microphone level for as long as the assistant speaks.
+  function watchForVoice() {
+    activity.current?.stop();
+    activity.current = null;
+    const token = ++activityToken.current;
+    void startVoiceActivity(() => {
+      if (token === activityToken.current && alive.current && speakingRef.current) {
+        bargeIn();
+        // Make sure a phrase is being listened for, in case the listening session ended while speaking.
+        listen();
+      }
+    }).then((a) => {
+      if (!a) return;
+      if (token === activityToken.current && alive.current && speakingRef.current) activity.current = a;
+      else a.stop();
+    });
+  }
+
+  function stopWatching() {
+    activityToken.current++;
+    activity.current?.stop();
+    activity.current = null;
   }
 
   function listen() {
@@ -168,6 +204,7 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
     if (!text) {
       speakingRef.current = false;
       setSpeaking(false);
+      stopWatching();
       scheduleListen();
       return;
     }
@@ -175,6 +212,7 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
     setWaiting(false);
     keep.current = false;
     bargeListen(text);
+    watchForVoice();
     const started = speak(text, { onStart: () => setSpeaking(true), onEnd: playNext });
     if (!started) playNext();
   }
@@ -204,6 +242,7 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
       clearTimers();
       queue.current = [];
       cancelSpeech();
+      stopWatching();
       setReplyListener(null);
       stopAllListening();
     };
@@ -225,6 +264,7 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
 
   function interrupt() {
     if (speakingRef.current) {
+      stopWatching();
       queue.current = [];
       cancelSpeech();
       speakingRef.current = false;
@@ -260,6 +300,7 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
     cancelSpeech();
     speech.stop();
     if (latest.current.busy) latest.current.onStopAnswer();
+    stopWatching();
     stopAllListening();
     onEnd();
   }
