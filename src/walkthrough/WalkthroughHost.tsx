@@ -32,7 +32,7 @@ export function WalkthroughHost() {
       anchorSelector={findSettings}
       anchorGap={52}
       anchorAlignLeft
-      autoOpenMs={30_000}
+      autoOpenMs={0}
     />
   );
 }

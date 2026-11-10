@@ -14,7 +14,6 @@ const MARGIN = 8 // keeps the circle off the window edge
 const GAP = 16 // between the circle and the card
 const CARD_WIDTH = 360
 const AVATAR = 58 // 1px stroke + 8px padding + 40px face + 8px padding + 1px stroke
-const DEFAULT_AUTO_OPEN_MS = 45_000
 // The automatic opening only happens within this long of landing on the page.
 const DEFAULT_AUTO_OPEN_WINDOW_MS = 5 * 60_000
 // ...and only once no modal has been open for this long.
@@ -48,7 +47,8 @@ export type WalkthroughProps<P extends string> = {
   anchorGap?: number
   // Put the face's left edge on the anchor's left edge too.
   anchorAlignLeft?: boolean
-  // If the face is not touched within this time, the guide opens on its own. 0 turns this off.
+  // If the face is not touched within this time, the guide opens on its own. 0 (the default) turns this off:
+  // the guide then opens only when the face is clicked.
   autoOpenMs?: number
   // The automatic opening only happens within this long of landing on the page.
   autoOpenWindowMs?: number
@@ -188,7 +188,7 @@ export function Walkthrough<P extends string>({
   anchorSelector,
   anchorGap = 32,
   anchorAlignLeft = false,
-  autoOpenMs = DEFAULT_AUTO_OPEN_MS,
+  autoOpenMs = 0,
   autoOpenWindowMs = DEFAULT_AUTO_OPEN_WINDOW_MS,
   modalQuietMs = DEFAULT_MODAL_QUIET_MS,
   isModalOpen = defaultIsModalOpen,
