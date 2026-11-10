@@ -36,6 +36,10 @@ export type PerformResult = { ok: true; summary: string; changedIds: string[]; s
 
 type ClaimsStore = {
   claims: LocalClaim[];
+  /** The demo clock: `meta.now` plus the days skipped ahead. Waits end against this, never the real clock. */
+  now: Date;
+  /** Moves the demo clock forward so a wait can end and its claim return to the queue. Kept until the demo is reset. */
+  skipAhead: (days: number) => void;
   /** Ids Noa has acted on this session, for the cleared-queue summary (PRD EMP-1). */
   sessionIds: string[];
   simulateError: boolean;
@@ -56,7 +60,17 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
   const [claims, setClaims] = useState<LocalClaim[]>(initialClaims);
   const [sessionIds, setSessionIds] = useState<string[]>([]);
   const [simulateError, setSimulateError] = useState(false);
+  const [daysSkipped, setDaysSkipped] = useState(0);
+  // Each action moves the clock one minute, so the log has distinct times. `now` follows it, so a wait set by an action ends exactly when the skipped days are up.
+  const [minutes, setMinutes] = useState(0);
+  const skipped = useRef(0);
   const tick = useRef(0);
+  const clock = () => new Date(NOW.getTime() + skipped.current * 86_400_000 + tick.current * 60_000);
+  const now = useMemo(() => new Date(NOW.getTime() + daysSkipped * 86_400_000 + minutes * 60_000), [daysSkipped, minutes]);
+  const skipAhead = useCallback((days: number) => {
+    skipped.current += days;
+    setDaysSkipped(skipped.current);
+  }, []);
   const undoId = useRef(0);
   const undoStack = useRef<UndoEntry[]>([]);
 
@@ -79,8 +93,8 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
         return { ok: false };
       }
       tick.current += 1;
-      const now = new Date(NOW.getTime() + tick.current * 60_000);
-      const result = applyAction(claims, claimId, input, now);
+      setMinutes(tick.current);
+      const result = applyAction(claims, claimId, input, clock());
       const previous = claims.filter((c) => result.changed.some((r) => r.id === c.id));
       const entry: UndoEntry = { id: ++undoId.current, previous, claimId };
       undoStack.current.push(entry);
@@ -108,8 +122,9 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
         return { ok: false as const };
       }
       tick.current += 1;
-      const now = new Date(NOW.getTime() + tick.current * 60_000);
-      const changed = claimIds.flatMap((id) => applyAction(claims, id, input, now).changed);
+      setMinutes(tick.current);
+      const at = clock();
+      const changed = claimIds.flatMap((id) => applyAction(claims, id, input, at).changed);
       const previous = claims.filter((c) => changed.some((r) => r.id === c.id));
       const entry: UndoEntry = { id: ++undoId.current, previous, claimId: claimIds[0] };
       undoStack.current.push(entry);
@@ -129,7 +144,8 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
     const body = text.trim();
     if (!body) return;
     tick.current += 1;
-    const at = isoLocal(new Date(NOW.getTime() + tick.current * 60_000));
+    setMinutes(tick.current);
+    const at = isoLocal(clock());
     setClaims((current) =>
       current.map((c) => (c.id === claimId ? { ...c, local: { ...c.local, thread: [...(c.local?.thread ?? []), { at, from: "manager" as const, text: body }] } } : c)),
     );
@@ -151,12 +167,15 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
     undoStack.current = [];
     undoers.clear();
     tick.current = 0;
+    setMinutes(0);
+    skipped.current = 0;
+    setDaysSkipped(0);
     toast("Demo reset to the start of Monday 16 Nov");
   }, []);
 
   const value = useMemo<ClaimsStore>(
-    () => ({ claims, sessionIds, simulateError, setSimulateError, perform, performBatch, undoLast, sendMessage, reset }),
-    [claims, sessionIds, simulateError, perform, performBatch, undoLast, sendMessage, reset],
+    () => ({ claims, now, skipAhead, sessionIds, simulateError, setSimulateError, perform, performBatch, undoLast, sendMessage, reset }),
+    [claims, now, skipAhead, sessionIds, simulateError, perform, performBatch, undoLast, sendMessage, reset],
   );
 
   return <Context.Provider value={value}>{children}</Context.Provider>;

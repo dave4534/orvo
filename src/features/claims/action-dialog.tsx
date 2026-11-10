@@ -21,10 +21,16 @@ const ASK_BY_REASON: Record<string, string> = {
   over_meal_cap: "Add the part over the cap, or give more detail about the bill.",
   over_finance_threshold: "Add why this fare was needed.",
   unusual_amount: "Add more detail on why this was higher than usual.",
+  possible_duplicate: "Is this the same trip as the other claim? Please add the ride details.",
 };
 
 export function defaultMessage(spec: ActionSpec, claim: LocalClaim): string {
-  if (spec.askMessage === "hold") return "Please send the receipt from the merchant, or a duplicate they can issue.";
+  if (spec.askMessage === "wait") {
+    return claim.agent.reason_type === "receipt_unreadable"
+      ? "The receipt image can't be read. Please send a clearer copy."
+      : "Please send the receipt from the merchant, or a duplicate they can issue.";
+  }
+  if (spec.askMessage === "flag") return "";
   if (spec.askMessage === "ask") return ASK_BY_REASON[claim.agent.reason_type] ?? "Add a few details about this claim.";
   if (spec.askMessage === "decline") return claim.agent.headline;
   return "";
@@ -68,7 +74,7 @@ export function ActionDialog({ claim, allClaims, spec, onConfirm, onCancel, init
   const preview = actionPreview(claim, input, allClaims);
   // Approvals are success actions (green). Everything else keeps the primary yellow.
   const approves = !spec.destructive && (input.to === "approved" || ["approve", "approve_amount", "exception"].includes(input.id));
-  const messageMissing = spec.askMessage === "ask" || spec.askMessage === "hold" ? message.trim() === "" : false;
+  const messageMissing = spec.askMessage === "ask" || spec.askMessage === "wait" || spec.askMessage === "flag" ? message.trim() === "" : false;
   const blocked = Boolean(amountError) || messageMissing;
 
   useEffect(() => {
@@ -114,8 +120,17 @@ export function ActionDialog({ claim, allClaims, spec, onConfirm, onCancel, init
 
         {spec.askMessage ? (
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="action-message">{spec.askMessage === "decline" ? `Message to ${firstName(claim)} (optional)` : `Message to ${firstName(claim)}`}</Label>
-            <Textarea id="action-message" rows={3} value={message} onChange={(e) => setMessage(e.target.value)} />
+            <Label htmlFor="action-message">
+              {spec.askMessage === "flag" ? "Why is this claim flagged?" : spec.askMessage === "decline" ? `Message to ${firstName(claim)} (optional)` : `Message to ${firstName(claim)}`}
+            </Label>
+            <Textarea
+              id="action-message"
+              rows={3}
+              value={message}
+              placeholder={spec.askMessage === "flag" ? "One line, for example: second claim for the same dinner" : undefined}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            {spec.askMessage === "flag" ? <p className="text-xs text-muted-foreground">Kept on the claim and shown with {firstName(claim)}&apos;s other flags. It is not sent to {firstName(claim)}.</p> : null}
           </div>
         ) : null}
 

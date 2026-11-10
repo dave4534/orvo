@@ -1,5 +1,5 @@
 import type { PersonId, Status } from "@/data/types";
-import type { LocalClaim } from "./local";
+import { isWaitOver, type LocalClaim } from "./local";
 import { dataset, NOW } from "@/data";
 import { matchesQuery } from "./search";
 
@@ -67,7 +67,10 @@ export function applyFilters(claims: LocalClaim[], f: ClaimFilters, now: Date = 
   });
 }
 
-export function inTab(claims: LocalClaim[], tab: TabId): LocalClaim[] {
+/** A claim whose wait has ended comes back to Needs review and leaves Waiting on others. */
+export function inTab(claims: LocalClaim[], tab: TabId, now: Date = NOW): LocalClaim[] {
+  if (tab === "needs_review") return claims.filter((c) => c.status === "waiting_on_noa" || isWaitOver(c, now));
+  if (tab === "waiting") return claims.filter((c) => (c.status === "waiting_on_employee" || c.status === "waiting_on_finance") && !isWaitOver(c, now));
   const statuses = TABS.find((t) => t.id === tab)?.statuses;
   return statuses ? claims.filter((c) => statuses.includes(c.status)) : claims;
 }
@@ -80,7 +83,7 @@ export function sortForTab(claims: LocalClaim[], tab: TabId): LocalClaim[] {
   );
 }
 
-export function tabCounts(claims: LocalClaim[], f: ClaimFilters): Record<TabId, number> {
-  const filtered = applyFilters(claims, f);
-  return Object.fromEntries(TABS.map((t) => [t.id, inTab(filtered, t.id).length])) as Record<TabId, number>;
+export function tabCounts(claims: LocalClaim[], f: ClaimFilters, now: Date = NOW): Record<TabId, number> {
+  const filtered = applyFilters(claims, f, now);
+  return Object.fromEntries(TABS.map((t) => [t.id, inTab(filtered, t.id, now).length])) as Record<TabId, number>;
 }

@@ -13,6 +13,7 @@ import {
 
 import { RailNav, type RailItem } from "@/components/ui/c-sidebar-2";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarRail } from "@/components/ui/sidebar";
+import { isWaitOver } from "@/logic/local";
 import { useClaims } from "@/store/claims-store";
 
 const MAIN = [
@@ -30,9 +31,9 @@ const FOOTER = [
 ] as const;
 
 export function AppSidebar() {
-  const { claims } = useClaims();
-  // Badge on Expenses: claims waiting on Noa, unfiltered (PRD FR-NAV-3).
-  const needsReview = claims.filter((c) => c.status === "waiting_on_noa").length;
+  const { claims, now } = useClaims();
+  // Badge on Expenses: claims waiting on Noa, unfiltered (PRD FR-NAV-3). A claim whose wait ended is back in the queue, so it counts.
+  const needsReview = claims.filter((c) => c.status === "waiting_on_noa" || isWaitOver(c, now)).length;
 
   const toRail = (items: readonly { id: string; label: string; icon: typeof House; active?: boolean }[]): RailItem[] =>
     items.map(({ id, label, icon: Icon, active }) => ({

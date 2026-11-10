@@ -34,7 +34,7 @@ function TopBar() {
                 size="icon-lg"
                 aria-label="Ask Orvo AI"
                 aria-pressed={aiOpen}
-                className={cn(aiOpen && "border-primary bg-info text-foreground hover:bg-info hover:text-foreground")}
+                className={cn(aiOpen && "border-foreground bg-accent text-foreground hover:bg-accent hover:text-foreground")}
                 onClick={() => setAiOpen(!aiOpen)}
               >
                 <AutoAwesome className="size-4" />

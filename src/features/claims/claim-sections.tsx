@@ -10,7 +10,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { dataset } from "@/data";
 import type { CheckResult } from "@/data/types";
 import { formatSubmitted, formatUsd } from "@/logic/format";
-import type { LocalClaim } from "@/logic/local";
+import { isWaitOver, type LocalClaim } from "@/logic/local";
+import { DAILY_ALLOWANCE, dailyFacts, FINANCE_LIMIT, WEEKLY_LIMIT, weeklyFacts } from "@/logic/policy";
+import { assess } from "@/logic/recommendations";
 import { PILL } from "@/lib/blocks";
 import { cn } from "@/lib/utils";
 import type { DocumentView } from "./document-dialog";
@@ -154,9 +156,58 @@ export function TransactionUnit({ claim, onView }: { claim: LocalClaim; onView: 
   );
 }
 
+type DerivedCheck = { id: string; label: string; policy: string; result: CheckResult };
+
+/** Checks the app works out from the claims around this one. The agent's own checks are in the data; these two need the employee's other claims. */
+function derivedChecks(claim: LocalClaim, all: LocalClaim[]): DerivedCheck[] {
+  const rows: DerivedCheck[] = [];
+  if (claim.amount.usd_claimed <= FINANCE_LIMIT) {
+    const week = weeklyFacts(claim, all);
+    rows.push({
+      id: "weekly_total",
+      label: "Weekly total",
+      policy: `${formatUsd(week.total)} in ${week.days} days. Above ${formatUsd(WEEKLY_LIMIT)} also needs Finance (our assumption)`,
+      result: week.over ? "fail" : "pass",
+    });
+  }
+  const day = dailyFacts(claim, all);
+  if (day.claims.length >= 2) {
+    rows.push({
+      id: "daily_allowance",
+      label: "Same-day claims",
+      policy: `${formatUsd(day.total)} per person in one day. Fine up to ${formatUsd(DAILY_ALLOWANCE)} (our assumption)`,
+      result: day.over ? "fail" : "pass",
+    });
+  }
+  return rows;
+}
+
+/** Why the recommended action is the right one and why each other action is weaker. The same record the triage note reads. */
+export function RecommendationReasoning({ claim, allClaims, now }: { claim: LocalClaim; allClaims: LocalClaim[]; now: Date }) {
+  if (claim.status !== "waiting_on_noa" && !isWaitOver(claim, now)) return null;
+  const a = assess(claim, allClaims, now);
+  const rec = a.recommendation.recommended;
+  return (
+    <section aria-label="Why this is recommended">
+      <SectionLabel>{rec ? "Why this is recommended" : "Close call"}</SectionLabel>
+      {rec ? <p className="mb-3 text-sm"><span className="font-semibold">{rec.label}.</span> {a.why}</p> : null}
+      {a.others.length > 0 ? (
+        <ul className="flex flex-col gap-2 text-sm">
+          {a.others.map((o) => (
+            <li key={o.label}>
+              <span className="font-semibold">{o.label}.</span> <span className="text-muted-foreground">{o.why}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
+  );
+}
+
 /** The Policy tab's table of checks, one row per check and whether it passed. Also used in the chat. */
-export function PolicyChecks({ claim }: { claim: LocalClaim }) {
+export function PolicyChecks({ claim, allClaims }: { claim: LocalClaim; allClaims?: LocalClaim[] }) {
   const rules = dataset.policy.rules;
+  const derived = allClaims ? derivedChecks(claim, allClaims) : [];
   return (
     <div>
       <Table className="table-fixed">
@@ -172,6 +223,17 @@ export function PolicyChecks({ claim }: { claim: LocalClaim }) {
             <TableRow key={c.id}>
               <TableCell className="px-3 py-4 font-medium whitespace-normal">{c.label}</TableCell>
               <TableCell className="px-3 py-4 whitespace-normal text-left text-muted-foreground">{rules.find((r) => r.id === c.rule_id)?.text ?? "No policy number"}</TableCell>
+              <TableCell className="px-3 py-4 text-right">
+                <Badge variant="outline" className={cn(PILL, "bg-card whitespace-nowrap", CHECK_STYLE[c.result])}>
+                  {PASSED_LABEL[c.result]}
+                </Badge>
+              </TableCell>
+            </TableRow>
+          ))}
+          {derived.map((c) => (
+            <TableRow key={c.id}>
+              <TableCell className="px-3 py-4 font-medium whitespace-normal">{c.label}</TableCell>
+              <TableCell className="px-3 py-4 whitespace-normal text-left text-muted-foreground">{c.policy}</TableCell>
               <TableCell className="px-3 py-4 text-right">
                 <Badge variant="outline" className={cn(PILL, "bg-card whitespace-nowrap", CHECK_STYLE[c.result])}>
                   {PASSED_LABEL[c.result]}

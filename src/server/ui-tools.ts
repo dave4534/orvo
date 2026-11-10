@@ -4,8 +4,9 @@ import { z } from "zod";
 import { dataset } from "@/data";
 import type { Status } from "@/data/types";
 import { CLAIM_TABS, DATE_RANGES, DETAIL_TABS, SECTIONS } from "@/logic/assistant-tools";
-import type { LocalClaim } from "@/logic/local";
+import { isWaitOver, type LocalClaim } from "@/logic/local";
 import { allActionsFor } from "@/logic/recommendations";
+import { NOW } from "@/data";
 
 const STATUSES = ["waiting_on_noa", "waiting_on_employee", "waiting_on_finance", "approved_by_agent", "declined_by_agent", "approved_by_noa", "declined_by_noa"] as const satisfies readonly Status[];
 const TEAM = dataset.people.filter((p) => p.role === "team_member").map((p) => p.id) as [string, ...string[]];
@@ -17,9 +18,9 @@ const TEAM_HELP = dataset.people
 const isDecided = (c: LocalClaim) => c.status === "approved_by_agent" || c.status === "declined_by_agent" || c.status === "approved_by_noa" || c.status === "declined_by_noa";
 
 /** Labels takeAction accepts for a claim. Claims waiting on an employee have their own two buttons. */
-export function actionLabelsFor(claim: LocalClaim | undefined): string[] {
+export function actionLabelsFor(claim: LocalClaim | undefined, claims: LocalClaim[] = [], now: Date = NOW): string[] {
   if (!claim) return [];
-  if (claim.status === "waiting_on_noa") return allActionsFor(claim).map((s) => s.label);
+  if (claim.status === "waiting_on_noa" || isWaitOver(claim, now)) return allActionsFor(claim, claims, now).map((s) => s.label);
   if (claim.status === "waiting_on_employee") return ["Decide now", "Continue waiting"];
   return [];
 }
@@ -29,9 +30,9 @@ export function actionLabelsFor(claim: LocalClaim | undefined): string[] {
  * `active` is the claim the user is working on right now: the past claim window if one is open, otherwise the open claim.
  * Names, surfaces and controls are listed in src/logic/assistant-tools.ts, which `npm run audit:assistant` checks this file against.
  */
-export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[], opts: { claimOpen: boolean; pastOpen: boolean; detailsOpen: boolean }): ToolSet {
+export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[], opts: { claimOpen: boolean; pastOpen: boolean; detailsOpen: boolean; now?: Date }): ToolSet {
   const ids = claims.map((c) => c.id) as [string, ...string[]];
-  const labels = actionLabelsFor(active);
+  const labels = actionLabelsFor(active, claims, opts.now ?? NOW);
 
   const tools: ToolSet = {
     lookAtScreen: tool({ description: "See what is on screen right now: the text of an open dialog and every control that can be pressed. Use it when you are not sure what is available, or after a dialog changed.", inputSchema: z.object({}) }),
@@ -57,6 +58,10 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
     undoLastDecision: tool({
       description: "Undo the most recent decision, the same as the Undo button. Use when Noa asks to undo or reverse what was just done.",
       inputSchema: z.object({}),
+    }),
+    skipAhead: tool({
+      description: "Move the demo clock forward so waits end and their claims return to Needs review, as the Skip ahead button on Waiting on others does. Only when Noa asks to skip ahead or to see a wait end. Works on the claims list, not inside a claim.",
+      inputSchema: z.object({ days: z.number().int().min(1).max(60).optional().describe("Days to skip. Default 14.") }),
     }),
     confirmDialog: tool({
       description: 'Send or confirm whatever is waiting: an open pop-up (for example the message to an employee) or a message typed into the employee chat. Use when Noa says "send it", "yes", "go ahead" or similar after you opened or typed one.',
@@ -105,6 +110,10 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
       inputSchema: z.object({ which: z.enum(["receipt", "attachment"]), label: z.string().max(80).optional().describe("Part of the attachment's name, if there is more than one") }),
     });
     tools.closeDocument = tool({ description: "Close the receipt or attachment window.", inputSchema: z.object({}) });
+    tools.removeFlag = tool({
+      description: "Remove the flag Noa added to a claim, as Remove in the Flags list under Past claims does. Only a flag Noa added by hand within the last 60 days can be removed. Automatic flags cannot.",
+      inputSchema: z.object({ claimId: z.enum(ids) }),
+    });
     tools.openPastClaim = tool({ description: "Open one of the employee's other claims in a window over the review, as the Past claims tab does.", inputSchema: z.object({ claimId: z.enum(ids) }) });
     if (opts.pastOpen) tools.closePastClaim = tool({ description: "Close the past claim window and return to the review.", inputSchema: z.object({}) });
   }
@@ -112,7 +121,7 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
   if (active && labels.length > 0) {
     tools.takeAction = tool({
       description:
-        "Carry out one of the buttons on the claim now: approve, decline, hold for a receipt, send to Finance, approve a different amount, or for a claim waiting on the employee Decide now or Continue waiting. Only call it when Noa has asked for that or accepted your suggestion. The decision is applied at once, and Noa can undo it. The button that asks the employee a question opens the Chat tab in Details with the question typed in for Noa to send, instead of sending at once.",
+        "Carry out one of the buttons on the claim now: approve, decline, wait for a receipt (the label names the days), send to Finance, flag the claim (needs a reason in message), approve a different amount, or for a claim waiting on the employee Decide now or Continue waiting. Only call it when Noa has asked for that or accepted your suggestion. The decision is applied at once, and Noa can undo it. The button that asks the employee a question opens the Chat tab in Details with the question typed in for Noa to send, instead of sending at once.",
       inputSchema: z.object({
         buttonLabel: z.enum(labels as [string, ...string[]]).describe("Exact label of the button"),
         amount: z.number().positive().optional().describe('Only for "Approve a different amount": the amount in USD that Noa said. Required there.'),
@@ -120,7 +129,7 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
           .string()
           .max(300)
           .optional()
-          .describe('For Hold, Ask and Decline: the wording Noa dictated for the employee, written as a short imperative with no "you", "your" or "could you" (for example: "Resend the card statement as a PDF."). Leave out to send the standard wording (Hold and Ask) or no note (Decline).'),
+          .describe('For Wait, Ask, Flag claim and Decline: the wording Noa dictated for the employee, written as a short imperative with no "you", "your" or "could you" (for example: "Resend the card statement as a PDF."). Leave out to send the standard wording (Hold and Ask) or no note (Decline).'),
       }),
     });
   }

@@ -1,5 +1,5 @@
 import type { ReasonType } from "@/data/types";
-import type { LocalClaim } from "./local";
+import { isWaitOver, type LocalClaim } from "./local";
 import { NOW } from "@/data";
 import { daysOverTarget, WAIT_TARGET_DAYS } from "./wait";
 
@@ -23,9 +23,9 @@ export type DailyBrief = {
 
 /** Counts for the daily brief. Derived from the claims, never typed. */
 export function buildDailyBrief(claims: LocalClaim[], now: Date = NOW): DailyBrief {
-  const needs = claims.filter((c) => c.status === "waiting_on_noa");
+  const needs = claims.filter((c) => c.status === "waiting_on_noa" || isWaitOver(c, now));
   const quick = needs.filter((c) => QUICK_APPROVAL_REASONS.includes(c.agent.reason_type)).length;
-  const chasing = claims.filter((c) => c.status === "waiting_on_employee");
+  const chasing = claims.filter((c) => c.status === "waiting_on_employee" && !isWaitOver(c, now));
   const dateLabel = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" })
     .format(now)
     .replace(",", "");

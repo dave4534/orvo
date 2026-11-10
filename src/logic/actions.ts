@@ -1,7 +1,13 @@
 import type { PersonId } from "@/data/types";
 import { personById } from "./claims";
 import { displayName, formatUsd } from "./format";
-import { FINANCE_LIMIT, isAgentDecided, type LocalClaim, type LocalEvent } from "./local";
+import { NOW } from "@/data";
+import { canRemoveFlag } from "./flags";
+import { isAgentDecided, type ClaimFlag, type ClaimWait, type LocalClaim, type LocalEvent } from "./local";
+import { FINANCE_LIMIT, FINANCE_NUDGE_WORKING_DAYS, needsFinance, waitDays, weeklyFacts } from "./policy";
+import { addDays, addWorkingDays, formatDay, isoLocal } from "./time";
+
+export { isoLocal } from "./time";
 
 export type ActionId =
   | "approve"
@@ -9,9 +15,12 @@ export type ActionId =
   | "exception"
   | "decline"
   | "ask"
-  | "hold"
+  | "wait"
+  | "extend_wait"
   | "to_finance"
   | "to_finance_both"
+  | "flag"
+  | "unflag"
   | "decide_now"
   | "confirm"
   | "correct";
@@ -30,6 +39,8 @@ export type ActionInput = {
   linkTo?: string;
   /** Short description for the event log, for example the cited rule when approving an exception. */
   reason?: string;
+  /** The flag to remove, for "unflag". */
+  flagId?: string;
 };
 
 export type ActionResult = {
@@ -42,11 +53,6 @@ export type ActionResult = {
 export const firstName = (claim: LocalClaim): string => {
   const person = personById(claim.employee_id as PersonId);
   return person ? displayName(person).split(" ")[0] : claim.employee_id;
-};
-
-export const isoLocal = (d: Date) => {
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 };
 
 const setChain = (claim: LocalClaim, noa: string, finance: string) => {
@@ -66,11 +72,20 @@ const addToThread = (claim: LocalClaim, at: string, text?: string) => {
   claim.local = { ...claim.local, thread: [...(claim.local?.thread ?? []), { at, from: "manager", text: text.trim() }] };
 };
 
-function approveClaim(claim: LocalClaim, amount: number, at: string, overrode: boolean, note: string) {
-  const needsFinance = amount > FINANCE_LIMIT;
-  claim.status = needsFinance ? "waiting_on_finance" : "approved_by_noa";
-  claim.awaiting = needsFinance ? "finance" : null;
-  setChain(claim, "done", needsFinance ? "waiting" : "not_needed");
+/** Parks the claim until `until`, then it returns to the manager's queue. A wait set again after one ended counts as an extension. */
+function setWait(claim: LocalClaim, at: string, kind: "employee" | "finance", previous: ClaimWait | null | undefined, action: "wait" | "ask" = "wait") {
+  const from = new Date(at);
+  const days = kind === "finance" ? FINANCE_NUDGE_WORKING_DAYS : previous && action === "wait" && previous.kind === "employee" && previous.days ? previous.days : waitDays(claim.agent.reason_type, action);
+  const until = isoLocal(kind === "finance" ? addWorkingDays(from, days) : addDays(from, days));
+  claim.local = { ...claim.local, wait: { since: at, until, days, kind, extensions: previous ? previous.extensions + 1 : 0 } };
+  return until;
+}
+
+function approveClaim(claim: LocalClaim, amount: number, at: string, overrode: boolean, note: string, all: LocalClaim[], previousWait: ClaimWait | null | undefined) {
+  const needs = needsFinance(claim, amount, all);
+  claim.status = needs ? "waiting_on_finance" : "approved_by_noa";
+  claim.awaiting = needs ? "finance" : null;
+  setChain(claim, "done", needs ? "waiting" : "not_needed");
   claim.noa = {
     decision: "approved",
     decided_at: at,
@@ -78,7 +93,15 @@ function approveClaim(claim: LocalClaim, amount: number, at: string, overrode: b
     approved_amount_usd: amount,
     overrode_agent: overrode,
   };
-  return needsFinance;
+  if (needs) setWait(claim, at, "finance", previousWait);
+  return needs;
+}
+
+/** Why a claim has to go to Finance, in a few words: over the single limit, or the week adds up past the weekly limit. Empty when it does not. */
+export function financeReason(claim: LocalClaim, amount: number, all: LocalClaim[]): string {
+  if (amount > FINANCE_LIMIT) return `it is over ${formatUsd(FINANCE_LIMIT).replace(".00", "")}`;
+  const week = weeklyFacts(claim, all, amount);
+  return week.over ? `the week's claims total ${formatUsd(week.total)}, over ${formatUsd(week.limit).replace(".00", "")}` : "";
 }
 
 /** Pure: returns changed copies and leaves the input array untouched. PRD 4.2 and 8.2. */
@@ -91,19 +114,23 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
   const claimed = claim.amount.usd_claimed;
   const wasAgent = isAgentDecided(claim);
   const changed: LocalClaim[] = [claim];
+  // A decision ends any wait. A new wait set below counts the old one as an extension. Flags do not touch the wait.
+  const previousWait = claim.local?.wait ?? null;
+  if (input.id !== "flag" && input.id !== "unflag" && input.id !== "confirm" && input.id !== "extend_wait") claim.local = { ...claim.local, wait: null };
 
   switch (input.id) {
     case "approve":
     case "approve_amount":
     case "exception": {
       const amount = input.amount ?? claimed;
-      const toFinance = approveClaim(claim, amount, at, wasAgent, input.reason ?? "");
+      const why = financeReason(claim, amount, all);
+      const toFinance = approveClaim(claim, amount, at, wasAgent, input.reason ?? "", all, previousWait);
       const diff = amount < claimed ? `, ${formatUsd(claimed - amount)} less than claimed` : "";
       const text =
         input.id === "exception"
           ? `Approved ${formatUsd(amount)} as an exception${input.reason ? `: ${input.reason}` : ""}`
           : `Approved ${formatUsd(amount)}${diff}`;
-      claim.events.push(event(at, toFinance ? "noa_routed_finance" : "noa_decision", toFinance ? `${text}. Sent to Finance.` : text));
+      claim.events.push(event(at, toFinance ? "noa_routed_finance" : "noa_decision", toFinance ? `${text}. Sent to Finance${why ? `, because ${why}` : ""}.` : text));
       return {
         changed,
         summary: toFinance
@@ -121,15 +148,38 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
       return { changed, summary: `Declined ${formatUsd(claimed)} for ${name}` };
     }
     case "ask":
-    case "hold": {
+    case "wait": {
       claim.status = "waiting_on_employee";
       claim.awaiting = "employee";
       setChain(claim, "waiting", claim.approval_chain.find((s) => s.step === "finance")?.state ?? "not_needed");
+      const until = setWait(claim, at, "employee", previousWait, input.id);
+      const days = claim.local?.wait?.days ?? waitDays(claim.agent.reason_type, input.id);
       claim.events.push(
-        event(at, "noa_asked", input.id === "hold" ? `Asked for a receipt: ${input.message ?? ""}`.trim() : `Asked ${name}: ${input.message ?? ""}`.trim()),
+        event(at, "noa_asked", `${input.id === "wait" ? `Asked for a receipt: ${input.message ?? ""}` : `Asked ${name}: ${input.message ?? ""}`}`.trim() + ` Waiting ${days} days.`),
       );
       addToThread(claim, at, input.message);
-      return { changed, summary: `Asked ${name}${input.id === "hold" ? " for a receipt" : ""}` };
+      return { changed, summary: `Asked ${name}${input.id === "wait" ? " for a receipt" : ""}. Back in the queue ${formatDay(until)}` };
+    }
+    case "extend_wait": {
+      const current = claim.local?.wait;
+      if (!current) return { changed, summary: `No wait to extend for ${name}` };
+      const until = setWait(claim, at, current.kind, current);
+      claim.events.push(event(at, "noa_asked", `Kept waiting. Back in the queue ${formatDay(until)}.`));
+      return { changed, summary: `Kept waiting on ${current.kind === "finance" ? "Finance" : name}. Back in the queue ${formatDay(until)}` };
+    }
+    case "flag": {
+      const note = (input.message ?? "").trim();
+      const flag: ClaimFlag = { id: `${claim.id}:manager:${at}`, type: "manager", claimId: claim.id, employeeId: claim.employee_id, by: "noa", at, note };
+      claim.local = { ...claim.local, flags: [...(claim.local?.flags ?? []), flag] };
+      claim.events.push(event(at, "noa_flagged", `Flagged: ${note}`));
+      return { changed, summary: `Flagged ${name}'s claim ${claim.id}` };
+    }
+    case "unflag": {
+      const flag = claim.local?.flags?.find((f) => f.id === input.flagId);
+      if (!flag || !canRemoveFlag(flag, now)) return { changed, summary: "That flag can't be removed" };
+      claim.local = { ...claim.local, flags: (claim.local?.flags ?? []).filter((f) => f.id !== flag.id) };
+      claim.events.push(event(at, "noa_unflagged", `Removed a flag: ${flag.note}`));
+      return { changed, summary: `Removed the flag from ${name}'s claim ${claim.id}` };
     }
     case "to_finance":
     case "to_finance_both": {
@@ -137,6 +187,7 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
       claim.awaiting = "finance";
       setChain(claim, "done", "waiting");
       claim.noa = { decision: "approved", decided_at: at, note: "", approved_amount_usd: claimed, overrode_agent: wasAgent };
+      setWait(claim, at, "finance", previousWait);
       claim.events.push(event(at, "noa_routed_finance", `Sent ${formatUsd(claimed)} to Finance`));
       if (input.id === "to_finance_both") {
         for (const relatedId of input.linkTo ? [input.linkTo] : claim.agent.related_claim_ids) {
@@ -154,6 +205,7 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
             approved_amount_usd: copy.amount.usd_claimed,
             overrode_agent: isAgentDecided(other),
           };
+          setWait(copy, at, "finance", copy.local?.wait);
           copy.events.push(event(at, "noa_correction", `Reopened the automatic approval and sent ${formatUsd(copy.amount.usd_claimed)} to Finance with ${claim.id}`));
           changed.push(copy);
         }
@@ -179,7 +231,7 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
       const amount = input.amount ?? claimed;
       const was = claim.status === "declined_by_agent" ? "the automatic decline" : wasAgent ? `the automatic approval of ${formatUsd(claimed)}` : "the decision";
       if (outcome === "approved") {
-        const toFinance = approveClaim(claim, amount, at, wasAgent, input.reason ?? "");
+        const toFinance = approveClaim(claim, amount, at, wasAgent, input.reason ?? "", all, previousWait);
         claim.events.push(event(at, "noa_correction", `Corrected ${was} to ${formatUsd(amount)}${toFinance ? ". Sent to Finance." : ""}`));
       } else if (outcome === "declined") {
         claim.status = "declined_by_noa";
@@ -192,6 +244,7 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
         claim.status = "waiting_on_employee";
         claim.awaiting = "employee";
         setChain(claim, "waiting", "not_needed");
+        setWait(claim, at, "employee", previousWait, "ask");
         claim.events.push(event(at, "noa_correction", `Reopened ${was} and asked ${name}: ${input.message ?? ""}`.trim()));
         addToThread(claim, at, input.message);
       }
@@ -222,9 +275,8 @@ export function actionPreview(claim: LocalClaim, input: ActionInput, all: LocalC
   const name = firstName(claim);
   const claimed = claim.amount.usd_claimed;
   const amount = input.amount ?? claimed;
-  const overLimit = (a: number) => a > FINANCE_LIMIT;
-  const limit = formatUsd(FINANCE_LIMIT).replace(".00", "");
   const toldInChat = (text: string) => `${name} is told in the claim chat ${text}.`;
+  const backOn = (days: number, working = false) => formatDay(working ? addWorkingDays(NOW, days) : addDays(NOW, days));
 
   switch (input.id) {
     case "approve":
@@ -237,9 +289,10 @@ export function actionPreview(claim: LocalClaim, input: ActionInput, all: LocalC
       if (input.id === "correct" && input.to === "ask") {
         return { summary: `Nothing is paid yet. ${toldInChat("with your question")}` };
       }
+      const why = input.id === "correct" && input.to !== "approved" ? "" : financeReason(claim, amount, all);
       const paid =
-        overLimit(amount)
-          ? `${name} is paid ${formatUsd(amount)} after Finance approves it, because it is over ${limit}.`
+        why
+          ? `${name} is paid ${formatUsd(amount)} after Finance approves it, because ${why}.`
           : amount < claimed
             ? `${name} is paid ${formatUsd(amount)}, ${formatUsd(claimed - amount)} less than claimed.`
             : `${name} is paid ${formatUsd(amount)} in full.`;
@@ -257,11 +310,17 @@ export function actionPreview(claim: LocalClaim, input: ActionInput, all: LocalC
     case "decline":
       return { summary: `${name} is not paid. ${toldInChat(`that the claim is declined${input.message ? ", with your note" : ""}`)}` };
     case "ask":
-      return { summary: `Nothing is paid yet. ${toldInChat("with your question")}` };
-    case "hold":
-      return { summary: `Nothing is paid until a receipt arrives. ${toldInChat("and asked for the receipt")}` };
+      return { summary: `Nothing is paid yet. ${toldInChat("with your question")} The claim returns to the queue on ${backOn(waitDays(claim.agent.reason_type, "ask"))}.` };
+    case "wait":
+      return { summary: `Nothing is paid until a receipt arrives. ${toldInChat("and asked for the receipt")} The claim returns to the queue on ${backOn(waitDays(claim.agent.reason_type, "wait"))}.` };
+    case "extend_wait":
+      return { summary: `Nothing changes except the date. The claim returns to the queue on ${backOn(FINANCE_NUDGE_WORKING_DAYS, true)}.` };
+    case "flag":
+      return { summary: `Nothing changes on the claim. A flag is added to ${name}'s record and shows with the other flags, so the pattern is visible.` };
+    case "unflag":
+      return { summary: `The flag is removed from ${name}'s record.` };
     case "to_finance":
-      return { summary: `${name} is paid nothing until Finance approves ${formatUsd(claimed)}. ${toldInChat("that it is with Finance")}` };
+      return { summary: `${name} is paid nothing until Finance approves ${formatUsd(claimed)}. ${toldInChat("that it is with Finance")} The claim returns to the queue on ${backOn(FINANCE_NUDGE_WORKING_DAYS, true)} to check on Finance.` };
     case "to_finance_both": {
       const linkIds = input.linkTo ? [input.linkTo] : claim.agent.related_claim_ids;
       const others = linkIds.map((id) => all.find((c) => c.id === id)).filter((c): c is LocalClaim => Boolean(c));
@@ -269,7 +328,7 @@ export function actionPreview(claim: LocalClaim, input: ActionInput, all: LocalC
       const total = claimed + others.reduce((sum, c) => sum + c.amount.usd_claimed, 0);
       const ids = [claim.id, ...others.map((c) => c.id)].join(" and ");
       return {
-        summary: `${ids} go to Finance together. ${name} is paid nothing until Finance approves ${formatUsd(total)}. ${toldInChat("that both claims are with Finance")}`,
+        summary: `${ids} go to Finance together. ${name} is paid nothing until Finance approves ${formatUsd(total)}. ${toldInChat("that both claims are with Finance")} They return to the queue on ${backOn(FINANCE_NUDGE_WORKING_DAYS, true)} to check on Finance.`,
       };
     }
     default:

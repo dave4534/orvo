@@ -1,6 +1,7 @@
 import type { ActionInput } from "./actions";
 import { formatUsd } from "./format";
-import { FINANCE_LIMIT, type LocalClaim } from "./local";
+import type { LocalClaim } from "./local";
+import { needsFinance } from "./policy";
 import { recommendationFor } from "./recommendations";
 
 /**
@@ -17,20 +18,20 @@ export type BulkAction = {
 };
 
 /** Approve when the recommended step is a plain approval of the full amount that does not need Finance. */
-const canApprove = (claim: LocalClaim): boolean => {
+const canApprove = (claim: LocalClaim, all: LocalClaim[]): boolean => {
   if (claim.status !== "waiting_on_noa") return false;
-  if (claim.amount.usd_claimed > FINANCE_LIMIT) return false;
-  return recommendationFor(claim).recommended?.id === "approve";
+  if (needsFinance(claim, claim.amount.usd_claimed, all)) return false;
+  return recommendationFor(claim, all).recommended?.id === "approve";
 };
 
 const canDecline = (claim: LocalClaim): boolean => claim.status === "waiting_on_noa";
 
 const plural = (n: number) => `${n} claim${n === 1 ? "" : "s"}`;
 
-export function bulkActionsFor(selected: LocalClaim[]): BulkAction[] {
+export function bulkActionsFor(selected: LocalClaim[], all: LocalClaim[] = selected): BulkAction[] {
   if (selected.length < 2) return [];
   const actions: BulkAction[] = [];
-  if (selected.every(canApprove)) actions.push({ id: "approve", label: `Approve ${plural(selected.length)}`, input: { id: "approve" } });
+  if (selected.every((c) => canApprove(c, all))) actions.push({ id: "approve", label: `Approve ${plural(selected.length)}`, input: { id: "approve" } });
   if (selected.every(canDecline)) actions.push({ id: "decline", label: `Decline ${plural(selected.length)}`, input: { id: "decline" }, destructive: true });
   return actions;
 }

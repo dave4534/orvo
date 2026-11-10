@@ -2,8 +2,9 @@
 
 import { Kbd } from "@/components/ui/kbd";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Ban, Check, ChevronDown, Command, CornerDownLeft, CircleDollarSign, Clock, Info, Landmark, ListChecks, MessageSquare, Pencil, TriangleAlert, Wrench, type LucideIcon } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Ban, Check, ChevronDown, Command, CornerDownLeft, CircleDollarSign, Clock, Flag, Info, Landmark, ListChecks, MessageSquare, Pencil, TriangleAlert, Wrench, type LucideIcon } from "lucide-react";
 
+import { FlagIcon } from "@/components/icons/flag";
 import { StatusBanner } from "@/components/status-banner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -25,8 +26,9 @@ import { actionPreview, firstName, type ActionId, type ActionInput } from "@/log
 import { buildComparison, employeeName } from "@/logic/comparison";
 import { claimStatusLabel, formatUsd, initials } from "@/logic/format";
 import { daysOverTarget, formatDuration, isOpen, WAIT_TARGET_DAYS, waitingFor } from "@/logic/wait";
-import { isAgentDecided, isSpotCheck, type LocalClaim } from "@/logic/local";
-import { allActionsFor, moreOptionsFor, recommendationFor, type ActionSpec } from "@/logic/recommendations";
+import { flagsForEmployee } from "@/logic/flags";
+import { isAgentDecided, isSpotCheck, isWaitOver, type LocalClaim } from "@/logic/local";
+import { allActionsFor, flagSpec, moreOptionsFor, recommendationFor, type ActionSpec } from "@/logic/recommendations";
 import { photoFor } from "@/logic/photos";
 import { track } from "@/logic/track";
 import { cn } from "@/lib/utils";
@@ -67,9 +69,11 @@ const ACTION_ICON: Partial<Record<ActionId, LucideIcon>> = {
   exception: Check,
   decline: Ban,
   ask: MessageSquare,
-  hold: Clock,
+  wait: Clock,
   to_finance: Landmark,
   to_finance_both: Landmark,
+  extend_wait: Clock,
+  flag: Flag,
   correct: Pencil,
 };
 
@@ -91,7 +95,7 @@ function retarget(spec: ActionSpec, claim: LocalClaim): ActionSpec {
 
 /** Triage column of the claims queue: the claim, its comparison and the decision actions (actions stay pinned at the bottom). */
 export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMore, padded = true, flat = false, primary = true, onDecided, onReopen, onContinue }: Props) {
-  const { perform, sendMessage } = useClaims();
+  const { perform, sendMessage, now } = useClaims();
   const { setActionRunner, setDialogControl, setAskDraft } = useWorkspace();
   const [pending, setPending] = useState<ActionSpec | null>(null);
   /** Wording to start the pop-up with, when it was opened from the chat. */
@@ -108,11 +112,15 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
   const full = employeeName(claim);
   const claimed = claim.amount.usd_claimed;
   const category = dataset.enums.category[claim.category];
-  const needsReview = claim.status === "waiting_on_noa";
+  // A claim whose wait ended is back in the queue and gets the same decision buttons as one the agent escalated.
+  const waitedOut = isWaitOver(claim, now);
+  const needsReview = claim.status === "waiting_on_noa" || waitedOut;
   const agentDecided = isAgentDecided(claim);
   const decidedByNoa = claim.status === "approved_by_noa" || claim.status === "declined_by_noa";
   const spot = isSpotCheck(claim) && !claim.local?.spot_checked && claim.status === "approved_by_agent";
-  const rec = needsReview ? recommendationFor(claim) : null;
+  const rec = needsReview ? recommendationFor(claim, allClaims, now) : null;
+  const flags = flagsForEmployee(allClaims, claim.employee_id, now);
+  const wait = claim.local?.wait;
 
   function run(input: ActionInput): boolean {
     const result = perform(claim.id, input, { onUndo: onReopen, silent: input.id === "confirm" });
@@ -175,9 +183,11 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
     setActionRunner(
       needsReview
         ? (label, extra) => {
-            const spec = allActionsFor(claim).find((s) => s.label === label);
+            const spec = allActionsFor(claim, allClaims, now).find((s) => s.label === label);
             if (!spec) return { ok: false, error: "That button is not available." };
             const target = retarget(spec, claim);
+            // A flag keeps a reason on the claim. The wording has to come from Noa.
+            if (spec.askMessage === "flag" && !extra?.message?.trim()) return { ok: false, error: "A reason for the flag is needed. Ask Noa for one line." };
             // Asking the employee a question opens the message pop-up with the wording filled in, so it can be read and sent or cancelled.
             if (spec.askMessage === "ask") {
               if (asksInChat) {
@@ -287,7 +297,23 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                 <AvatarFallback>{initials(full)}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[1.375rem] leading-7 font-semibold">{full}</div>
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="truncate text-[1.375rem] leading-7 font-semibold">{full}</div>
+                  {flags.length > 0 && onOpenMore ? (
+                    // The employee's flags. The chip opens them in the Past claims tab, so it points up and to the right.
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 rounded-full"
+                      aria-label={`${flags.length} ${flags.length === 1 ? "flag" : "flags"} for ${full}. Open them in Past claims`}
+                      onClick={() => onOpenMore("past")}
+                    >
+                      <FlagIcon data-icon="inline-start" className="text-gap" />
+                      {flags.length} {flags.length === 1 ? "flag" : "flags"}
+                      <ArrowUpRight data-icon="inline-end" />
+                    </Button>
+                  ) : null}
+                </div>
                 {flat ? null : <div className="text-xs text-muted-foreground">{subtitle}</div>}
               </div>
               <div className="text-right text-3xl leading-9 font-semibold tabular-nums">{formatUsd(claimed)}</div>
@@ -332,7 +358,19 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
               <ComparisonView comparison={comparison} />
             </div>
 
-            {claim.status === "waiting_on_employee" && chase ? (
+            {waitedOut && wait ? (
+              // The wait ended: say so, and how many times it was already extended, so a loop is visible.
+              <p className="mx-6 mb-4 rounded-lg bg-muted/60 p-3 text-sm">
+                {wait.kind === "finance"
+                  ? `Back in the queue. No decision from Finance after ${wait.days} working days (since ${formatDay(wait.since)}).`
+                  : `Back in the queue. The ${wait.days}-day wait for ${name} ended ${formatDay(wait.until)}.`}
+                {wait.extensions > 0 ? ` Waited ${wait.extensions + 1} times already.` : ""}
+              </p>
+            ) : claim.status === "waiting_on_employee" && wait ? (
+              <p className="mx-6 mb-4 rounded-lg bg-muted/60 p-3 text-sm">
+                Waiting on {name} for {wait.days} days. Back in the queue {formatDay(wait.until)}.
+              </p>
+            ) : claim.status === "waiting_on_employee" && chase ? (
               <p className="mx-6 mb-4 rounded-lg bg-muted/60 p-3 text-sm">
                 Waiting on {name}. {chase.attempts.length} of {chase.max_attempts} requests sent.{" "}
                 {chase.next_attempt_at ? `Next request ${formatDay(chase.next_attempt_at)}. ` : "No requests left. "}
@@ -384,8 +422,11 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
           <p className="text-sm text-muted-foreground">No recommendation for this claim. {claim.agent.unsure ? "It could not be judged." : ""}</p>
         ) : null}
 
-        {claim.status === "waiting_on_finance" ? (
-          <p className="text-sm text-muted-foreground">With Finance since {claim.noa ? formatDay(claim.noa.decided_at) : "today"}. No action is needed until Finance decides.</p>
+        {claim.status === "waiting_on_finance" && !waitedOut ? (
+          <p className="text-sm text-muted-foreground">
+            With Finance since {claim.noa ? formatDay(claim.noa.decided_at) : "today"}. No action is needed until Finance decides.
+            {wait ? ` Back in the queue ${formatDay(wait.until)} to check on it.` : ""}
+          </p>
         ) : null}
 
         <div className="flex flex-wrap items-center gap-2">
@@ -434,6 +475,17 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                   </DropdownMenuItem>
                 ) : null}
               </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>FLAG</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => choose(flagSpec())}>
+                  <Flag />
+                  <span className="flex flex-col">
+                    <span>Flag claim</span>
+                    <span className="text-xs text-muted-foreground">Mark it for the pattern. Decides nothing</span>
+                  </span>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -450,7 +502,12 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                   );
                 })}
                 {rec.recommended ? (
-                  <Button size="lg" className="h-11 bg-success text-success-foreground hover:bg-success/90" onClick={() => choose(rec.recommended!)}>
+                  <Button
+                    size="lg"
+                    variant={rec.recommended.destructive ? "destructive" : "default"}
+                    className={cn("h-11", !rec.recommended.destructive && "bg-success text-success-foreground hover:bg-success/90")}
+                    onClick={() => choose(rec.recommended!)}
+                  >
                     {rec.recommended.label}
                     {primary ? (
                       <span aria-hidden className="ml-1 inline-flex items-center gap-1">
@@ -507,7 +564,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
               </Button>
             ) : null}
 
-            {claim.status === "waiting_on_employee" ? (
+            {claim.status === "waiting_on_employee" && !waitedOut ? (
               <>
                 <Button variant="ghost" size="lg" className="h-11" onClick={() => run({ id: "decide_now" })}>
                   Decide now

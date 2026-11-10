@@ -2,7 +2,7 @@ import { dataset } from "@/data";
 import { employeeName } from "@/logic/comparison";
 import { formatUsd } from "@/logic/format";
 import type { LocalClaim } from "@/logic/local";
-import { recommendationFor } from "@/logic/recommendations";
+import { assess, reasoningText } from "@/logic/recommendations";
 
 export type AiReply = { text: string; action?: { label: string; kind: "overview" | "policy" } };
 
@@ -52,10 +52,11 @@ export function replyTo(prompt: string, claim: LocalClaim | null, all: LocalClai
   }
   if (/recommend|should|what would/.test(q)) {
     if (claim.status !== "waiting_on_noa") return { text: "This claim is not waiting for review, so there is nothing to recommend." };
-    const rec = recommendationFor(claim).recommended;
+    const a = assess(claim, all);
+    const rec = a.recommendation.recommended;
     return {
       text: rec
-        ? `I would choose "${rec.label}". ${claim.agent.needs_from_noa ?? ""} The decision is open, and any of the other options can be chosen.`
+        ? `I would choose "${rec.label}". ${reasoningText(a)} The decision is open, and any of the other options can be chosen.`
         : `I can't recommend one here. ${claim.agent.explanation}`,
     };
   }

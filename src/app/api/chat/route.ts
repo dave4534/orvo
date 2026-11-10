@@ -2,7 +2,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { createAgentUIStreamResponse, isStepCount, ToolLoopAgent, type UIMessage } from "ai";
 import { z } from "zod";
 
-import { dataset } from "@/data";
+import { dataset, NOW } from "@/data";
 import { mergeOverlay, type ClaimOverlay } from "@/logic/chat-context";
 import type { LocalClaim } from "@/logic/local";
 import { AI_MODEL_ID } from "@/lib/ai-model";
@@ -38,6 +38,7 @@ const bodySchema = z.object({
       controls: z.array(z.string().max(90)).max(80).optional().default([]),
       briefVisible: z.boolean().optional().default(false),
       voice: z.boolean().optional().default(false),
+      now: z.string().max(30).optional(),
     }),
     overlay: z.array(z.object({ id: z.string() }).passthrough()).max(60),
   }),
@@ -106,6 +107,8 @@ export async function POST(req: Request) {
   if (uiMessages.length === 0) return json({ error: "bad_request" }, 400);
 
   const claims = mergeOverlay(dataset.claims as unknown as LocalClaim[], parsed.context.overlay as unknown as ClaimOverlay[]);
+  const parsedNow = parsed.context.ui.now ? new Date(parsed.context.ui.now) : NOW;
+  const now = Number.isNaN(parsedNow.getTime()) ? NOW : parsedNow;
 
   const openClaim = claims.find((c) => c.id === parsed.context.ui.openClaimId);
   const pastClaim = claims.find((c) => c.id === parsed.context.ui.pastClaimId);
@@ -115,9 +118,9 @@ export async function POST(req: Request) {
     model: anthropic(AI_MODEL_ID),
     instructions: [
       { role: "system", content: STATIC_INSTRUCTIONS, providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } } },
-      { role: "system", content: uiInstructions(parsed.context.ui, openClaim, pastClaim) },
+      { role: "system", content: uiInstructions(parsed.context.ui, openClaim, pastClaim, claims, now) },
     ],
-    tools: { ...buildChatTools(claims), ...buildSuggestActionTool(openClaim), ...buildCardTools(claims, openClaim?.id), ...buildUiTools(activeClaim, claims, { claimOpen: Boolean(openClaim), pastOpen: Boolean(pastClaim), detailsOpen: parsed.context.ui.detailsOpen }) },
+    tools: { ...buildChatTools(claims, now), ...buildSuggestActionTool(openClaim, claims, now), ...buildCardTools(claims, openClaim?.id), ...buildUiTools(activeClaim, claims, { claimOpen: Boolean(openClaim), pastOpen: Boolean(pastClaim), detailsOpen: parsed.context.ui.detailsOpen, now }) },
     stopWhen: isStepCount(6),
     maxOutputTokens: 700,
   });

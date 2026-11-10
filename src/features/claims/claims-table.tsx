@@ -23,12 +23,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { dataset } from "@/data";
 import type { Category } from "@/data/types";
 import { basisFor } from "@/logic/basis";
-import { NOW } from "@/data";
 import { formatDuration, timeToDecision, waitingFor } from "@/logic/wait";
 import { employeeName } from "@/logic/comparison";
 import { claimStatusLabel, formatSubmitted, formatUsd, initials } from "@/logic/format";
 import { photoFor } from "@/logic/photos";
-import type { LocalClaim } from "@/logic/local";
+import { isWaitOver, type LocalClaim } from "@/logic/local";
+import { useClaims } from "@/store/claims-store";
 import type { Section } from "@/logic/sections";
 import type { TabId } from "@/logic/claims";
 import { PILL } from "@/lib/blocks";
@@ -58,8 +58,8 @@ type Props = {
   onReview: (id: string) => void;
 };
 
-function statusStyle(claim: LocalClaim): string {
-  if (claim.status === "waiting_on_noa") return "border-warning-border bg-warning text-warning-foreground";
+function statusStyle(claim: LocalClaim, now: Date): string {
+  if (claim.status === "waiting_on_noa" || isWaitOver(claim, now)) return "border-warning-border bg-warning text-warning-foreground";
   if (claim.status === "approved_by_agent" || claim.status === "approved_by_noa") return "border-success-border bg-card text-success";
   return "bg-card text-muted-foreground";
 }
@@ -74,12 +74,13 @@ const TIME_HEADER: Record<TabId, string> = {
 
 /** The time cell. The plain value shows in the row, and hovering it shows the exact time. */
 function TimeCell({ tab, claim }: { tab: TabId; claim: LocalClaim }) {
+  const { now } = useClaims();
   const value =
     tab === "done"
       ? timeToDecision(claim) ?? ""
       : tab === "all"
-        ? `${formatDuration(NOW.getTime() - new Date(claim.submitted_at).getTime())} ago`
-        : waitingFor(claim, NOW);
+        ? `${formatDuration(now.getTime() - new Date(claim.submitted_at).getTime())} ago`
+        : waitingFor(claim, now);
   const exact = tab === "done" && claim.noa ? `Decided ${formatSubmitted(claim.noa.decided_at)}` : `Submitted ${formatSubmitted(claim.submitted_at)}`;
   return (
     <Tooltip>
@@ -188,6 +189,7 @@ function SectionRows({
   onToggle: (id: string, checked: boolean) => void;
   onReview: (id: string) => void;
 }) {
+  const { now } = useClaims();
   return (
     <>
       {section.label ? (
@@ -251,8 +253,8 @@ function SectionRows({
                 <TableCell className="text-right font-medium tabular-nums">{formatUsd(claim.amount.usd_claimed)}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    <Badge variant="outline" className={cn(PILL, statusStyle(claim))}>
-                      {claimStatusLabel(claim)}
+                    <Badge variant="outline" className={cn(PILL, statusStyle(claim, now))}>
+                      {isWaitOver(claim, now) ? "Needs review" : claimStatusLabel(claim)}
                     </Badge>
                     {claim.local?.spot_checked ? <Badge variant="outline" className={cn(PILL, "bg-card text-muted-foreground")}>Reviewed</Badge> : null}
                   </div>

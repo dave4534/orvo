@@ -5,8 +5,8 @@ import { dataset, NOW } from "@/data";
 import type { Category, Status } from "@/data/types";
 import { employeeName } from "@/logic/comparison";
 import { claimStatusLabel, formatSubmitted } from "@/logic/format";
-import type { LocalClaim } from "@/logic/local";
-import { allActionsFor, recommendationFor } from "@/logic/recommendations";
+import { isWaitOver, type LocalClaim } from "@/logic/local";
+import { allActionsFor, assess, reasoningText } from "@/logic/recommendations";
 
 const STATUSES = [
   "waiting_on_noa",
@@ -27,9 +27,9 @@ const money = (n: number | null | undefined) => (typeof n === "number" ? Math.ro
  * The button runs the same action as the one in the action bar.
  * The label is limited to the buttons that exist for that claim.
  */
-export function buildSuggestActionTool(claim: LocalClaim | undefined): ToolSet {
-  if (!claim || claim.status !== "waiting_on_noa") return {};
-  const labels = allActionsFor(claim).map((s) => s.label) as [string, ...string[]];
+export function buildSuggestActionTool(claim: LocalClaim | undefined, claims: LocalClaim[] = [], now: Date = NOW): ToolSet {
+  if (!claim || !(claim.status === "waiting_on_noa" || isWaitOver(claim, now))) return {};
+  const labels = allActionsFor(claim, claims, now).map((s) => s.label) as [string, ...string[]];
   return {
     suggestAction: tool({
       description:
@@ -41,7 +41,7 @@ export function buildSuggestActionTool(claim: LocalClaim | undefined): ToolSet {
 }
 
 /** Read-only tools over the dataset with the session's changes laid over it. */
-export function buildChatTools(claims: LocalClaim[]) {
+export function buildChatTools(claims: LocalClaim[], now: Date = NOW) {
   const byId = new Map(claims.map((c) => [c.id.toUpperCase(), c]));
   const people = dataset.people.filter((p) => p.role === "team_member");
 
@@ -195,13 +195,19 @@ export function buildChatTools(claims: LocalClaim[]) {
       execute: async ({ id }) => {
         const c = byId.get(id.trim().toUpperCase());
         if (!c) return { error: `No claim with id ${id}.` };
-        if (c.status !== "waiting_on_noa") return { note: `${c.id} is not waiting for review (${claimStatusLabel(c)}), so nothing is recommended.` };
-        const rec = recommendationFor(c);
+        if (c.status !== "waiting_on_noa" && !isWaitOver(c, now)) return { note: `${c.id} is not waiting for review (${claimStatusLabel(c)}), so nothing is recommended.` };
+        // The same record the triage note and the Policy tab show, so every answer matches the card.
+        const a = assess(c, claims, now);
+        const rec = a.recommendation;
         return {
           recommendedButton: rec.recommended?.label ?? null,
           otherButtons: rec.secondary.map((s) => s.label),
           inMoreOptions: rec.more.map((s) => s.label),
           reasonForReview: dataset.enums.reason_type[c.agent.reason_type],
+          policyGap: a.gap,
+          whyRecommended: a.why,
+          whyOthersAreWeaker: a.others,
+          reasoning: reasoningText(a),
         };
       },
     }),

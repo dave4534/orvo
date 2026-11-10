@@ -25,9 +25,11 @@ import {
   type TabId,
 } from "@/logic/claims";
 import { bulkActionsFor, type BulkActionId } from "@/logic/bulk";
-import { isSpotCheck, type LocalClaim } from "@/logic/local";
+import { isSpotCheck, isWaitOver, type LocalClaim } from "@/logic/local";
 import { sectionsFor } from "@/logic/sections";
 import { buildChatContext } from "@/logic/chat-context";
+import { canRemoveFlag } from "@/logic/flags";
+import { isoLocal } from "@/logic/time";
 import { triageNote } from "@/logic/summary";
 import { firstName } from "@/logic/actions";
 import { TABS_LIST, TABS_TRIGGER } from "@/lib/blocks";
@@ -48,11 +50,12 @@ import { ClaimsTable } from "./claims-table";
 import { AiBriefBanner } from "./daily-brief";
 import type { MoreTab } from "./panel-types";
 
-const tabOfStatus = (status: Status): TabId =>
-  TABS.find((t) => t.statuses?.includes(status))?.id ?? "all";
+/** The tab a claim belongs on right now. A claim whose wait ended is back in Needs review. */
+const tabOfClaim = (claim: LocalClaim | undefined, now: Date): TabId =>
+  claim ? (["needs_review", "waiting", "done"] as TabId[]).find((t) => inTab([claim], t, now).length > 0) ?? "all" : "needs_review";
 
 export function ClaimsView() {
-  const { claims, sessionIds, undoLast, perform, performBatch, sendMessage } = useClaims();
+  const { claims, now, skipAhead, sessionIds, undoLast, perform, performBatch, sendMessage } = useClaims();
   const { aiOpen, setAiOpen, addAiMessage, lastTriageClaim, setChatContext, setUiToolHandler, runAction, controlDialog, callControl, hasControl, setAiWidener, voiceOpen, homeRequest } = useWorkspace();
   const seenHome = useRef(homeRequest);
   const aiPanel = usePanelRef();
@@ -99,6 +102,7 @@ export function ClaimsView() {
         unsentMessage: typeof unsent === "string" ? unsent : "",
         selectedCount: selectedIds.size,
         controls: controlSummary(),
+        now: isoLocal(now),
         briefVisible: openId === null && tab !== "waiting" && !briefDismissed.has(tab === "done" ? "done" : "needs_review"),
         voice: voiceOpen,
       });
@@ -202,7 +206,7 @@ export function ClaimsView() {
         case "bulkAction": {
           if (openId !== null) return listOnly;
           const wanted = String(input.action) as BulkActionId;
-          if (!bulkActionsFor(claims.filter((c) => selectedIds.has(c.id))).some((a) => a.id === wanted)) {
+          if (!bulkActionsFor(claims.filter((c) => selectedIds.has(c.id)), claims).some((a) => a.id === wanted)) {
             return { ok: false, error: `That bulk action is not available. It needs two or more selected claims that can all take it, and ${selectedIds.size} are selected.` };
           }
           return runBulk(wanted) ? { ok: true, action: wanted, count: selectedIds.size } : { ok: false, error: "The decisions could not be saved." };
@@ -244,6 +248,21 @@ export function ClaimsView() {
         }
         case "closeDocument":
           return callControl("document", { do: "close" });
+        case "skipAhead": {
+          if (openId !== null) return listOnly;
+          const days = Math.max(1, Math.min(60, Math.round(Number(input.days) || 14)));
+          skipAhead(days);
+          return { ok: true, days };
+        }
+        case "removeFlag": {
+          const id = String(input.claimId ?? "");
+          const claim = claims.find((c) => c.id === id);
+          if (!claim) return { ok: false, error: `No claim ${id}.` };
+          const flag = [...(claim.local?.flags ?? [])].reverse().find((f) => canRemoveFlag(f, now));
+          if (!flag) return { ok: false, error: "That claim has no flag Noa added that can still be removed. Automatic flags cannot be removed." };
+          const result = perform(id, { id: "unflag", flagId: flag.id });
+          return result.ok ? { ok: true, removed: flag.note } : { ok: false, error: "The flag could not be removed." };
+        }
         case "openPastClaim": {
           if (openId === null) return claimOnly;
           const id = String(input.claimId ?? "");
@@ -307,7 +326,7 @@ export function ClaimsView() {
             return { ok: false, error: "That button is not available." };
           }
           if (pastId) return { ok: false, error: "That past claim is already decided. Use changeDecision, or close it first." };
-          if (target.status !== "waiting_on_noa") return { ok: false, error: "This claim is not waiting for review. Use changeDecision to change it." };
+          if (target.status !== "waiting_on_noa" && !isWaitOver(target, now)) return { ok: false, error: "This claim is not waiting for review. Use changeDecision to change it." };
           const result = runAction(label, {
             amount: typeof input.amount === "number" ? input.amount : undefined,
             message: typeof input.message === "string" ? input.message : undefined,
@@ -345,10 +364,10 @@ export function ClaimsView() {
     return () => setUiToolHandler(null);
   });
 
-  const brief = useMemo(() => buildDailyBrief(claims), [claims]);
-  const doneBrief = useMemo(() => buildDoneBrief(claims), [claims]);
-  const counts = useMemo(() => tabCounts(claims, filters), [claims, filters]);
-  const rows = useMemo(() => sortForTab(inTab(applyFilters(claims, filters), tab), tab), [claims, filters, tab]);
+  const brief = useMemo(() => buildDailyBrief(claims, now), [claims, now]);
+  const doneBrief = useMemo(() => buildDoneBrief(claims, now), [claims, now]);
+  const counts = useMemo(() => tabCounts(claims, filters, now), [claims, filters, now]);
+  const rows = useMemo(() => sortForTab(inTab(applyFilters(claims, filters, now), tab, now), tab), [claims, filters, tab, now]);
   const sections = useMemo(() => sectionsFor(tab, rows), [tab, rows]);
 
   const filtered = isFiltered(filters);
@@ -371,7 +390,7 @@ export function ClaimsView() {
   // The chat is one continuous conversation. Each time a new claim comes up it adds a short note (policy gap, recommendation, reasoning).
   function postTriageNote(claim: LocalClaim) {
     if (lastTriageClaim() === claim.id) return;
-    const { heading, text, suggest } = triageNote(claim);
+    const { heading, text, suggest } = triageNote(claim, claims, now);
     addAiMessage({ role: "assistant", text, heading, claimId: claim.id, suggest: suggest ?? undefined, triage: true });
   }
 
@@ -434,7 +453,7 @@ export function ClaimsView() {
   // After an undo, bring the claim back into view, on the tab it returned to.
   function onReopen(claimId: string) {
     const claim = claims.find((c) => c.id === claimId);
-    setTab(tabOfStatus(claim?.status ?? "waiting_on_noa"));
+    setTab(tabOfClaim(claim, now));
     setOpenId(claimId);
     // The note is posted once the undone claim is in its new state, in the effect below.
     reopened.current = claimId;
@@ -447,14 +466,14 @@ export function ClaimsView() {
 
   function reviewAll() {
     setTab("needs_review");
-    const first = sortForTab(inTab(applyFilters(claims, DEFAULT_FILTERS), "needs_review"), "needs_review")[0];
+    const first = sortForTab(inTab(applyFilters(claims, DEFAULT_FILTERS, now), "needs_review", now), "needs_review")[0];
     if (first) openClaimById(first.id);
   }
 
   // The Done brief's review opens the Done queue, newest first.
   function reviewDone() {
     setTab("done");
-    const first = sortForTab(inTab(applyFilters(claims, DEFAULT_FILTERS), "done"), "done")[0];
+    const first = sortForTab(inTab(applyFilters(claims, DEFAULT_FILTERS, now), "done", now), "done")[0];
     if (first) openClaimById(first.id);
   }
 
@@ -470,7 +489,7 @@ export function ClaimsView() {
   }
 
   const selectedClaims = claims.filter((c) => selectedIds.has(c.id));
-  const bulkActions = bulkActionsFor(selectedClaims);
+  const bulkActions = bulkActionsFor(selectedClaims, claims);
 
   function runBulk(id: BulkActionId): boolean {
     const action = bulkActions.find((a) => a.id === id);
@@ -572,7 +591,17 @@ export function ClaimsView() {
 
         <ClaimsFilters filters={filters} onChange={changeFilters} onReset={() => changeFilters(DEFAULT_FILTERS)} canReset={filtered}
           showStatus={tab === "all"}
-          trailing={<BulkActions actions={bulkActions} onRun={runBulk} />}
+          trailing={
+            <>
+              <BulkActions actions={bulkActions} onRun={runBulk} />
+              {tab === "waiting" ? (
+                // Demo clock: lets a wait end so its claim returns to Needs review. Not part of the product.
+                <Button variant="outline" size="sm" onClick={() => skipAhead(14)}>
+                  Skip ahead 14 days
+                </Button>
+              ) : null}
+            </>
+          }
         />
 
         {rows.length > 0 ? (

@@ -7,7 +7,7 @@ import { AutoAwesome } from "@/components/icons/auto-awesome";
 import { Button } from "@/components/ui/button";
 import { Kbd } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import type { LocalClaim } from "@/logic/local";
+import { isWaitOver, type LocalClaim } from "@/logic/local";
 import { track } from "@/logic/track";
 import { allActionsFor } from "@/logic/recommendations";
 import { replyTo, suggestedPrompts } from "@/mocks/ai-replies";
@@ -170,13 +170,14 @@ function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry, shortcut
 
 export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
   const { aiMessages, aiStatus, askAi, stopAi, regenerateAi, addAiMessage, setAiFallback, runAction, voiceOpen, setVoiceOpen } = useWorkspace();
+  const { now } = useClaims();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
   const busy = aiStatus === "submitted" || aiStatus === "streaming";
   const last = aiMessages[aiMessages.length - 1];
 
   // A suggested action only shows while that claim is open and still waiting for review.
-  const availableLabels = claim && claim.status === "waiting_on_noa" ? allActionsFor(claim).map((s) => s.label) : [];
+  const availableLabels = claim && (claim.status === "waiting_on_noa" || isWaitOver(claim, now)) ? allActionsFor(claim, allClaims, now).map((s) => s.label) : [];
   const canAct = (claimId: string, label: string) => claim?.id === claimId && availableLabels.includes(label);
 
   // Cmd+Enter (Ctrl+Enter elsewhere) runs the suggested action of the latest answer, the one shown with its keys. It stays out of the way

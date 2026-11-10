@@ -17,7 +17,8 @@ import { ClaimChat } from "./claim-chat";
 import { DocumentDialog, type DocumentView } from "./document-dialog";
 import type { MoreTab } from "./panel-types";
 import { PastClaims } from "./past-claims";
-import { PolicyChecks, SectionLabel, TransactionUnit } from "./claim-sections";
+import { PolicyChecks, RecommendationReasoning, SectionLabel, TransactionUnit } from "./claim-sections";
+import { useClaims } from "@/store/claims-store";
 import { useWorkspace } from "@/store/workspace-store";
 
 type Props = {
@@ -93,12 +94,16 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
   );
 }
 
-function Policy({ claim }: { claim: LocalClaim }) {
+function Policy({ claim, allClaims }: { claim: LocalClaim; allClaims: LocalClaim[] }) {
+  const { now } = useClaims();
   return (
-    <section>
-      <SectionLabel>Checks run</SectionLabel>
-      <PolicyChecks claim={claim} />
-    </section>
+    <div className="flex flex-col gap-6">
+      <RecommendationReasoning claim={claim} allClaims={allClaims} now={now} />
+      <section>
+        <SectionLabel>Checks run</SectionLabel>
+        <PolicyChecks claim={claim} allClaims={allClaims} />
+      </section>
+    </div>
   );
 }
 
@@ -157,7 +162,7 @@ export function MoreInfoPanel({ claim, allClaims, tab, onTab, onClose, onOpenPas
           <Overview claim={claim} onView={setViewing} />
         </TabsContent>
         <TabsContent value="policy" className="min-h-0 flex-1 overflow-y-auto p-6">
-          <Policy claim={claim} />
+          <Policy claim={claim} allClaims={allClaims} />
         </TabsContent>
         <TabsContent value="past" className="min-h-0 flex-1 overflow-y-auto p-6">
           <PastClaims claim={claim} allClaims={allClaims} onOpenClaim={onOpenPastClaim} />

@@ -3,6 +3,7 @@ import { firstName } from "./actions";
 import { personById } from "./claims";
 import { displayName, formatSubmitted, formatUsd } from "./format";
 import { FINANCE_LIMIT, MEAL_CAP, RECEIPT_LIMIT, type LocalClaim } from "./local";
+import { weeklyFacts } from "./policy";
 
 export type Half = {
   label: string;
@@ -143,6 +144,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
       }
       case "possible_split": {
         const linked = claim.agent.related_claim_ids.map((id) => all.find((c) => c.id === id)).filter((c): c is LocalClaim => Boolean(c));
+        const week = weeklyFacts(claim, all);
         const combined = claimed + linked.reduce((s, c) => s + c.amount.usd_claimed, 0);
         const evidence = [
           { label: claim.id, value: `${formatUsd(claimed)}, ${claim.receipt.document?.details?.invoice ?? "no invoice"}, filed ${formatSubmitted(claim.submitted_at)}` },
@@ -151,13 +153,15 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
             value: `${formatUsd(c.amount.usd_claimed)}, ${c.receipt.document?.details?.invoice ?? "no invoice"}, filed ${formatSubmitted(c.submitted_at)}, ${dataset.enums.status[c.status] ?? c.status}`,
           })),
           { label: "Time apart", value: fact(claim, /time apart/i) ?? "" },
+          { label: `Claims in ${week.days} days`, value: `${formatUsd(week.total)}, ${week.claims.length + 1} claims` },
         ].filter((e) => e.value);
+        // The weekly total decides it, so it is what the bar shows. The two linked claims stay in the evidence.
         return {
           kind: "money",
-          left: { label: "Policy", tone: "neutral", amount: FINANCE_LIMIT, sub: "Finance limit" },
-          right: { label: "Combined", tone: "info", amount: combined, sub: `${claim.id} plus ${linked.map((c) => c.id).join(", ")}` },
-          scale: scaleFor(FINANCE_LIMIT, combined),
-          sentence: `${formatUsd(combined - FINANCE_LIMIT)} over the limit when combined.`,
+          left: { label: "Policy", tone: "neutral", amount: FINANCE_LIMIT, sub: `Finance limit, ${week.days} days` },
+          right: { label: "This week", tone: "info", amount: week.over ? week.total : combined, sub: week.over ? `${claim.id} plus ${week.claims.length} earlier claims` : `${claim.id} plus ${linked.map((c) => c.id).join(", ")}` },
+          scale: scaleFor(FINANCE_LIMIT, week.over ? week.total : combined),
+          sentence: `${formatUsd((week.over ? week.total : combined) - FINANCE_LIMIT)} over the weekly Finance limit.`,
           evidence,
         };
       }
@@ -181,6 +185,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
         const tickets = fact(claim, /tickets/i);
         const fees = fact(claim, /fees/i);
         const margin = fact(claim, /under the finance/i);
+        const weekly = weeklyFacts(claim, all);
         return {
           kind: "text",
           left: { label: "No rule", tone: "neutral", text: "Nothing covers entertainment or team events" },
@@ -190,6 +195,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
             ...(fact(claim, /paid by/i) ? [{ label: "Paid by", value: fact(claim, /paid by/i)! }] : []),
             ...note,
             ...(margin ? [{ label: "Under the Finance limit by", value: margin }] : []),
+            ...(weekly.over ? [{ label: `Claims in ${weekly.days} days`, value: `${formatUsd(weekly.total)}, over the ${formatUsd(weekly.limit)} weekly limit` }] : []),
           ],
         };
       }

@@ -24,6 +24,8 @@ export type ChatUi = {
   briefVisible: boolean;
   /** Noa is talking to the assistant, so replies will be read aloud. */
   voice: boolean;
+  /** The demo clock, in dataset time. Waits end against it. */
+  now?: string;
 };
 
 /** The parts of a claim the user can change during a session. The rest comes from the dataset. */
