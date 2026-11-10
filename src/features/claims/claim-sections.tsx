@@ -162,18 +162,18 @@ export function PolicyChecks({ claim }: { claim: LocalClaim }) {
       <Table className="table-fixed">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[34%] px-4 py-3 text-left">Check</TableHead>
-            <TableHead className="px-4 py-3 text-left">Policy</TableHead>
-            <TableHead className="w-24 px-4 py-3 text-right">Passed</TableHead>
+            <TableHead className="w-[30%] px-3 py-3 text-left">Check</TableHead>
+            <TableHead className="px-3 py-3 text-left">Policy</TableHead>
+            <TableHead className="w-[8.5rem] px-3 py-3 text-right">Passed</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {claim.agent.checks.map((c) => (
             <TableRow key={c.id}>
-              <TableCell className="px-4 py-4 font-medium whitespace-normal">{c.label}</TableCell>
-              <TableCell className="px-4 py-4 whitespace-normal text-left text-muted-foreground">{rules.find((r) => r.id === c.rule_id)?.text ?? "No policy number"}</TableCell>
-              <TableCell className="px-4 py-4 text-right">
-                <Badge variant="outline" className={cn(PILL, "bg-card", CHECK_STYLE[c.result])}>
+              <TableCell className="px-3 py-4 font-medium whitespace-normal">{c.label}</TableCell>
+              <TableCell className="px-3 py-4 whitespace-normal text-left text-muted-foreground">{rules.find((r) => r.id === c.rule_id)?.text ?? "No policy number"}</TableCell>
+              <TableCell className="px-3 py-4 text-right">
+                <Badge variant="outline" className={cn(PILL, "bg-card whitespace-nowrap", CHECK_STYLE[c.result])}>
                   {PASSED_LABEL[c.result]}
                 </Badge>
               </TableCell>

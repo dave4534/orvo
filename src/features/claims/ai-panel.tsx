@@ -13,7 +13,7 @@ import { replyTo, suggestedPrompts } from "@/mocks/ai-replies";
 import { isUndoable, undoDecision, useClaims } from "@/store/claims-store";
 import { useWorkspace, type AiMessage } from "@/store/workspace-store";
 import { isCardTool } from "@/logic/chat-cards";
-import { cardsOf, ChatCard } from "./chat-cards";
+import { cardsOf, ChatCard, TriageCard } from "./chat-cards";
 import { ChatComposer } from "./chat-composer";
 import { ChatMarkdown } from "./chat-markdown";
 import { VoiceBar } from "./voice-chat";
@@ -103,6 +103,15 @@ function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry, shortcut
   // Notes the app posts on its own (claim summary and recommendation, offline reply). Plain text like every other answer.
   if (m.metadata?.note) {
     const noteSuggest = m.metadata.suggest && m.metadata.claimId && canAct(m.metadata.claimId, m.metadata.suggest) ? m.metadata.suggest : null;
+    if (m.metadata.triage && m.metadata.claimId) {
+      return (
+        <div className={`${enter} flex flex-col`}>
+          <TriageCard claimId={m.metadata.claimId} text={text}>
+            {noteSuggest ? <SuggestedAction label={noteSuggest} onAct={onAct} shortcut={shortcutLabel === noteSuggest} /> : null}
+          </TriageCard>
+        </div>
+      );
+    }
     return (
       <div className={`${enter} flex flex-col gap-2 text-sm leading-relaxed`}>
         {m.metadata.heading ? <div className="text-xs text-muted-foreground">{m.metadata.heading}</div> : null}

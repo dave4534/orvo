@@ -7,6 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { firstName } from "@/logic/actions";
+import { employeeName } from "@/logic/comparison";
+import { initials } from "@/logic/format";
 import { isCardTool, type CardKind } from "@/logic/chat-cards";
 import type { LocalClaim } from "@/logic/local";
 import { photoFor } from "@/logic/photos";
@@ -139,4 +141,42 @@ export function ChatCard({ tool, output }: { tool: CardKind; output: Record<stri
     case "messageEmployee":
       return <MessageCard claim={claim} text={String(output.sent ?? "")} />;
   }
+}
+
+/**
+ * The note posted each time a new claim comes up, as a card: the employee's photo and name, then the policy gap, the recommendation or
+ * decision, and the reasoning. The text is the three "**Label:** value" lines from `triageNote`; the recommended button goes in `children`.
+ */
+export function TriageCard({ claimId, text, children }: { claimId: string; text: string; children?: React.ReactNode }) {
+  const { claims } = useClaims();
+  const claim = claims.find((c) => c.id === claimId);
+  const rows = [...text.matchAll(/\*\*(.+?):\*\*\s*(.+)/g)].map((m) => ({ label: m[1], value: m[2] }));
+  const name = claim ? employeeName(claim) : "";
+  return (
+    <Card size="sm" className="w-full self-stretch">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Avatar size="sm" className="shrink-0">
+            <AvatarImage src={photoFor(claim?.employee_id)} alt="" />
+            <AvatarFallback className="text-[10px] font-semibold">{initials(name)}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <CardTitle className="truncate">{name}</CardTitle>
+            <CardDescription>{claimId}</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        <dl className="flex flex-col gap-2">
+          {rows.map((r) => (
+            <div key={r.label}>
+              <dt className="text-xs font-semibold text-muted-foreground">{r.label}</dt>
+              <dd className="text-sm">{r.value}</dd>
+            </div>
+          ))}
+        </dl>
+        {children}
+      </CardContent>
+    </Card>
+  );
 }

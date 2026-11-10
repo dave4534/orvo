@@ -101,10 +101,7 @@ export function ComparisonView({ comparison }: { comparison: Comparison }) {
           {comparison.evidence.map((e) => (
             <div key={`${e.label}-${e.value}`} className="grid grid-cols-[8.5rem_1fr] gap-3">
               <dt className="text-muted-foreground">{e.label}</dt>
-              <dd className={cn("min-w-0 break-words", e.differs && "rounded bg-warning px-1 font-semibold text-warning-foreground")}>
-                {e.value}
-                {e.differs ? <span className="sr-only"> (differs)</span> : null}
-              </dd>
+              <dd className="min-w-0 break-words">{e.value}</dd>
             </div>
           ))}
         </dl>

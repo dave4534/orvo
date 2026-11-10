@@ -28,7 +28,7 @@ export type Comparison = {
   summary?: string;
   /** True when the receipt and the approval agree: a filled green check. Anything else is an issue: a filled warning. */
   matches?: boolean;
-  evidence: { label: string; value: string; differs?: boolean }[];
+  evidence: { label: string; value: string }[];
 };
 
 const SYMBOL: Record<string, string> = { USD: "$", EUR: "€", SEK: "SEK " };
@@ -79,16 +79,15 @@ function identityComparison(claim: LocalClaim, other: LocalClaim): Comparison {
   ];
   const sameRide = rows.find((r) => r.label === "Ride ID")?.differs === false;
   const otherName = firstName(other);
-  const otherEmployee = other.employee_id === claim.employee_id ? "earlier claim" : `${otherName}'s claim`;
   return {
     kind: "identity",
     left: { label: "Earlier claim", tone: "neutral", text: other.id, sub: `${otherName}, ${formatSubmitted(other.submitted_at)}` },
     right: { label: "This claim", tone: "info", text: claim.id, sub: `${firstName(claim)}, ${formatSubmitted(claim.submitted_at)}` },
     sentence: sameRide
-      ? `Declined as a possible duplicate of ${other.id}. Same ride ID on both claims, so it is the same trip claimed twice.`
-      : `Declined as a possible duplicate of ${other.id}. Same fare and route as ${otherEmployee}, but the ride ID and pickup differ, so these look like two rides.`,
+      ? `Possible duplicate of ${other.id}. Same ride ID on both.`
+      : `Possible duplicate of ${other.id}. Ride ID and pickup differ.`,
     // The fields side by side, one line each: the earlier value, then this claim's value when it differs.
-    evidence: rows.map((r) => ({ label: r.label, value: r.differs ? `${r.left}, now ${r.right}` : r.left, differs: r.differs })),
+    evidence: rows.map((r) => ({ label: r.label, value: r.differs ? `${r.left}, now ${r.right}` : r.left })),
   };
 }
 
@@ -109,7 +108,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
           left: { label: "Policy", tone: "neutral", amount: FINANCE_LIMIT, sub: "Above this, Finance approves too" },
           right: { label: "Claim", tone: "info", amount: claimed, sub: original.currency !== "USD" ? `${money(original.value, original.currency)}${claim.amount.fx ? ` at ${claim.amount.fx.rate}` : ""}` : undefined },
           scale: scaleFor(FINANCE_LIMIT, claimed),
-          sentence: `${formatUsd(gap)} over the limit, so it needs Finance after this decision.`,
+          sentence: `${formatUsd(gap)} over the limit, so Finance needs to approve.`,
           evidence: note,
         };
       }
@@ -158,7 +157,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
           left: { label: "Policy", tone: "neutral", amount: FINANCE_LIMIT, sub: "Finance limit" },
           right: { label: "Combined", tone: "info", amount: combined, sub: `${claim.id} plus ${linked.map((c) => c.id).join(", ")}` },
           scale: scaleFor(FINANCE_LIMIT, combined),
-          sentence: `${formatUsd(combined - FINANCE_LIMIT)} over the limit when combined. The invoices are separate.`,
+          sentence: `${formatUsd(combined - FINANCE_LIMIT)} over the limit when combined.`,
           evidence,
         };
       }
@@ -186,7 +185,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
           kind: "text",
           left: { label: "No rule", tone: "neutral", text: "Nothing covers entertainment or team events" },
           right: { label: "Claim", tone: "info", amount: claimed, sub: [tickets && `${tickets} tickets`, fees && `${fees} fees`].filter(Boolean).join(" plus ") || undefined },
-          sentence: "There is no rule to compare this against, so the decision is open.",
+          sentence: "No rule covers this, so the decision is open.",
           evidence: [
             ...(fact(claim, /paid by/i) ? [{ label: "Paid by", value: fact(claim, /paid by/i)! }] : []),
             ...note,
@@ -228,7 +227,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
       left: { label: "Receipt", tone: "neutral", amount: total, sub: "Total printed on the receipt" },
       right: { label: "Approved", tone: "good", amount: paid, sub: claim.noa.overrode_agent ? `Automatically approved at ${formatUsd(claimed)}` : "Amount approved" },
       scale: scaleFor(total, paid),
-      sentence: diff < 0.005 ? "Receipt and approval match." : `You approved ${formatUsd(paid)}, ${formatUsd(diff)} ${paid < total ? "less" : "more"} than the receipt.`,
+      sentence: diff < 0.005 ? "Receipt and approval match." : `Approved ${formatUsd(paid)}, ${formatUsd(diff)} ${paid < total ? "less" : "more"} than the receipt.`,
       matches: diff < 0.005,
       evidence: [],
     };
@@ -263,7 +262,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
             left: { label: "Policy", tone: "neutral", amount: cap, sub: `${formatUsd(MEAL_CAP)} × ${doc.covers} on the receipt` },
             right: { label: "Approved", tone: "good", amount: claimed, sub: `Claimed for ${claim.attendees.count} people` },
             scale: scaleFor(cap, claimed),
-            sentence: `Policy and approval differ by ${formatUsd(claimed - cap)}. The receipt shows ${doc.covers} diners, the claim says ${claim.attendees.count}.`,
+            sentence: `${formatUsd(claimed - cap)} over the cap. Receipt: ${doc.covers} diners, claim: ${claim.attendees.count}.`,
             evidence: [],
           };
         }
@@ -273,7 +272,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
         left: { label: "Receipt", tone: "neutral", amount: doc.total, sub: "Total printed on the receipt" },
         right: { label: "Approved", tone: "good", amount: paid, sub: claim.status === "approved_by_noa" ? "Amount approved" : "Total read from receipt" },
         scale: scaleFor(doc.total, paid),
-        sentence: Math.abs(doc.total - paid) < 0.005 ? "Receipt and approval match." : `You approved ${formatUsd(paid)}, ${formatUsd(Math.abs(doc.total - paid))} ${paid < doc.total ? "less" : "more"} than the receipt.`,
+        sentence: Math.abs(doc.total - paid) < 0.005 ? "Receipt and approval match." : `Approved ${formatUsd(paid)}, ${formatUsd(Math.abs(doc.total - paid))} ${paid < doc.total ? "less" : "more"} than the receipt.`,
         matches: Math.abs(doc.total - paid) < 0.005,
         evidence: [],
       };
@@ -287,7 +286,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
       return {
         kind: "money",
         left: { label: "Claim", tone: "neutral", amount: claim.amount.usd_claimed, sub: "As claimed" },
-        right: { label: "You approved", tone: "good", amount: claim.noa?.approved_amount_usd ?? claimed, sub: "Waiting on Finance" },
+        right: { label: "Approved", tone: "good", amount: claim.noa?.approved_amount_usd ?? claimed, sub: "Waiting on Finance" },
         sentence: "With Finance. No action is needed until Finance decides.",
         evidence: [],
       };
@@ -311,9 +310,9 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
       right: { label: approved ? "Approved" : "Declined", tone: approved ? "good" : "neutral", amount: claim.noa.approved_amount_usd, sub: claim.noa.note || undefined },
       sentence: approved
         ? claim.noa.approved_amount_usd === claimed
-          ? "You approved the full amount."
-          : `You approved ${formatUsd(claim.noa.approved_amount_usd)}, ${formatUsd(claimed - claim.noa.approved_amount_usd)} less than claimed.`
-        : "You declined this claim.",
+          ? "Approved the full amount."
+          : `Approved ${formatUsd(claim.noa.approved_amount_usd)}, ${formatUsd(claimed - claim.noa.approved_amount_usd)} less than claimed.`
+        : "Declined this claim.",
       evidence: [],
     };
   }
