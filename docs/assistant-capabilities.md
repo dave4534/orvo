@@ -34,6 +34,7 @@ The single list is `src/logic/assistant-tools.ts`. `npm run audit:assistant` che
 | `showClaimsTab` | Claims list | Tabs: Needs review, Waiting on others, Done, All |
 | `searchClaims` | Claims list | Search box |
 | `setFilters` | Claims list | Date range, Employee and Status filters |
+| `setSort` | Claims list | Sort menu beside the filters |
 | `clearSearch` | Claims list | Reset button (clears the search and all filters) |
 | `dismissBrief` | Claims list | Brief banner: Dismiss |
 | `reviewAll` | Claims list | Brief banner: Review all |

@@ -37,6 +37,7 @@ const LABELS: Record<string, { running: (i: Input) => string; done: (i: Input) =
   "tool-goToSection": { running: (i) => `Opening ${(i as { section?: string }).section ?? "the section"}`, done: (i) => `Opened ${(i as { section?: string }).section ?? "the section"}` },
   "tool-closeChat": { running: () => "Closing the chat", done: () => "Closed the chat" },
   "tool-setFilters": { running: () => "Setting the filters", done: () => "Set the filters" },
+  "tool-setSort": { running: () => "Setting the sort", done: () => "Set the sort" },
   "tool-dismissBrief": { running: () => "Dismissing the brief", done: () => "Dismissed the brief" },
   "tool-reviewAll": { running: () => "Starting the review", done: () => "Started the review" },
   "tool-selectClaims": { running: () => "Selecting claims", done: () => "Selected claims" },

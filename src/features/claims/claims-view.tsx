@@ -18,10 +18,13 @@ import {
   DEFAULT_FILTERS,
   inTab,
   isFiltered,
-  sortForTab,
+  defaultSortFor,
+  sortClaims,
+  statusOptionsFor,
   tabCounts,
   TABS,
   type ClaimFilters,
+  type SortId,
   type TabId,
 } from "@/logic/claims";
 import { bulkActionsFor, type BulkActionId } from "@/logic/bulk";
@@ -70,6 +73,8 @@ export function ClaimsView() {
 
   const [tab, setTab] = useState<TabId>("needs_review");
   const [filters, setFilters] = useState<ClaimFilters>(DEFAULT_FILTERS);
+  // A sort chosen on a tab applies to that tab only. Until one is chosen, each tab uses its default.
+  const [sortOverride, setSortOverride] = useState<{ tab: TabId; sort: SortId } | null>(null);
   const [briefDismissed, setBriefDismissed] = useState<Set<TabId>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -160,6 +165,11 @@ export function ClaimsView() {
           if (openId !== null) return listOnly;
           changeFilters({ ...filters, query: String(input.query ?? "") });
           return { ok: true, query: input.query };
+        }
+        case "setSort": {
+          if (openId !== null) return listOnly;
+          setSortOverride({ tab, sort: input.sort as SortId });
+          return { ok: true, sort: input.sort };
         }
         case "setFilters": {
           if (openId !== null) return listOnly;
@@ -357,7 +367,8 @@ export function ClaimsView() {
   const brief = useMemo(() => buildDailyBrief(claims, now), [claims, now]);
   const doneBrief = useMemo(() => buildDoneBrief(claims, now), [claims, now]);
   const counts = useMemo(() => tabCounts(claims, filters, now), [claims, filters, now]);
-  const rows = useMemo(() => sortForTab(inTab(applyFilters(claims, filters, now), tab, now), tab), [claims, filters, tab, now]);
+  const sort: SortId = sortOverride?.tab === tab ? sortOverride.sort : defaultSortFor(tab);
+  const rows = useMemo(() => sortClaims(inTab(applyFilters(claims, filters, now), tab, now), sort), [claims, filters, tab, now, sort]);
   const sections = useMemo(() => sectionsFor(tab, rows), [tab, rows]);
 
   const filtered = isFiltered(filters);
@@ -456,14 +467,14 @@ export function ClaimsView() {
 
   function reviewAll() {
     setTab("needs_review");
-    const first = sortForTab(inTab(applyFilters(claims, DEFAULT_FILTERS, now), "needs_review", now), "needs_review")[0];
+    const first = sortClaims(inTab(applyFilters(claims, DEFAULT_FILTERS, now), "needs_review", now), defaultSortFor("needs_review"))[0];
     if (first) openClaimById(first.id);
   }
 
   // The Done brief's review opens the Done queue, newest first.
   function reviewDone() {
     setTab("done");
-    const first = sortForTab(inTab(applyFilters(claims, DEFAULT_FILTERS, now), "done", now), "done")[0];
+    const first = sortClaims(inTab(applyFilters(claims, DEFAULT_FILTERS, now), "done", now), defaultSortFor("done"))[0];
     if (first) openClaimById(first.id);
   }
 
@@ -544,6 +555,8 @@ export function ClaimsView() {
           onValueChange={(value) => {
             track("tab_changed", { tab: value });
             setTab(value as TabId);
+            // Status choices belong to the tab they were made on, so they start over here.
+            setFilters((f) => ({ ...f, statuses: [] }));
             setSelectedIds(new Set());
           }}
         >
@@ -580,7 +593,9 @@ export function ClaimsView() {
         ) : null}
 
         <ClaimsFilters filters={filters} onChange={changeFilters} onReset={() => changeFilters(DEFAULT_FILTERS)} canReset={filtered}
-          showStatus={tab === "all"}
+          statusOptions={statusOptionsFor(tab)}
+          sort={sort}
+          onSortChange={(next) => setSortOverride({ tab, sort: next })}
           trailing={
             <>
               <BulkActions actions={bulkActions} onRun={runBulk} />

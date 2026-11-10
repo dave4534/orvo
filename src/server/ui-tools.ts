@@ -74,12 +74,16 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
     tools.showClaimsTab = tool({ description: "Switch the claims list to one of its tabs.", inputSchema: z.object({ tab: z.enum(CLAIM_TABS) }) });
     tools.searchClaims = tool({ description: "Search the claims list, for example by employee, merchant or claim id.", inputSchema: z.object({ query: z.string().max(80) }) });
     tools.setFilters = tool({
-      description: `Set the filters on the claims list. Only the fields you pass change. Employees use these ids: ${TEAM_HELP}. Pass an empty array to clear that filter. Statuses only apply on the All tab.`,
+      description: `Set the filters on the claims list. Only the fields you pass change. Employees use these ids: ${TEAM_HELP}. Pass an empty array to clear that filter. Statuses are the ones the current tab offers; the Status filter is disabled on a tab with only one.`,
       inputSchema: z.object({
         dateRange: z.enum(DATE_RANGES).optional(),
         employees: z.array(z.enum(TEAM)).optional(),
         statuses: z.array(z.enum(STATUSES)).optional(),
       }),
+    });
+    tools.setSort = tool({
+      description: 'Set the sort on the claims list for the current tab. "wait" is wait time, longest first (the default on Needs review); "declined" puts declined claims first (the default on Done).',
+      inputSchema: z.object({ sort: z.enum(["wait", "newest", "amount", "employee", "declined"]) }),
     });
     tools.clearSearch = tool({ description: "Clear the search and every filter on the claims list.", inputSchema: z.object({}) });
     tools.dismissBrief = tool({ description: "Dismiss the brief banner at the top of the claims list.", inputSchema: z.object({}) });

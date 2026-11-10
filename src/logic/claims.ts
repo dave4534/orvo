@@ -2,6 +2,7 @@ import type { PersonId, Status } from "@/data/types";
 import { isWaitOver, type LocalClaim } from "./local";
 import { dataset, NOW } from "@/data";
 import { matchesQuery } from "./search";
+import { displayName } from "./format";
 
 export type TabId = "needs_review" | "waiting" | "done" | "all";
 
@@ -75,12 +76,39 @@ export function inTab(claims: LocalClaim[], tab: TabId, now: Date = NOW): LocalC
   return statuses ? claims.filter((c) => statuses.includes(c.status)) : claims;
 }
 
-/** Needs review: oldest first, because the metric is time to approval. Other tabs: newest first. PRD 6.6. */
-export function sortForTab(claims: LocalClaim[], tab: TabId): LocalClaim[] {
-  const dir = tab === "needs_review" ? 1 : -1;
-  return [...claims].sort(
-    (a, b) => dir * (new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()),
-  );
+export type SortId = "wait" | "newest" | "amount" | "employee" | "declined";
+
+export const SORTS: { id: SortId; label: string }[] = [
+  { id: "wait", label: "Wait time" },
+  { id: "newest", label: "Newest submitted" },
+  { id: "amount", label: "Amount, highest first" },
+  { id: "employee", label: "Employee, A to Z" },
+  { id: "declined", label: "Declined first" },
+];
+
+/** Needs review sorts by wait time (PRD 6.6, the metric is time to approval). Done starts with declined claims. */
+export const defaultSortFor = (tab: TabId): SortId => (tab === "done" ? "declined" : "wait");
+
+/** Status filter options for a tab: only the statuses that can appear there. */
+export const statusOptionsFor = (tab: TabId): Status[] => TABS.find((t) => t.id === tab)?.statuses ?? STATUS_FILTER_OPTIONS;
+
+const time = (c: LocalClaim) => new Date(c.submitted_at).getTime();
+
+export function sortClaims(claims: LocalClaim[], sort: SortId): LocalClaim[] {
+  const byWait = (a: LocalClaim, b: LocalClaim) => time(a) - time(b);
+  const rank = (c: LocalClaim) => (c.status === "declined_by_agent" || c.status === "declined_by_noa" ? 0 : 1);
+  switch (sort) {
+    case "wait":
+      return [...claims].sort(byWait);
+    case "newest":
+      return [...claims].sort((a, b) => time(b) - time(a));
+    case "amount":
+      return [...claims].sort((a, b) => b.amount.usd_claimed - a.amount.usd_claimed || byWait(a, b));
+    case "employee":
+      return [...claims].sort((a, b) => displayName(personById(a.employee_id) ?? { name: "" }).localeCompare(displayName(personById(b.employee_id) ?? { name: "" })) || byWait(a, b));
+    case "declined":
+      return [...claims].sort((a, b) => rank(a) - rank(b) || byWait(a, b));
+  }
 }
 
 export function tabCounts(claims: LocalClaim[], f: ClaimFilters, now: Date = NOW): Record<TabId, number> {

@@ -13,6 +13,7 @@ export const UI_TOOLS = [
   { name: "showClaimsTab", surface: "Claims list", control: "Tabs: Needs review, Waiting on others, Done, All" },
   { name: "searchClaims", surface: "Claims list", control: "Search box" },
   { name: "setFilters", surface: "Claims list", control: "Date range, Employee and Status filters" },
+  { name: "setSort", surface: "Claims list", control: "Sort menu beside the filters" },
   { name: "clearSearch", surface: "Claims list", control: "Reset button (clears the search and all filters)" },
   { name: "dismissBrief", surface: "Claims list", control: "Brief banner: Dismiss" },
   { name: "reviewAll", surface: "Claims list", control: "Brief banner: Review all" },

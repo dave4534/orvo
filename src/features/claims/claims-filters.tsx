@@ -13,10 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { PersonId, Status } from "@/data/types";
 import {
   RANGES,
-  STATUS_FILTER_OPTIONS,
+  SORTS,
   teamMembers,
   type ClaimFilters,
   type RangeId,
+  type SortId,
 } from "@/logic/claims";
 import { displayName, STATUS_LABEL } from "@/logic/format";
 
@@ -25,18 +26,23 @@ type Props = {
   onChange: (next: ClaimFilters) => void;
   onReset: () => void;
   canReset: boolean;
-  showStatus: boolean;
+  /** Statuses that can appear in the current tab. One or none disables the Status filter. */
+  statusOptions: Status[];
+  sort: SortId;
+  onSortChange: (sort: SortId) => void;
   /** Shown at the right end of the row, for example the bulk actions. */
   trailing?: ReactNode;
 };
 
 const RANGE_ITEMS = RANGES.map((r) => ({ value: r.id, label: r.label }));
+const SORT_ITEMS = SORTS.map((s) => ({ value: s.id, label: s.label }));
 
 function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 }
 
-export function ClaimsFilters({ filters, onChange, onReset, canReset, showStatus, trailing }: Props) {
+export function ClaimsFilters({ filters, onChange, onReset, canReset, statusOptions, sort, onSortChange, trailing }: Props) {
+  const statusDisabled = statusOptions.length <= 1;
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="relative w-full max-w-sm min-w-56 flex-1">
@@ -91,29 +97,41 @@ export function ClaimsFilters({ filters, onChange, onReset, canReset, showStatus
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {showStatus ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button variant="outline" className="h-10 bg-card px-3">
-                Status{filters.statuses.length > 0 ? ` (${filters.statuses.length})` : ""}
-                <ChevronDown data-icon="inline-end" />
-              </Button>
-            }
-          />
-          <DropdownMenuContent className="min-w-56">
-            {STATUS_FILTER_OPTIONS.map((s: Status) => (
-              <DropdownMenuCheckboxItem
-                key={s}
-                checked={filters.statuses.includes(s)}
-                onCheckedChange={() => onChange({ ...filters, statuses: toggle(filters.statuses, s) })}
-              >
-                {STATUS_LABEL[s]}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ) : null}
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button variant="outline" className="h-10 bg-card px-3" disabled={statusDisabled}>
+              Status{filters.statuses.length > 0 ? ` (${filters.statuses.length})` : ""}
+              <ChevronDown data-icon="inline-end" />
+            </Button>
+          }
+        />
+        <DropdownMenuContent className="min-w-56">
+          {statusOptions.map((s: Status) => (
+            <DropdownMenuCheckboxItem
+              key={s}
+              checked={filters.statuses.includes(s)}
+              onCheckedChange={() => onChange({ ...filters, statuses: toggle(filters.statuses, s) })}
+            >
+              {STATUS_LABEL[s]}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Select value={sort} items={SORT_ITEMS} onValueChange={(value) => onSortChange(value as SortId)}>
+        <SelectTrigger aria-label="Sort claims" className="h-10! bg-card px-3">
+          <span className="text-muted-foreground">Sort:</span>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {SORTS.map((s) => (
+            <SelectItem key={s.id} value={s.id}>
+              {s.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       <Button variant="ghost" className="h-10" onClick={onReset} disabled={!canReset}>
         Reset
