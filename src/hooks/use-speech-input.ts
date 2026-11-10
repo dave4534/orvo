@@ -15,12 +15,22 @@ type Handlers = {
 
 export type SpeechInputError = "blocked" | "unavailable" | null;
 
+// Every recognition that is running. Used to make sure nothing keeps listening once voice mode is off.
+const running = new Set<Recognition>();
+
+/** Stops every microphone session this app started. */
+export function stopAllListening() {
+  for (const r of running) r.abort();
+  running.clear();
+}
+
 /** Listens through the microphone and reports what was said. */
 export function useSpeechInput() {
   const [supported] = useState(() => getRecognitionCtor() !== null);
   const [listening, setListening] = useState(false);
   const [error, setError] = useState<SpeechInputError>(null);
   const recognition = useRef<Recognition | null>(null);
+  const mounted = useRef(true);
 
   const stop = useCallback(() => {
     recognition.current?.stop();
@@ -28,7 +38,8 @@ export function useSpeechInput() {
 
   const start = useCallback((handlers: Handlers) => {
     const Ctor = getRecognitionCtor();
-    if (!Ctor) return;
+    // Nothing may start listening after the component that asked for it is gone.
+    if (!Ctor || !mounted.current) return;
     recognition.current?.abort();
     const r = new Ctor();
     r.lang = "en-US";
@@ -53,20 +64,26 @@ export function useSpeechInput() {
       else if (e.error === "network" || e.error === "audio-capture") setError("unavailable");
     };
     r.onend = () => {
+      running.delete(r);
       setListening(false);
       handlers.onInterim?.("");
       handlers.onEnded?.();
     };
     recognition.current = r;
+    running.add(r);
     r.start();
   }, []);
 
-  useEffect(
-    () => () => {
-      recognition.current?.abort();
-    },
-    [],
-  );
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      if (recognition.current) {
+        running.delete(recognition.current);
+        recognition.current.abort();
+      }
+    };
+  }, []);
 
   return { supported, listening, error, start, stop };
 }
