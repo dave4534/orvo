@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { Info, Paperclip, Sparkles, X } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { StatusBanner } from "@/components/status-banner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +14,7 @@ import { dataset } from "@/data";
 import type { CheckResult, ClaimEvent } from "@/data/types";
 import { employeeName } from "@/logic/comparison";
 import { formatSubmitted, formatUsd, initials } from "@/logic/format";
+import { photoFor } from "@/logic/photos";
 import type { LocalClaim } from "@/logic/local";
 import { PILL, TABS_LIST, TABS_TRIGGER } from "@/lib/blocks";
 import { cn } from "@/lib/utils";
@@ -89,7 +90,7 @@ function DocumentRow({
 const DOC_ICON = "flex size-9 shrink-0 items-center justify-center rounded-lg";
 
 /** Marks an event: a sparkle for what Orvo did, a profile initial for what a person did. */
-function EventMarker({ actor, name }: { actor: ClaimEvent["actor"]; name: string }) {
+function EventMarker({ actor, name, personId }: { actor: ClaimEvent["actor"]; name: string; personId: string }) {
   if (actor === "agent") {
     return (
       <span aria-hidden className="flex size-6 shrink-0 items-center justify-center rounded-full border border-info-border bg-info text-info-foreground">
@@ -100,6 +101,7 @@ function EventMarker({ actor, name }: { actor: ClaimEvent["actor"]; name: string
   if (actor === "employee" || actor === "noa") {
     return (
       <Avatar size="sm" aria-hidden className="shrink-0">
+        <AvatarImage src={photoFor(personId)} alt="" />
         <AvatarFallback className="text-[10px] font-semibold">{initials(name)}</AvatarFallback>
       </Avatar>
     );
@@ -119,7 +121,7 @@ export function ActivityList({ claim }: { claim: LocalClaim }) {
       {events.map((e, i) => (
         <li key={`${e.at}-${i}`} className="relative flex gap-3 pb-4 last:pb-0">
           {i < events.length - 1 ? <span aria-hidden className="absolute top-6 bottom-0 left-[11px] w-px bg-border" /> : null}
-          <EventMarker actor={e.actor} name={e.actor === "employee" ? employeeName(claim) : "Noa"} />
+          <EventMarker actor={e.actor} name={e.actor === "employee" ? employeeName(claim) : "Noa"} personId={e.actor === "employee" ? claim.employee_id : "noa"} />
           <div className="min-w-0 pt-0.5">
             <div className="font-semibold">{e.text}</div>
             <div className="text-xs text-muted-foreground">{formatSubmitted(e.at)}</div>

@@ -14,7 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,6 +25,7 @@ import type { Category } from "@/data/types";
 import { basisFor } from "@/logic/basis";
 import { employeeName } from "@/logic/comparison";
 import { claimStatusLabel, formatSubmitted, formatUsd, initials } from "@/logic/format";
+import { photoFor } from "@/logic/photos";
 import type { LocalClaim } from "@/logic/local";
 import type { Section } from "@/logic/sections";
 import { PILL } from "@/lib/blocks";
@@ -200,6 +201,7 @@ function SectionRows({
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Avatar>
+                      <AvatarImage src={photoFor(claim.employee_id)} alt="" />
                       <AvatarFallback>{initials(name)}</AvatarFallback>
                     </Avatar>
                     <span className="truncate font-medium">{name}</span>
