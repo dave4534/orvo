@@ -18,7 +18,7 @@ export function AiBriefBanner({ title, text, reviewCount, onDismiss, onReviewAll
       icon={<Sparkle />}
       title={title}
       onDismiss={onDismiss}
-      actions={reviewCount > 0 ? <Button onClick={onReviewAll}>Review all {reviewCount}</Button> : null}
+      actions={reviewCount > 0 ? <Button onClick={onReviewAll} className="bg-brief text-brief-foreground hover:bg-brief/90">Review all {reviewCount}</Button> : null}
     >
       {text}
     </StatusBanner>
