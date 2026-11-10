@@ -563,7 +563,7 @@ export function ClaimsView() {
           ) : null
         ) : tab !== "waiting" && !briefDismissed.has("needs_review") ? (
           <AiBriefBanner
-            title={`Daily brief, ${brief.dateLabel}`}
+            title="Good morning Noa, let's get started."
             text={briefSentence(brief)}
             reviewCount={brief.needsYou}
             onDismiss={() => dismissBrief("needs_review")}
