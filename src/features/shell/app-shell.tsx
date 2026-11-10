@@ -34,7 +34,7 @@ function TopBar() {
                 size="icon-lg"
                 aria-label="Ask Orvo AI"
                 aria-pressed={aiOpen}
-                className={cn(aiOpen && "border-primary bg-info text-primary hover:bg-info hover:text-primary")}
+                className={cn(aiOpen && "border-primary bg-info text-foreground hover:bg-info hover:text-foreground")}
                 onClick={() => setAiOpen(!aiOpen)}
               >
                 <Sparkles />

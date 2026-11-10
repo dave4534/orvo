@@ -111,7 +111,7 @@ export function WorkingIndicator({ label }: { label: string }) {
   const seconds = useElapsedSeconds();
   return (
     <div className="flex items-center gap-2 text-sm" role="status" aria-live="polite">
-      <Sparkles aria-hidden className="size-4 animate-pulse text-primary" />
+      <Sparkles aria-hidden className="size-4 animate-pulse text-foreground" />
       <Shimmer>{label}</Shimmer>
       <span className="text-xs text-muted-foreground tabular-nums">{seconds}s</span>
     </div>

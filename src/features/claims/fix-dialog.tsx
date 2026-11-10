@@ -322,6 +322,7 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
                 Back
               </Button>
               <Button
+                className={(option === "declined_valid" ? reverseChoice === "reverse" : input?.to === "approved") ? "bg-success text-success-foreground hover:bg-success/90" : undefined}
                 disabled={option === "declined_valid" ? false : !input}
                 onClick={() => {
                   if (option === "declined_valid" && reverseChoice === "keep") return onCancel();

@@ -66,6 +66,8 @@ export function ActionDialog({ claim, allClaims, spec, onConfirm, onCancel, init
     id: spec.askAmount && amount === claimed ? "approve" : spec.input.id,
   };
   const preview = actionPreview(claim, input, allClaims);
+  // Approvals are success actions (green). Everything else keeps the primary yellow.
+  const approves = !spec.destructive && (input.to === "approved" || ["approve", "approve_amount", "exception"].includes(input.id));
   const messageMissing = spec.askMessage === "ask" || spec.askMessage === "hold" ? message.trim() === "" : false;
   const blocked = Boolean(amountError) || messageMissing;
 
@@ -125,6 +127,7 @@ export function ActionDialog({ claim, allClaims, spec, onConfirm, onCancel, init
           </Button>
           <Button
             variant={spec.destructive ? "destructive" : "default"}
+            className={approves ? "bg-success text-success-foreground hover:bg-success/90" : undefined}
             disabled={blocked}
             onClick={() => {
               if (blocked) {
