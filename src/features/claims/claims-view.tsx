@@ -529,7 +529,7 @@ export function ClaimsView() {
             />
           ) : (
       <main className="mx-auto flex min-w-0 w-full max-w-[1400px] flex-1 flex-col gap-6 p-8">
-        <h1 className="text-3xl font-semibold tracking-tight">Claims</h1>
+        <h1 className="text-[1.75rem] font-semibold tracking-tight">Claims</h1>
 
         <Tabs
           value={tab}

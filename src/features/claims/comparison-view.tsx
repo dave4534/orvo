@@ -31,7 +31,7 @@ function HalfView({ half, dot }: { half: Half; dot: string }) {
         {half.label}
       </div>
       {half.amount !== undefined ? (
-        <div className="mt-1.5 text-[2.125rem] leading-[2.6rem] font-semibold tracking-tight tabular-nums">
+        <div className="mt-1.5 text-[2rem] leading-[2.5rem] font-semibold tracking-tight tabular-nums">
           {formatUsd(half.amount)}
         </div>
       ) : (

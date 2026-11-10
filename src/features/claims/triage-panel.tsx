@@ -284,10 +284,10 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                 <AvatarFallback>{initials(full)}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[1.375rem] leading-7 font-semibold">{full}</div>
+                <div className="truncate text-[1.25rem] leading-7 font-semibold">{full}</div>
                 {flat ? null : <div className="text-xs text-muted-foreground">{subtitle}</div>}
               </div>
-              <div className="text-right text-3xl leading-9 font-semibold tabular-nums">{formatUsd(claimed)}</div>
+              <div className="text-right text-[1.75rem] leading-9 font-semibold tabular-nums">{formatUsd(claimed)}</div>
             </div>
 
             <div className="flex items-center justify-between gap-3 border-b bg-muted/40 px-6 py-2.5">
