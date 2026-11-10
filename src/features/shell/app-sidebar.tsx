@@ -11,9 +11,10 @@ import {
   Users,
 } from "lucide-react";
 
-import { RailNav, type RailItem } from "@/components/ui/c-sidebar-2";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarRail } from "@/components/ui/sidebar";
+import { AccountButton, BrandButton, RailNav, type RailItem } from "@/components/ui/c-sidebar-2";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar";
 import { useClaims } from "@/store/claims-store";
+import { useWorkspace } from "@/store/workspace-store";
 import { notInPrototype } from "./not-in-prototype";
 
 const MAIN = [
@@ -32,6 +33,7 @@ const FOOTER = [
 
 export function AppSidebar() {
   const { claims } = useClaims();
+  const { goHome } = useWorkspace();
   // Badge on Expenses: claims waiting on Noa, unfiltered (PRD FR-NAV-3).
   const needsReview = claims.filter((c) => c.status === "waiting_on_noa").length;
 
@@ -51,12 +53,19 @@ export function AppSidebar() {
       className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
       aria-label="Main navigation"
     >
+      <SidebarHeader>
+        <BrandButton name="Orvo" subtitle="Expense claims" onSelect={goHome} />
+      </SidebarHeader>
+
       <SidebarContent role="navigation" aria-label="Primary">
-        <RailNav items={toRail(MAIN)} />
+        <RailNav label="Menu" items={toRail(MAIN)} />
       </SidebarContent>
+
       <SidebarFooter>
         <RailNav items={toRail(FOOTER)} />
+        <AccountButton name="Noa Levi" role="Manager" initials="NL" />
       </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   );
