@@ -29,7 +29,7 @@ export function UndoToast({ id, message, onUndo }: Props) {
 
   return (
     <div
-      className="flex w-[356px] max-w-full items-center justify-between gap-3 rounded-lg border bg-popover p-3 text-sm text-popover-foreground shadow-lg"
+      className="flex w-[356px] max-w-full items-center justify-between gap-3 rounded-card border bg-popover shadow-surface p-3 text-sm text-popover-foreground shadow-lg"
       onMouseEnter={() => anim.current?.pause()}
       onMouseLeave={() => anim.current?.play()}
     >

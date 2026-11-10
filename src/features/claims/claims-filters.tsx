@@ -69,7 +69,7 @@ export function ClaimsFilters({ filters, onChange, onReset, canReset, showStatus
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="outline" className="h-10 bg-card px-3">
+            <Button variant="outline">
               Employee{filters.employees.length > 0 ? ` (${filters.employees.length})` : ""}
               <ChevronDown data-icon="inline-end" />
             </Button>
@@ -92,7 +92,7 @@ export function ClaimsFilters({ filters, onChange, onReset, canReset, showStatus
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <Button variant="outline" className="h-10 bg-card px-3">
+              <Button variant="outline">
                 Status{filters.statuses.length > 0 ? ` (${filters.statuses.length})` : ""}
                 <ChevronDown data-icon="inline-end" />
               </Button>
@@ -112,7 +112,7 @@ export function ClaimsFilters({ filters, onChange, onReset, canReset, showStatus
         </DropdownMenu>
       ) : null}
 
-      <Button variant="ghost" className="h-10" onClick={onReset} disabled={!canReset}>
+      <Button variant="ghost" onClick={onReset} disabled={!canReset}>
         Reset
       </Button>
     </div>

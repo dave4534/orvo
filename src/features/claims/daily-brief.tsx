@@ -22,7 +22,7 @@ export function AiBriefBanner({ title, text, reviewCount, onDismiss, onReviewAll
         <Button variant="ghost" onClick={onDismiss}>
           Dismiss
         </Button>
-        {reviewCount > 0 ? <Button onClick={onReviewAll}>Review all {reviewCount}</Button> : null}
+        {reviewCount > 0 ? <Button variant="light" onClick={onReviewAll}>Review all {reviewCount}</Button> : null}
       </AlertAction>
     </Alert>
   );

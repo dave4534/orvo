@@ -255,11 +255,11 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
           {stacked ? (
             <>
               {/* Each card sits 2px lower and is 4px narrower than the one in front: the back card is 8px narrower than the front one. */}
-              <div aria-hidden className="absolute inset-x-8 -bottom-0.5 h-10 rounded-[14px] border bg-card" />
-              <div aria-hidden className="absolute inset-x-4 bottom-2 h-10 rounded-[14px] border bg-card" />
+              <div aria-hidden className="absolute inset-x-8 -bottom-0.5 h-10 rounded-card border bg-card" />
+              <div aria-hidden className="absolute inset-x-4 bottom-2 h-10 rounded-card border bg-card" />
             </>
           ) : null}
-          <div className={cn("relative flex flex-1 flex-col overflow-hidden", !flat && "rounded-2xl border bg-card shadow-md")}>
+          <div className={cn("relative flex flex-1 flex-col overflow-hidden", !flat && "rounded-card border bg-card shadow-surface")}>
             <div className="flex items-center gap-3.5 border-b px-6 py-[18px]">
               <Avatar size="lg">
                 <AvatarFallback>{initials(full)}</AvatarFallback>
@@ -375,7 +375,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <Button variant="outline" size="lg" className="h-11">
+                <Button variant="outline" size="lg">
                   More options <ChevronDown data-icon="inline-end" />
                 </Button>
               }
@@ -426,14 +426,14 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                 {rec.secondary.map((spec) => {
                   const Icon = ACTION_ICON[spec.id];
                   return (
-                    <Button key={spec.label} variant="outline" size="lg" className="h-11" onClick={() => choose(spec)}>
+                    <Button key={spec.label} variant={spec.id === "ask" ? "light" : "outline"} size="lg" onClick={() => choose(spec)}>
                       {Icon ? <Icon data-icon="inline-start" /> : null}
                       {spec.label}
                     </Button>
                   );
                 })}
                 {rec.recommended ? (
-                  <Button size="lg" className="h-11 bg-success text-success-foreground hover:bg-success/90" onClick={() => choose(rec.recommended!)}>
+                  <Button size="lg" onClick={() => choose(rec.recommended!)}>
                     {rec.recommended.label}
                   </Button>
                 ) : null}
@@ -441,7 +441,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
             ) : null}
 
             {spot ? (
-              <Button size="lg" className="h-11 bg-success text-success-foreground hover:bg-success/90" onClick={() => run({ id: "confirm" })}>
+              <Button size="lg" onClick={() => run({ id: "confirm" })}>
                 Confirm decision
               </Button>
             ) : null}
@@ -452,7 +452,6 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                   <Button
                     variant="outline"
                     size="lg"
-                    className="h-11"
                     onClick={() => {
                       setChoice("keep");
                       setReason("");
@@ -462,7 +461,6 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                   </Button>
                   <Button
                     size="lg"
-                    className="h-11"
                     disabled={choice === "declined" && !reason.trim()}
                     onClick={() => {
                       const text = reason.trim();
@@ -473,12 +471,12 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                   </Button>
                 </>
               ) : (
-                <Button variant="outline" size="lg" className="h-11" disabled>
+                <Button variant="outline" size="lg" disabled>
                   Save
                 </Button>
               )
             ) : agentDecided || decidedByNoa ? (
-              <Button variant="outline" size="lg" className="h-11" onClick={() => setFixOpen(true)}>
+              <Button variant="outline" size="lg" onClick={() => setFixOpen(true)}>
                 <Pencil data-icon="inline-start" />
                 Edit decision
               </Button>
@@ -486,10 +484,10 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
 
             {claim.status === "waiting_on_employee" ? (
               <>
-                <Button variant="ghost" size="lg" className="h-11" onClick={() => run({ id: "decide_now" })}>
+                <Button variant="ghost" size="lg" onClick={() => run({ id: "decide_now" })}>
                   Decide now
                 </Button>
-                <Button size="lg" className="h-11" onClick={() => onContinue?.()}>
+                <Button variant="light" size="lg" onClick={() => onContinue?.()}>
                   Continue waiting
                 </Button>
               </>

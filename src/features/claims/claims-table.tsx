@@ -61,7 +61,7 @@ export function ClaimsTable({ sections, expanded, onToggleSection, selectedIds, 
   const someSelected = !allSelected && visible.some((c) => selectedIds.has(c.id));
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-card">
+    <div className="overflow-hidden rounded-card border bg-card">
       <Table className="table-fixed">
         <TableHeader className="bg-muted/50">
           <TableRow>

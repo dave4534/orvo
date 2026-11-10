@@ -66,6 +66,10 @@
     --color-warning-foreground: var(--warning-foreground);
     --color-warning-border: var(--warning-border);
     --color-gap: var(--gap);
+    --color-highlight: var(--highlight);
+    --color-highlight-foreground: var(--highlight-foreground);
+    --radius-card: 0.5rem;
+    --shadow-surface: 0 1px 2px oklch(0.2 0 0 / 0.06), 0 4px 12px oklch(0.2 0 0 / 0.05);
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -75,32 +79,38 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Ramp-inspired theme (branch theme/ramp-inspired). Warm off-white page, white cards, deep green main action,
+   lime light action, square corners (cards 8px via --radius-card), round icon buttons. */
 :root {
-    --background: oklch(1 0 0);
-    /** Light gray behind the stacked claim cards. Kept apart from --background so the rest of the UI can be white. */
-    --stack: oklch(0.975 0.003 100);
-    --foreground: oklch(0.2 0.01 270);
+    --background: oklch(0.982 0.004 85);
+    --foreground: oklch(0.145 0 0);
+    /** Warm grey behind the stacked claim cards. */
+    --stack: oklch(0.96 0.006 85);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.3 0.17 270);
+    /** Main action: deep forest green with white text. */
+    --primary: oklch(0.4 0.1 152);
     --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
+    /** Light action: lime with black text (Button variant "light"). */
+    --highlight: oklch(0.93 0.19 112);
+    --highlight-foreground: oklch(0.145 0 0);
+    --secondary: oklch(0.955 0.006 85);
+    --secondary-foreground: oklch(0.21 0.006 85);
+    --muted: oklch(0.955 0.006 85);
+    --muted-foreground: oklch(0.52 0.01 85);
+    --accent: oklch(0.955 0.006 85);
     --accent-foreground: oklch(0.205 0 0);
     --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
+    --border: oklch(0.9 0.006 85);
+    --input: oklch(0.86 0.006 85);
+    --ring: oklch(0.6 0.05 152);
+    --chart-1: oklch(0.905 0.182 98.111);
+    --chart-2: oklch(0.795 0.184 86.047);
+    --chart-3: oklch(0.681 0.162 75.834);
+    --chart-4: oklch(0.554 0.135 66.442);
+    --chart-5: oklch(0.476 0.114 61.907);
     --info: oklch(0.955 0.025 280);
     --info-foreground: oklch(0.3 0.17 270);
     --info-border: oklch(0.86 0.06 280);
@@ -108,22 +118,23 @@
     --warning-foreground: oklch(0.42 0.1 75);
     --warning-border: oklch(0.85 0.12 90);
     --gap: oklch(0.72 0.16 65);
-    --success: oklch(0.5 0.13 150);
+    /** Same green as the main action, so Approve buttons match it. */
+    --success: oklch(0.4 0.1 152);
     --success-foreground: oklch(0.985 0 0);
-    --success-border: oklch(0.5 0.13 150);
+    --success-border: oklch(0.4 0.1 152);
     --danger: oklch(0.96 0.03 25);
     --danger-foreground: oklch(0.4 0.15 27);
     --danger-border: oklch(0.8 0.1 27);
-    --radius: 0.625rem;
+    --radius: 0;
     --header-height: 4rem;
-    --sidebar: oklch(1 0 0);
+    --sidebar: oklch(0.965 0.006 85);
     --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary: oklch(0.4 0.1 152);
     --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent: oklch(0.93 0.008 85);
     --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --sidebar-border: oklch(0.9 0.006 85);
+    --sidebar-ring: oklch(0.6 0.05 152);
 }
 
 .dark {
@@ -134,9 +145,9 @@
     --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.205 0 0);
     --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.7 0.14 275);
-    --primary-foreground: oklch(0.15 0.03 270);
-    --secondary: oklch(0.269 0 0);
+    --primary: oklch(0.795 0.184 86.047);
+    --primary-foreground: oklch(0.421 0.095 57.708);
+    --secondary: oklch(0.274 0.006 286.033);
     --secondary-foreground: oklch(0.985 0 0);
     --muted: oklch(0.269 0 0);
     --muted-foreground: oklch(0.708 0 0);
@@ -146,11 +157,11 @@
     --border: oklch(1 0 0 / 10%);
     --input: oklch(1 0 0 / 15%);
     --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
+    --chart-1: oklch(0.905 0.182 98.111);
+    --chart-2: oklch(0.795 0.184 86.047);
+    --chart-3: oklch(0.681 0.162 75.834);
+    --chart-4: oklch(0.554 0.135 66.442);
+    --chart-5: oklch(0.476 0.114 61.907);
     --info: oklch(0.27 0.06 280);
     --info-foreground: oklch(0.9 0.05 280);
     --info-border: oklch(0.4 0.1 280);
@@ -166,8 +177,8 @@
     --danger-border: oklch(0.5 0.15 27);
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.795 0.184 86.047);
+    --sidebar-primary-foreground: oklch(0.987 0.026 102.212);
     --sidebar-accent: oklch(0.269 0 0);
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);

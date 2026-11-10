@@ -146,7 +146,7 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
                 <Label
                   key={o.id}
                   htmlFor={`fix-${o.id}`}
-                  className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 font-normal ${option === o.id ? "border-primary bg-info" : ""}`}
+                  className={`flex cursor-pointer items-start gap-3 rounded-card border p-3 font-normal ${option === o.id ? "border-primary bg-info" : ""}`}
                 >
                   <RadioGroupItem id={`fix-${o.id}`} value={o.id} className="mt-0.5" />
                   <span className="flex flex-col">
@@ -170,7 +170,7 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
             </div>
 
             {(option === "amount" || option === "rate") && doc ? (
-              <div className="grid grid-cols-2 overflow-hidden rounded-xl border">
+              <div className="grid grid-cols-2 overflow-hidden rounded-card border">
                 <div className="p-4">
                   <div className="text-xs text-muted-foreground">Receipt total</div>
                   <div className="text-2xl font-semibold tabular-nums">{doc.total != null ? formatUsd(doc.total) : "Unreadable"}</div>
@@ -184,7 +184,7 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
 
             {option === "people" && doc ? (
               <div className="flex flex-col gap-3">
-                <div className="grid grid-cols-2 overflow-hidden rounded-xl border">
+                <div className="grid grid-cols-2 overflow-hidden rounded-card border">
                   <div className="p-4">
                     <div className="text-xs text-muted-foreground">Covers on the receipt</div>
                     <div className="text-2xl font-semibold">{covers}</div>
@@ -195,14 +195,14 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
                   </div>
                 </div>
                 <RadioGroup value={peopleChoice} onValueChange={(v) => setPeopleChoice(v as "cap" | "ask")} className="gap-2">
-                  <Label htmlFor="people-cap" className="flex cursor-pointer items-start gap-3 rounded-xl border p-3 font-normal">
+                  <Label htmlFor="people-cap" className="flex cursor-pointer items-start gap-3 rounded-card border p-3 font-normal">
                     <RadioGroupItem id="people-cap" value="cap" className="mt-0.5" />
                     <span>
                       <span className="block font-semibold">Pay up to the cap for {covers} people</span>
                       <span className="text-xs text-muted-foreground">{formatUsd(MEAL_CAP)} × {covers} = {formatUsd(capAmount)}</span>
                     </span>
                   </Label>
-                  <Label htmlFor="people-ask" className="flex cursor-pointer items-start gap-3 rounded-xl border p-3 font-normal">
+                  <Label htmlFor="people-ask" className="flex cursor-pointer items-start gap-3 rounded-card border p-3 font-normal">
                     <RadioGroupItem id="people-ask" value="ask" className="mt-0.5" />
                     <span>
                       <span className="block font-semibold">Ask {name} to explain</span>
@@ -215,14 +215,14 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
 
             {option === "declined_valid" ? (
               <RadioGroup value={reverseChoice} onValueChange={(v) => setReverseChoice(v as "reverse" | "keep")} className="gap-2">
-                <Label htmlFor="rev-reverse" className="flex cursor-pointer items-start gap-3 rounded-xl border p-3 font-normal">
+                <Label htmlFor="rev-reverse" className="flex cursor-pointer items-start gap-3 rounded-card border p-3 font-normal">
                   <RadioGroupItem id="rev-reverse" value="reverse" className="mt-0.5" />
                   <span>
                     <span className="block font-semibold">Reverse the decline and approve</span>
                     <span className="text-xs text-muted-foreground">Pays {formatUsd(claimed)} to {name}</span>
                   </span>
                 </Label>
-                <Label htmlFor="rev-keep" className="flex cursor-pointer items-start gap-3 rounded-xl border p-3 font-normal">
+                <Label htmlFor="rev-keep" className="flex cursor-pointer items-start gap-3 rounded-card border p-3 font-normal">
                   <RadioGroupItem id="rev-keep" value="keep" className="mt-0.5" />
                   <span>
                     <span className="block font-semibold">Keep it declined</span>
@@ -270,7 +270,7 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
               <div className="flex flex-col gap-3">
                 <RadioGroup value={otherOutcome} onValueChange={(v) => setOtherOutcome(v as "approved" | "declined" | "ask")} className="flex gap-2">
                   {(["approved", "declined", "ask"] as const).map((o) => (
-                    <Label key={o} htmlFor={`other-${o}`} className="flex flex-1 cursor-pointer items-center gap-2 rounded-xl border p-3 font-normal">
+                    <Label key={o} htmlFor={`other-${o}`} className="flex flex-1 cursor-pointer items-center gap-2 rounded-card border p-3 font-normal">
                       <RadioGroupItem id={`other-${o}`} value={o} />
                       {o === "approved" ? "Approve" : o === "declined" ? "Decline" : `Ask ${name}`}
                     </Label>
@@ -311,7 +311,7 @@ export function FixDialog({ claim, allClaims, onConfirm, onCancel }: Props) {
               <Button variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
-              <Button disabled={!option} onClick={() => setStep(2)}>
+              <Button variant="light" disabled={!option} onClick={() => setStep(2)}>
                 Continue
               </Button>
             </>

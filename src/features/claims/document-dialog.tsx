@@ -20,7 +20,7 @@ export function DocumentDialog({ claim, view, onClose }: Props) {
           <DialogDescription>{claim.id}</DialogDescription>
         </DialogHeader>
         {view.kind === "receipt" && doc ? (
-          <div className="rounded-xl border p-4 text-sm">
+          <div className="rounded-card border p-4 text-sm">
             <div className="font-semibold">{doc.merchant}</div>
             <div className="mb-3 text-xs text-muted-foreground">{doc.date}</div>
             <Table className="table-fixed">
@@ -63,7 +63,7 @@ export function DocumentDialog({ claim, view, onClose }: Props) {
             ) : null}
           </div>
         ) : view.kind === "attachment" ? (
-          <p className="rounded-xl border bg-muted/40 p-4 font-mono text-sm">{view.shows}</p>
+          <p className="rounded-card border bg-muted/40 p-4 font-mono text-sm">{view.shows}</p>
         ) : null}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>

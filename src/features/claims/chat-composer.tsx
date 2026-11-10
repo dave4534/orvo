@@ -44,7 +44,7 @@ export function ChatComposer({ busy, onSend, onStop, onVoiceChat }: Props) {
 
   return (
     <div className="shrink-0 px-4 pt-2 pb-3">
-      <InputGroup className="rounded-2xl bg-card shadow-sm has-disabled:bg-card has-disabled:opacity-100 dark:has-disabled:bg-card">
+      <InputGroup className="rounded-card bg-card shadow-sm has-disabled:bg-card has-disabled:opacity-100 dark:has-disabled:bg-card">
         <InputGroupTextarea
           aria-label="Message to Ask Orvo AI"
           placeholder={speech.listening ? "Listening" : "Ask about claims, history or policy"}
@@ -70,7 +70,7 @@ export function ChatComposer({ busy, onSend, onStop, onVoiceChat }: Props) {
                   render={
                     <InputGroupButton
                       size="icon-sm"
-                      className={cn("rounded-lg text-foreground hover:text-foreground", speech.listening && "animate-pulse bg-destructive/15 text-destructive hover:bg-destructive/20 hover:text-destructive")}
+                      className={cn("rounded-full text-foreground hover:text-foreground", speech.listening && "animate-pulse bg-destructive/15 text-destructive hover:bg-destructive/20 hover:text-destructive")}
                       aria-label={speech.listening ? "Stop dictating" : "Dictate"}
                       aria-pressed={speech.listening}
                       onClick={toggleMic}
@@ -85,7 +85,7 @@ export function ChatComposer({ busy, onSend, onStop, onVoiceChat }: Props) {
                 <Tooltip>
                   <TooltipTrigger
                     render={
-                      <InputGroupButton size="icon-sm" className="rounded-lg text-foreground hover:text-foreground" aria-label="Start voice chat" onClick={onVoiceChat}>
+                      <InputGroupButton size="icon-sm" className="rounded-full text-foreground hover:text-foreground" aria-label="Start voice chat" onClick={onVoiceChat}>
                         <AudioLines />
                       </InputGroupButton>
                     }
@@ -96,11 +96,11 @@ export function ChatComposer({ busy, onSend, onStop, onVoiceChat }: Props) {
             </>
           ) : null}
           {busy ? (
-            <InputGroupButton variant="default" size="icon-sm" className="rounded-lg" aria-label="Stop" onClick={onStop}>
+            <InputGroupButton variant="default" size="icon-sm" className="rounded-full" aria-label="Stop" onClick={onStop}>
               <Square className="fill-current" />
             </InputGroupButton>
           ) : hasText ? (
-            <InputGroupButton variant="default" size="icon-sm" className="rounded-lg" aria-label="Send (Enter)" onClick={send}>
+            <InputGroupButton variant="default" size="icon-sm" className="rounded-full" aria-label="Send (Enter)" onClick={send}>
               <ArrowUp />
             </InputGroupButton>
           ) : null}

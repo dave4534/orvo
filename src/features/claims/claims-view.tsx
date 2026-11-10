@@ -567,7 +567,7 @@ export function ClaimsView() {
             </p>
           </>
         ) : cleared ? (
-          <Empty className="rounded-xl border bg-card py-16">
+          <Empty className="rounded-card border bg-card py-16">
             <EmptyHeader>
               <EmptyMedia variant="icon">{sessionIds.length > 0 ? <PartyPopper /> : <Sparkles />}</EmptyMedia>
               <EmptyTitle>{sessionIds.length > 0 ? "Queue cleared" : "Nothing needs review"}</EmptyTitle>
@@ -593,7 +593,7 @@ export function ClaimsView() {
             </EmptyContent>
           </Empty>
         ) : (
-          <Empty className="rounded-xl border bg-card py-16">
+          <Empty className="rounded-card border bg-card py-16">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <SearchX />

@@ -165,7 +165,7 @@ function Overview({ claim, onView }: { claim: LocalClaim; onView: (view: Documen
 
       <section>
         <SectionLabel>Transaction</SectionLabel>
-        <div className="overflow-hidden rounded-xl border">
+        <div className="overflow-hidden rounded-card border">
           <div className="p-3">
             <div className="truncate font-semibold">{claim.merchant}</div>
             <div className="text-xs text-muted-foreground">

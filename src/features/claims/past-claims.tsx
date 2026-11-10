@@ -23,7 +23,7 @@ export function PastClaims({ claim, allClaims, onOpenClaim }: Props) {
   const rows = [claim, ...others].sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
 
   return (
-    <div className="overflow-hidden rounded-lg border">
+    <div className="overflow-hidden rounded-card border">
       <Table className="table-fixed">
         <TableHeader>
           <TableRow>
