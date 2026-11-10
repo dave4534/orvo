@@ -21,7 +21,7 @@ function TopBar() {
         variant="ghost"
         aria-label="Orvo home, go to Expenses"
         onClick={goHome}
-        className="-ml-2 h-10 px-2"
+        className="-ml-2 h-10 px-0"
       >
         <Image src="/brand/orvo-logo.svg" alt="" aria-hidden width={85} height={30} unoptimized className="h-[30px] w-auto dark:invert" />
       </Button>
