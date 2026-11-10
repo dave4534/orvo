@@ -96,13 +96,13 @@ export function triageNote(claim: LocalClaim): TriageNote {
     const label = recommendationFor(claim).recommended?.label ?? null;
     return {
       heading,
-      text: [line("Policy gap", policyGap(claim)), line("Reasoning", reasoning(claim)), line("Recommendation", label ?? "None, it is a close call")].join("\n\n"),
+      text: [line("Policy gap", policyGap(claim)), line("Recommendation", label ?? "None, it is a close call"), line("Why I recommend this", reasoning(claim))].join("\n\n"),
       suggest: label,
     };
   }
   return {
     heading,
-    text: [line("Policy gap", policyGap(claim)), line("Reasoning", reasoning(claim)), line("Decision", claimStatusLabel(claim))].join("\n\n"),
+    text: [line("Policy gap", policyGap(claim)), line("Decision", claimStatusLabel(claim)), line("Why it was decided", reasoning(claim))].join("\n\n"),
     suggest: null,
   };
 }
