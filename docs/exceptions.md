@@ -15,3 +15,9 @@ A custom component is allowed only when no shadcn component, Studio or reui bloc
 - **What:** the Ask Orvo AI sparkle, the Material "Auto awesome" icon, drawn as an inline SVG.
 - **Why no shadcn part fits:** shadcn has no icon components; it uses lucide icons. Noa asked for this specific icon.
 - **Built from:** nothing. It is one SVG path from Google Material Icons (Apache 2.0), used with currentColor.
+
+## policy icons (src/components/icons/policy.tsx)
+
+- **What:** the three solid icons shown under the money on a policy half of the card: "Restaurant" for the meals policy, "Receipt" for the receipt policy and "Account balance" for the Finance policy, drawn as inline SVG.
+- **Why no shadcn part fits:** shadcn has no icon components, and Noa asked for solid Material icons for small icons.
+- **Built from:** nothing. Each is one SVG path from Google Material Icons (Apache 2.0), used with currentColor.

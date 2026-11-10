@@ -3,10 +3,12 @@ import { firstName } from "./actions";
 import { personById } from "./claims";
 import { displayName, formatSubmitted, formatUsd } from "./format";
 import { FINANCE_LIMIT, MEAL_CAP, RECEIPT_LIMIT, type LocalClaim } from "./local";
-import { weeklyFacts } from "./policy";
+import { weeklyFacts, type PolicyId } from "./policy";
 
 export type Half = {
   label: string;
+  /** The one of the three policies this half is the limit of. Shown under the money as a small icon and the policy name. */
+  policy?: PolicyId;
   /** Marker dot next to the label. */
   tone: "neutral" | "good" | "info";
   amount?: number;
@@ -111,7 +113,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
         const gap = claimed - FINANCE_LIMIT;
         return {
           kind: "money",
-          left: { label: "Policy", tone: "neutral", amount: FINANCE_LIMIT, sub: "Above this, Finance approves too" },
+          left: { label: "Policy", policy: "finance_over_1000", tone: "neutral", amount: FINANCE_LIMIT, sub: "Needs Finance too" },
           right: { label: "Claim", tone: "info", amount: claimed, sub: original.currency !== "USD" ? `${money(original.value, original.currency)}${claim.amount.fx ? ` at ${claim.amount.fx.rate}` : ""}` : undefined },
           scale: scaleFor(FINANCE_LIMIT, claimed),
           sentence: `${formatUsd(gap)} over the limit, so Finance needs to approve.`,
@@ -137,7 +139,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
         if (fx) {
           return {
             kind: "money",
-            left: { label: "Receipt, converted", tone: "neutral", amount: fx.usd_computed, sub: `${money(original.value, original.currency)} at ${fx.rate} on ${new Date(fx.rate_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` },
+            left: { label: "Receipt, converted", policy: "receipt_required", tone: "neutral", amount: fx.usd_computed, sub: `${money(original.value, original.currency)} at ${fx.rate} on ${new Date(fx.rate_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` },
             right: { label: "Claim", tone: "info", amount: claimed, sub: "Card statement amount" },
             scale: scaleFor(fx.usd_computed, claimed),
             sentence: `${fx.gap_pct}% over the receipt (the limit is ${fx.tolerance_pct}%).`,
@@ -163,7 +165,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
         // The weekly total decides it, so it is what the bar shows. The two linked claims stay in the evidence.
         return {
           kind: "money",
-          left: { label: "Policy", tone: "neutral", amount: FINANCE_LIMIT, sub: `Finance limit, ${week.days} days` },
+          left: { label: "Policy", policy: "finance_over_1000", tone: "neutral", amount: FINANCE_LIMIT, sub: `Per employee, ${week.days} days` },
           right: { label: "This week", tone: "info", amount: week.over ? week.total : combined, sub: week.over ? `${claim.id} plus ${week.claims.length} earlier claims` : `${claim.id} plus ${linked.map((c) => c.id).join(", ")}` },
           scale: scaleFor(FINANCE_LIMIT, week.over ? week.total : combined),
           sentence: `${formatUsd((week.over ? week.total : combined) - FINANCE_LIMIT)} over the weekly Finance limit.`,
@@ -175,7 +177,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
         const requests = claim.agent.chase?.attempts.length ?? 0;
         return {
           kind: "money",
-          left: { label: "Policy", tone: "neutral", amount: RECEIPT_LIMIT, sub: "Receipt required above this" },
+          left: { label: "Policy", policy: "receipt_required", tone: "neutral", amount: RECEIPT_LIMIT, sub: "Required above this" },
           right: { label: "Claim", tone: "info", amount: claimed, sub: "No receipt" },
           scale: scaleFor(RECEIPT_LIMIT, claimed),
           sentence: `${formatUsd(claimed - RECEIPT_LIMIT)} over the no-receipt limit.`,
@@ -227,7 +229,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
         const noWine = noWineAmount(claim);
         return {
           kind: "money",
-          left: { label: "Policy", tone: "neutral", amount: cap, sub: `${formatUsd(MEAL_CAP)} × ${people} people` },
+          left: { label: "Policy", policy: "meal_cap", tone: "neutral", amount: cap, sub: `${formatUsd(MEAL_CAP)} × ${people} people` },
           right: { label: "Claim", tone: "info", amount: claimed, sub: `${formatUsd(claimed / people)} per person` },
           scale: scaleFor(cap, claimed),
           sentence: `${formatUsd(claimed - cap)} over the cap in total.`,
@@ -285,7 +287,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
         if (claimed > cap) {
           return {
             kind: "money",
-            left: { label: "Policy", tone: "neutral", amount: cap, sub: `${formatUsd(MEAL_CAP)} × ${doc.covers} on the receipt` },
+            left: { label: "Policy", policy: "meal_cap", tone: "neutral", amount: cap, sub: `${formatUsd(MEAL_CAP)} × ${doc.covers} on the receipt` },
             right: { label: "Approved", tone: "good", amount: claimed, sub: `Claimed for ${claim.attendees.count} people` },
             scale: scaleFor(cap, claimed),
             sentence: `${formatUsd(claimed - cap)} over the cap. Receipt: ${doc.covers} diners, claim: ${claim.attendees.count}.`,
@@ -319,7 +321,7 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
     }
     return {
       kind: "money",
-      left: { label: "Policy", tone: "neutral", amount: RECEIPT_LIMIT, sub: "Receipt required above this" },
+      left: { label: "Policy", policy: "receipt_required", tone: "neutral", amount: RECEIPT_LIMIT, sub: "Required above this" },
       right: { label: "Claim", tone: "info", amount: claimed, sub: claim.receipt.status === "unreadable" ? "Receipt unreadable" : "No receipt" },
       scale: over > 0 ? scaleFor(RECEIPT_LIMIT, claimed) : undefined,
       sentence: over > 0 ? `${formatUsd(over)} over the no-receipt limit. ${chaseSentence(claim)}` : chaseSentence(claim),

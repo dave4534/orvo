@@ -8,16 +8,28 @@ Where it lives:
 - The triage note in the chat, the Policy tab, the assistant's `getRecommendedAction` and the scripted replies all read that one record, so they never disagree.
 - Data changes (new limits, labels) are made in `../Data Generation/_source/build.py`, then `npm run prep:data`.
 
-## What the assignment says, and what is our assumption
+## The three policies
 
-The assignment has three rules: meals up to $60 per person, receipt above $25, Finance above $1,000. Everything else below is our assumption, listed in `policy.agent_settings` and in the dataset's `assumptions`.
+There are three policies, the ones in the assignment, and every claim is read against one of them. The card names it under the money, as a small solid icon and a short label (Meals policy, Receipt policy, Finance policy). The labels are `enums.policy_label` in the dataset and the mapping from why a claim came to review to its policy is `policyOf` in `policy.ts`.
 
-| Assumption | Value | Why |
+| Policy | Rule | Icon |
 |---|---|---|
-| Weekly total over the Finance limit | $1,000 over a rolling 7 days goes to Finance | The brief does not say whether $1,000 is per claim or per period. A weekly total means splitting a purchase no longer avoids Finance, so intent never has to be guessed. |
-| Same-day allowance | $200 per person, same employee, same category, same day | Two or more claims over it are looked at. A single claim is never "over". Per person, so a team dinner is not counted as one person's spend. |
-| Receipt exception ceiling | $100, needs a card statement and both requests unanswered | The most the manager can approve without a receipt. |
-| Wait windows | receipt 14 days, unreadable 7, question 7, unusual amount 3, Finance 5 working days | A wait ends, the claim returns to Needs review, the manager decides. |
+| Meals | Up to $60 per person, per meal | Restaurant |
+| Receipt | A receipt is required for anything over $25 | Receipt |
+| Finance | Over $1,000 also needs Finance approval | Account balance |
+
+Two readings are ours, and they sit on the rules themselves, not as extra policies:
+
+| Reading | Value | Why |
+|---|---|---|
+| Finance rule, per employee over a rolling window | 7 days (`window_days`) | The brief does not say whether $1,000 is per claim or per period. A weekly total means splitting a purchase no longer avoids Finance, so intent never has to be guessed. |
+| Receipt rule, approving without one | Up to $100 on a card statement (`exception_ceiling_usd`) | The most the manager can approve without a receipt. |
+
+How long a waiting claim waits before it returns to the queue is in `policy.agent_settings.wait_days`: receipt 14 days, unreadable 7, question 7, unusual amount 3, Finance 5 working days.
+
+## Why a claim reaches the manager
+
+The agent approves routine claims that pass all three policies and keeps asking for missing details. It cannot approve over the Finance limit, which needs a person and then Finance, accept a substitute for a receipt, or pay above the meal cap. So the claim reaches the manager, and the status bar of the card says which of these it is ("Over $1,000: a person approves, then Finance"). Waiting is the agent's job: the Wait action parks the claim with one tap and writes nothing to the employee.
 
 ## The table
 

@@ -149,11 +149,14 @@ export function applyAction(all: LocalClaim[], claimId: string, input: ActionInp
       setChain(claim, "waiting", claim.approval_chain.find((s) => s.step === "finance")?.state ?? "not_needed");
       const until = setWait(claim, at, "employee", previousWait, input.id);
       const days = claim.local?.wait?.days ?? waitDays(claim.agent.reason_type, input.id);
-      claim.events.push(
-        event(at, "noa_asked", `${input.id === "wait" ? `Asked for a receipt: ${input.message ?? ""}` : `Asked ${name}: ${input.message ?? ""}`}`.trim() + ` Waiting ${days} days.`),
-      );
+      if (input.id === "wait") {
+        // Waiting writes nothing to the employee. The agent keeps asking for the receipt while the claim is parked.
+        claim.events.push(event(at, "noa_asked", `Waiting ${days} days for a receipt. The agent keeps asking ${name}.`));
+        return { changed, summary: `Waiting ${days} days for ${name}'s receipt. Back in the queue ${formatDay(until)}` };
+      }
+      claim.events.push(event(at, "noa_asked", `Asked ${name}: ${input.message ?? ""}`.trim() + ` Waiting ${days} days.`));
       addToThread(claim, at, input.message);
-      return { changed, summary: `Asked ${name}${input.id === "wait" ? " for a receipt" : ""}. Back in the queue ${formatDay(until)}` };
+      return { changed, summary: `Asked ${name}. Back in the queue ${formatDay(until)}` };
     }
     case "extend_wait": {
       const current = claim.local?.wait;
@@ -293,7 +296,7 @@ export function actionPreview(claim: LocalClaim, input: ActionInput, all: LocalC
     case "ask":
       return { summary: `Nothing is paid yet. ${toldInChat("with your question")} The claim returns to the queue on ${backOn(waitDays(claim.agent.reason_type, "ask"))}.` };
     case "wait":
-      return { summary: `Nothing is paid until a receipt arrives. ${toldInChat("and asked for the receipt")} The claim returns to the queue on ${backOn(waitDays(claim.agent.reason_type, "wait"))}.` };
+      return { summary: `Nothing is paid until a receipt arrives. The agent keeps asking ${name}. The claim returns to the queue on ${backOn(waitDays(claim.agent.reason_type, "wait"))}.` };
     case "extend_wait":
       return { summary: `Nothing changes except the date. The claim returns to the queue on ${backOn(FINANCE_NUDGE_WORKING_DAYS, true)}.` };
     case "to_finance":

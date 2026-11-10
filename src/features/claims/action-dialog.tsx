@@ -25,11 +25,6 @@ const ASK_BY_REASON: Record<string, string> = {
 };
 
 export function defaultMessage(spec: ActionSpec, claim: LocalClaim): string {
-  if (spec.askMessage === "wait") {
-    return claim.agent.reason_type === "receipt_unreadable"
-      ? "The receipt image can't be read. Please send a clearer copy."
-      : "Please send the receipt from the merchant, or a duplicate they can issue.";
-  }
   if (spec.askMessage === "ask") return ASK_BY_REASON[claim.agent.reason_type] ?? "Add a few details about this claim.";
   if (spec.askMessage === "decline") return claim.agent.headline;
   return "";
@@ -73,7 +68,7 @@ export function ActionDialog({ claim, allClaims, spec, onConfirm, onCancel, init
   const preview = actionPreview(claim, input, allClaims);
   // Approvals are success actions (green). Everything else keeps the primary yellow.
   const approves = !spec.destructive && (input.to === "approved" || ["approve", "approve_amount", "exception"].includes(input.id));
-  const messageMissing = spec.askMessage === "ask" || spec.askMessage === "wait" ? message.trim() === "" : false;
+  const messageMissing = spec.askMessage === "ask" ? message.trim() === "" : false;
   const blocked = Boolean(amountError) || messageMissing;
 
   useEffect(() => {

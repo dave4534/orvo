@@ -163,6 +163,10 @@ export interface PolicyRule {
   limit_usd?: number;
   threshold_usd?: number;
   approver?: string;
+  /** Rolling days the threshold is added up over, per employee. Our reading of the Finance rule. */
+  window_days?: number;
+  /** The most the manager can approve without a receipt, on a card statement. Our reading of the receipt rule. */
+  exception_ceiling_usd?: number;
   source: "assignment";
 }
 

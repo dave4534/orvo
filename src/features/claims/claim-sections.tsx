@@ -11,7 +11,7 @@ import { dataset } from "@/data";
 import type { CheckResult } from "@/data/types";
 import { formatSubmitted, formatUsd } from "@/logic/format";
 import { isWaitOver, type LocalClaim } from "@/logic/local";
-import { DAILY_ALLOWANCE, dailyFacts, FINANCE_LIMIT, WEEKLY_LIMIT, weeklyFacts } from "@/logic/policy";
+import { FINANCE_LIMIT, WEEKLY_LIMIT, weeklyFacts } from "@/logic/policy";
 import { assess } from "@/logic/recommendations";
 import { PILL } from "@/lib/blocks";
 import { cn } from "@/lib/utils";
@@ -158,7 +158,7 @@ export function TransactionUnit({ claim, onView }: { claim: LocalClaim; onView: 
 
 type DerivedCheck = { id: string; label: string; policy: string; result: CheckResult };
 
-/** Checks the app works out from the claims around this one. The agent's own checks are in the data; these two need the employee's other claims. */
+/** Checks the app works out from the claims around this one. The agent's own checks are in the data; this one needs the employee's other claims. */
 function derivedChecks(claim: LocalClaim, all: LocalClaim[]): DerivedCheck[] {
   const rows: DerivedCheck[] = [];
   if (claim.amount.usd_claimed <= FINANCE_LIMIT) {
@@ -166,17 +166,8 @@ function derivedChecks(claim: LocalClaim, all: LocalClaim[]): DerivedCheck[] {
     rows.push({
       id: "weekly_total",
       label: "Weekly total",
-      policy: `${formatUsd(week.total)} in ${week.days} days. Above ${formatUsd(WEEKLY_LIMIT)} also needs Finance (our assumption)`,
+      policy: `${formatUsd(week.total)} in ${week.days} days. Above ${formatUsd(WEEKLY_LIMIT)} also needs Finance (our reading of the Finance policy)`,
       result: week.over ? "fail" : "pass",
-    });
-  }
-  const day = dailyFacts(claim, all);
-  if (day.claims.length >= 2) {
-    rows.push({
-      id: "daily_allowance",
-      label: "Same-day claims",
-      policy: `${formatUsd(day.total)} per person in one day. Fine up to ${formatUsd(DAILY_ALLOWANCE)} (our assumption)`,
-      result: day.over ? "fail" : "pass",
     });
   }
   return rows;

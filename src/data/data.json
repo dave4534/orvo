@@ -48,7 +48,7 @@
     "Payout is out of scope. 'approved' means approved, not paid.",
     "Noa does not attend the concert. Kwame bought 9 tickets for the team of 9, so Noa is not approving her own spend.",
     "Merchant names are fictional except the MONO Music Conference and the Red Hot Chili Peppers, which come from Story.md.",
-    "The recommendation rules add four assumptions the assignment does not state, all in policy.agent_settings: a weekly Finance limit (an employee's claims over a rolling 7 days above $1,000 go to Finance), a daily allowance of $200 per person for same-category claims on one day, a $100 ceiling for approving without a receipt on a card statement, and wait windows after which a waiting claim returns to the manager's queue."
+    "There are three policies, the ones in the assignment. Two readings are ours and sit on the rules themselves: the $1,000 Finance rule is read per employee over a rolling 7 days (window_days), and the manager can approve up to $100 without a receipt on a card statement (exception_ceiling_usd). How long a waiting claim waits before it returns to the manager's queue is in policy.agent_settings.wait_days."
   ],
   "policy": {
     "version": "v3",
@@ -68,6 +68,7 @@
         "text": "Receipt required for anything over $25",
         "type": "receipt_threshold",
         "threshold_usd": 25,
+        "exception_ceiling_usd": 100,
         "source": "assignment"
       },
       {
@@ -75,6 +76,7 @@
         "text": "Over $1,000 also needs Finance approval",
         "type": "approval_threshold",
         "threshold_usd": 1000,
+        "window_days": 7,
         "approver": "finance",
         "source": "assignment"
       }
@@ -91,10 +93,6 @@
       "fx_tolerance_pct": 3,
       "unusual_amount_multiple_of_median": 3,
       "linked_claims_window_hours": 24,
-      "weekly_total_window_days": 7,
-      "weekly_total_limit_usd": 1000,
-      "daily_allowance_usd": 200,
-      "receipt_exception_ceiling_usd": 100,
       "finance_nudge_working_days": 5,
       "wait_days": {
         "receipt_missing": 14,
@@ -203,6 +201,11 @@
       "possible_split": "Two claims may be one purchase",
       "unusual_amount": "Unusual amount",
       "unusual_pattern": "Unusual pattern"
+    },
+    "policy_label": {
+      "meal_cap": "Meals policy",
+      "receipt_required": "Receipt policy",
+      "finance_over_1000": "Finance policy"
     },
     "category": {
       "meals": "Meals",

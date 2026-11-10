@@ -26,7 +26,7 @@ import { buildComparison, employeeName } from "@/logic/comparison";
 import { claimStatusLabel, formatUsd, initials } from "@/logic/format";
 import { daysOverTarget, formatDuration, isOpen, WAIT_TARGET_DAYS, waitingFor } from "@/logic/wait";
 import { isAgentDecided, isSpotCheck, isWaitOver, type LocalClaim } from "@/logic/local";
-import { allActionsFor, moreOptionsFor, recommendationFor, type ActionSpec } from "@/logic/recommendations";
+import { allActionsFor, assess, moreOptionsFor, recommendationFor, type ActionSpec } from "@/logic/recommendations";
 import { photoFor } from "@/logic/photos";
 import { track } from "@/logic/track";
 import { cn } from "@/lib/utils";
@@ -322,7 +322,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
               ) : (
                 <span className="inline-flex min-w-0 items-center gap-2 font-medium">
                   <Info aria-hidden className="size-4 shrink-0" />
-                  <span className="truncate">{needsReview ? (comparison.summary ?? dataset.enums.reason_type[claim.agent.reason_type]) : claimStatusLabel(claim)}</span>
+                  <span className="truncate">{needsReview && rec ? assess(claim, allClaims, now).needsPerson : claimStatusLabel(claim)}</span>
                 </span>
               )}
               {onOpenDetails ? (

@@ -24,7 +24,7 @@ export type ActionSpec = {
   /** Collects a typed amount in the dialog. */
   askAmount?: boolean;
   /** Collects a message in the dialog. */
-  askMessage?: "decline" | "ask" | "wait";
+  askMessage?: "decline" | "ask";
   /** Visual weight of a destructive choice. */
   destructive?: boolean;
 };
@@ -37,6 +37,8 @@ export type Recommendation = {
 
 export type Assessment = {
   recommendation: Recommendation;
+  /** Why a person has to decide and the agent could not, in a few words. Shown in the status bar of the card. */
+  needsPerson: string;
   /** The gap between the claim and the policy, in at most 8 words. */
   gap: string;
   /** Why the claim sits where it does, in at most 8 words, for the triage note. */
@@ -71,10 +73,13 @@ const ask = (claim: LocalClaim): ActionSpec => ({
   askMessage: "ask",
 });
 
-/** Parks the claim for the wait window of its reason type, then it returns to the queue. */
+/**
+ * Parks the claim for the wait window of its reason type, then it returns to the queue. One tap with Undo, and no message to write: the agent
+ * is the one that keeps asking the employee, so the manager only chooses to wait.
+ */
 const wait = (claim: LocalClaim, more = false): ActionSpec => {
   const days = waitDays(claim.agent.reason_type, "wait");
-  return { id: "wait", label: `Wait ${days}${more ? " more" : ""} days for receipt`, input: { id: "wait" }, confirm: true, askMessage: "wait" };
+  return { id: "wait", label: `Wait ${days}${more ? " more" : ""} days for receipt`, input: { id: "wait" }, confirm: false };
 };
 
 const otherAmount = (): ActionSpec => ({
@@ -100,8 +105,42 @@ const extendWait = (): ActionSpec => ({
 const limit = formatUsd(FINANCE_LIMIT);
 const upper = (text: string) => `${text.charAt(0).toUpperCase()}${text.slice(1)}`;
 
+/**
+ * Why the agent could not settle the claim itself. The agent approves routine claims that pass all three policies and keeps asking for missing
+ * details. It cannot approve over the Finance limit, since that needs a person and then Finance, and it cannot accept a substitute for a
+ * receipt or pay above a cap. So the claim reaches the manager, and the card says which of these it is.
+ */
+function needsPersonFor(claim: LocalClaim, all: LocalClaim[], now: Date): string {
+  if (isWaitOver(claim, now)) return claim.local?.wait?.kind === "finance" ? "No decision from Finance yet" : "The wait ended: a person decides";
+  const asked = claim.agent.chase?.attempts.length ?? 0;
+  switch (claim.agent.reason_type) {
+    case "over_finance_threshold":
+      return `Over ${formatUsd(FINANCE_LIMIT).replace(".00", "")}: a person approves, then Finance`;
+    case "possible_split":
+      return weeklyFacts(claim, all).over ? `Week over ${formatUsd(FINANCE_LIMIT).replace(".00", "")}: a person approves, then Finance` : "Two claims: a person decides";
+    case "receipt_missing_unresolved":
+      return `No receipt after ${asked || 2} requests: a person decides`;
+    case "receipt_missing":
+      return "No receipt yet: a person decides";
+    case "receipt_unreadable":
+      return "Receipt can't be read: a person decides";
+    case "over_meal_cap":
+      return "Over the meal cap: a person decides";
+    case "currency_mismatch":
+      return "Claim differs from the receipt: a person decides";
+    case "possible_duplicate":
+      return "Receipt already used: a person decides";
+    default:
+      return "A person decides";
+  }
+}
+
 /** The assessment of a claim that needs a decision: waiting on the manager, or back in her queue after a wait. Pure. */
 export function assess(claim: LocalClaim, all: LocalClaim[] = [], now: Date = NOW): Assessment {
+  return { ...assessCore(claim, all, now), needsPerson: needsPersonFor(claim, all, now) };
+}
+
+function assessCore(claim: LocalClaim, all: LocalClaim[], now: Date): Omit<Assessment, "needsPerson"> {
   const claimed = claim.amount.usd_claimed;
   const name = firstName(claim);
   const reason = claim.agent.reason_type;
@@ -109,7 +148,7 @@ export function assess(claim: LocalClaim, all: LocalClaim[] = [], now: Date = NO
   const wallet = claim.local?.wait;
   const waitedOut = isWaitOver(claim, now);
 
-  const make = (a: Omit<Assessment, "others"> & { others?: Assessment["others"] }): Assessment => ({ others: [], ...a });
+  const make = (a: Omit<Assessment, "others" | "needsPerson"> & { others?: Assessment["others"] }): Omit<Assessment, "needsPerson"> => ({ others: [], ...a });
 
   // A wait that ended: the claim is back in the queue and the manager decides.
   if (waitedOut && wallet?.kind === "finance") {

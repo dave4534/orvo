@@ -129,7 +129,7 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
           .string()
           .max(300)
           .optional()
-          .describe('For Wait, Ask and Decline: the wording Noa dictated for the employee, written as a short imperative with no "you", "your" or "could you" (for example: "Resend the card statement as a PDF."). Leave out to send the standard wording (Hold and Ask) or no note (Decline).'),
+          .describe('For Ask and Decline: the wording Noa dictated for the employee, written as a short imperative with no "you", "your" or "could you" (for example: "Resend the card statement as a PDF."). Leave out to send the standard wording (Hold and Ask) or no note (Decline).'),
       }),
     });
   }
