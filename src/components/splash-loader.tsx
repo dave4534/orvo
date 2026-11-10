@@ -47,7 +47,7 @@ export function SplashLoader() {
         height={432}
         onLoad={start}
         onError={start}
-        style={{ width: "min(665px, 80vw)", height: "auto" }}
+        style={{ width: "min(440px, 60vw)", height: "auto" }}
       />
     </div>
   )
