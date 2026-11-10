@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, PartyPopper, SearchX, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import {
   type ClaimFilters,
   type TabId,
 } from "@/logic/claims";
+import { bulkActionsFor, type BulkActionId } from "@/logic/bulk";
 import { isSpotCheck } from "@/logic/local";
 import { sectionsFor } from "@/logic/sections";
 import { buildChatContext } from "@/logic/chat-context";
@@ -35,6 +37,7 @@ import { notInPrototype } from "@/features/shell/not-in-prototype";
 import { RANGES } from "@/logic/claims";
 import { controlSummary, lookAtScreen, pressControl, typeInField } from "./screen-control";
 import { AiPanel } from "./ai-panel";
+import { BulkActions } from "./bulk-actions";
 import { ClaimsFilters } from "./claims-filters";
 import { ClaimsQueue } from "./claims-queue";
 import { MoreInfoPanel } from "./more-info-panel";
@@ -47,7 +50,7 @@ const tabOfStatus = (status: Status): TabId =>
   TABS.find((t) => t.statuses?.includes(status))?.id ?? "all";
 
 export function ClaimsView() {
-  const { claims, sessionIds, simulateError, setSimulateError, reset, undoLast, perform, sendMessage } = useClaims();
+  const { claims, sessionIds, simulateError, setSimulateError, reset, undoLast, perform, performBatch, sendMessage } = useClaims();
   const { aiOpen, setAiOpen, setAiSession, addAiMessage, hasAiMessages, resetAi, setChatContext, setUiToolHandler, runAction, controlDialog, callControl, hasControl, voiceOpen, homeRequest } = useWorkspace();
   const seenHome = useRef(homeRequest);
 
@@ -194,6 +197,14 @@ export function ClaimsView() {
             setSelectedIds(new Set(ids));
           }
           return { ok: true };
+        }
+        case "bulkAction": {
+          if (openId !== null) return listOnly;
+          const wanted = String(input.action) as BulkActionId;
+          if (!bulkActionsFor(claims.filter((c) => selectedIds.has(c.id))).some((a) => a.id === wanted)) {
+            return { ok: false, error: `That bulk action is not available. It needs two or more selected claims that can all take it, and ${selectedIds.size} are selected.` };
+          }
+          return runBulk(wanted) ? { ok: true, action: wanted, count: selectedIds.size } : { ok: false, error: "The decisions could not be saved." };
         }
         case "toggleSection": {
           if (openId !== null) return listOnly;
@@ -430,6 +441,21 @@ export function ClaimsView() {
     });
   }
 
+  const selectedClaims = claims.filter((c) => selectedIds.has(c.id));
+  const bulkActions = bulkActionsFor(selectedClaims);
+
+  function runBulk(id: BulkActionId): boolean {
+    const action = bulkActions.find((a) => a.id === id);
+    if (!action) return false;
+    const result = performBatch(selectedClaims.map((c) => c.id), id, action.input);
+    if (!result.ok) {
+      toast.error("Decisions not saved", { description: "Nothing was changed. Try again." });
+      return false;
+    }
+    setSelectedIds(new Set());
+    return true;
+  }
+
   function toggleOne(id: string, checked: boolean) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -546,7 +572,10 @@ export function ClaimsView() {
           />
         ) : null}
 
-        <ClaimsFilters filters={filters} onChange={changeFilters} onReset={() => changeFilters(DEFAULT_FILTERS)} canReset={filtered} showStatus={tab === "all"} />
+        <ClaimsFilters filters={filters} onChange={changeFilters} onReset={() => changeFilters(DEFAULT_FILTERS)} canReset={filtered}
+          showStatus={tab === "all"}
+          trailing={<BulkActions actions={bulkActions} onRun={runBulk} />}
+        />
 
         {rows.length > 0 ? (
           <>

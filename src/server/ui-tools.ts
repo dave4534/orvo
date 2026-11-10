@@ -80,6 +80,11 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
       description: 'Tick rows in the claims list: all visible rows, none, the first N rows as shown (mode "first" with count), or specific claims by id.',
       inputSchema: z.object({ mode: z.enum(["all", "none", "first", "ids"]), count: z.number().int().min(1).max(50).optional(), ids: z.array(z.enum(ids)).optional() }),
     });
+    tools.bulkAction = tool({
+      description:
+        "Approve or decline all the selected claims at once, with the bulk buttons beside the filters. They exist only when two or more claims are selected and every one of them can take the action (waiting on review, and for Approve a plain approval under the Finance limit). Only call it when Noa asked for it. The decisions apply at once with one Undo.",
+      inputSchema: z.object({ action: z.enum(["approve", "decline"]) }),
+    });
     tools.toggleSection = tool({ description: "Expand or collapse a group in the claims table, by its id as shown in the app (for example approved).", inputSchema: z.object({ sectionId: z.string().max(40) }) });
     tools.openClaim = tool({ description: "Open a claim for review. Use the claim id, such as C-1019.", inputSchema: z.object({ claimId: z.enum(ids) }) });
   } else {

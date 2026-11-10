@@ -40,6 +40,7 @@ The single list is `src/logic/assistant-tools.ts`. `npm run audit:assistant` che
 | `dismissBrief` | Claims list | Brief banner: Dismiss |
 | `reviewAll` | Claims list | Brief banner: Review all |
 | `selectClaims` | Claims list | Row checkboxes and the select all checkbox |
+| `bulkAction` | Claims list | Bulk Approve and Decline buttons beside the filters, shown when two or more claims are selected |
 | `toggleSection` | Claims list | Collapsible groups in the table |
 | `openClaim` | Claims list | Review button on a row |
 | `nextClaim` | Claim page | Next |

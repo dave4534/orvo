@@ -19,6 +19,7 @@ export const UI_TOOLS = [
   { name: "dismissBrief", surface: "Claims list", control: "Brief banner: Dismiss" },
   { name: "reviewAll", surface: "Claims list", control: "Brief banner: Review all" },
   { name: "selectClaims", surface: "Claims list", control: "Row checkboxes and the select all checkbox" },
+  { name: "bulkAction", surface: "Claims list", control: "Bulk Approve and Decline buttons beside the filters, shown when two or more claims are selected" },
   { name: "toggleSection", surface: "Claims list", control: "Collapsible groups in the table" },
   { name: "openClaim", surface: "Claims list", control: "Review button on a row" },
   // Claim page

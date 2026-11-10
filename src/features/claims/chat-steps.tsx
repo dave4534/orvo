@@ -41,6 +41,7 @@ const LABELS: Record<string, { running: (i: Input) => string; done: (i: Input) =
   "tool-dismissBrief": { running: () => "Dismissing the brief", done: () => "Dismissed the brief" },
   "tool-reviewAll": { running: () => "Starting the review", done: () => "Started the review" },
   "tool-selectClaims": { running: () => "Selecting claims", done: () => "Selected claims" },
+  "tool-bulkAction": { running: (i) => `${(i as { action?: string }).action === "decline" ? "Declining" : "Approving"} the selected claims`, done: (i) => `${(i as { action?: string }).action === "decline" ? "Declined" : "Approved"} the selected claims` },
   "tool-toggleSection": { running: () => "Changing the group", done: () => "Changed the group" },
   "tool-changeDecision": { running: () => "Changing the decision", done: () => "Changed the decision" },
   "tool-viewDocument": { running: () => "Opening the document", done: () => "Opened the document" },

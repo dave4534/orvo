@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { NOW } from "@/data";
 import type { Status } from "@/data/types";
 import { applyAction, isoLocal, type ActionInput } from "@/logic/actions";
+import { bulkSummary, type BulkActionId } from "@/logic/bulk";
 import { initialClaims, type LocalClaim } from "@/logic/local";
 import { track } from "@/logic/track";
 import { UNDO_MS, UndoToast } from "@/components/undo-toast";
@@ -28,6 +29,8 @@ type ClaimsStore = {
   simulateError: boolean;
   setSimulateError: (on: boolean) => void;
   perform: (claimId: string, input: ActionInput, options?: PerformOptions) => PerformResult;
+  /** Applies one action to several claims as a single step, with one notice and one Undo for the whole batch. */
+  performBatch: (claimIds: string[], action: BulkActionId, input: ActionInput) => { ok: true; summary: string; changedIds: string[] } | { ok: false };
   /** Undoes the most recent decision, the same as the Undo button in the notice. Returns the claim id, or null if there is nothing to undo. */
   undoLast: (onUndo?: (claimId: string) => void) => string | null;
   /** Adds a message from the manager to the claim chat. Local only. */
@@ -83,6 +86,30 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
     [claims, simulateError, undo],
   );
 
+  const performBatch = useCallback(
+    (claimIds: string[], action: BulkActionId, input: ActionInput) => {
+      if (simulateError) {
+        track("error_shown", { id: "ERR-1", claims: claimIds, action: input.id });
+        return { ok: false as const };
+      }
+      tick.current += 1;
+      const now = new Date(NOW.getTime() + tick.current * 60_000);
+      const changed = claimIds.flatMap((id) => applyAction(claims, id, input, now).changed);
+      const previous = claims.filter((c) => changed.some((r) => r.id === c.id));
+      const entry: UndoEntry = { id: ++undoId.current, previous, claimId: claimIds[0] };
+      undoStack.current.push(entry);
+
+      setClaims((current) => current.map((c) => changed.find((r) => r.id === c.id) ?? c));
+      setSessionIds((ids) => [...ids, ...claimIds.filter((id) => !ids.includes(id))]);
+      for (const id of claimIds) track("decision_made", { claim: id, action: input.id, bulk: true });
+
+      const summary = bulkSummary(action, changed.filter((c) => claimIds.includes(c.id)));
+      toast.custom((id) => <UndoToast id={id} message={summary} onUndo={() => undo(entry.id)} />, { duration: UNDO_MS });
+      return { ok: true as const, summary, changedIds: changed.map((c) => c.id) };
+    },
+    [claims, simulateError, undo],
+  );
+
   const sendMessage = useCallback((claimId: string, text: string) => {
     const body = text.trim();
     if (!body) return;
@@ -112,8 +139,8 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<ClaimsStore>(
-    () => ({ claims, sessionIds, simulateError, setSimulateError, perform, undoLast, sendMessage, reset }),
-    [claims, sessionIds, simulateError, perform, undoLast, sendMessage, reset],
+    () => ({ claims, sessionIds, simulateError, setSimulateError, perform, performBatch, undoLast, sendMessage, reset }),
+    [claims, sessionIds, simulateError, perform, performBatch, undoLast, sendMessage, reset],
   );
 
   return <Context.Provider value={value}>{children}</Context.Provider>;

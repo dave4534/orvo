@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ChevronDown, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,8 @@ type Props = {
   onReset: () => void;
   canReset: boolean;
   showStatus: boolean;
+  /** Shown at the right end of the row, for example the bulk actions. */
+  trailing?: ReactNode;
 };
 
 const RANGE_ITEMS = RANGES.map((r) => ({ value: r.id, label: r.label }));
@@ -33,7 +36,7 @@ function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 }
 
-export function ClaimsFilters({ filters, onChange, onReset, canReset, showStatus }: Props) {
+export function ClaimsFilters({ filters, onChange, onReset, canReset, showStatus, trailing }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="relative w-full max-w-sm min-w-56 flex-1">
@@ -115,6 +118,8 @@ export function ClaimsFilters({ filters, onChange, onReset, canReset, showStatus
       <Button variant="ghost" className="h-10" onClick={onReset} disabled={!canReset}>
         Reset
       </Button>
+
+      {trailing ? <div className="ml-auto flex items-center gap-2">{trailing}</div> : null}
     </div>
   );
 }
