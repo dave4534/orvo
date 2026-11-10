@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Mic, MicOff, Square, X } from "lucide-react";
+import { Mic, MicOff, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from "@/components/ui/input-group";
 import { stopAllListening, useSpeechInput } from "@/hooks/use-speech-input";
 import { cancelSpeech, plainForSpeech, speak } from "@/lib/speech";
 import { startVoiceActivity, type VoiceActivity } from "@/lib/voice-activity";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/store/workspace-store";
-import { Shimmer } from "./chat-steps";
 
 /** Bars that move while the assistant listens or speaks. Same look in the chat and in the bar. */
 export function Wave({ phase }: { phase: "listening" | "thinking" | "speaking" | "muted" }) {
@@ -305,31 +305,50 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
   const phase = speaking ? "speaking" : busy || waiting ? "thinking" : muted ? "muted" : "listening";
   const label = { speaking: "Speaking", thinking: "Thinking", muted: "Microphone is off", listening: "Listening" }[phase];
 
+  const live = speaking || busy;
   return (
-    <div className="shrink-0 border-t bg-card px-4 pt-3 pb-3">
-      <div className="flex min-h-6 items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-3">
-          <Wave phase={phase} />
-          {phase === "thinking" ? <Shimmer className="text-sm">{label}</Shimmer> : <span className="text-sm font-medium">{label}</span>}
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <Button variant="ghost" size="icon-sm" aria-label={muted ? "Turn microphone on" : "Turn microphone off"} aria-pressed={muted} onClick={toggleMute}>
-            {muted ? <MicOff /> : <Mic />}
-          </Button>
-          {speaking || busy ? (
-            <Button variant="ghost" size="icon-sm" aria-label={speaking ? "Stop speaking" : "Stop the answer"} onClick={interrupt}>
-              <Square className="fill-current" />
-            </Button>
-          ) : null}
-          <Button variant="outline" size="sm" onClick={end}>
+    <div className="shrink-0 px-4 pt-2 pb-3">
+      <InputGroup className="rounded-2xl bg-card shadow-sm has-disabled:bg-card has-disabled:opacity-100 dark:has-disabled:bg-card">
+        <InputGroupTextarea
+          aria-label="Voice chat status"
+          readOnly
+          rows={1}
+          value={heard}
+          placeholder={label}
+          className="max-h-40 min-h-14 field-sizing-content px-4 pt-4 text-[15px] italic"
+        />
+        <InputGroupAddon align="block-end" className="justify-between gap-1">
+          <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={end}>
             <X data-icon="inline-start" />
             End voice
           </Button>
-        </div>
-      </div>
-      {heard ? <p className="mt-2 text-sm text-muted-foreground italic">{heard}</p> : null}
-      {speech.error === "blocked" ? <p className="mt-2 text-xs text-destructive">Microphone access is blocked. Allow it in the browser&apos;s site settings.</p> : null}
-      {speech.error === "unavailable" ? <p className="mt-2 text-xs text-destructive">Voice isn&apos;t available in this browser right now.</p> : null}
+          <div className="flex items-center gap-1">
+            <InputGroupButton
+              size="icon-sm"
+              className="rounded-lg text-foreground hover:text-foreground"
+              aria-label={muted ? "Turn microphone on" : "Turn microphone off"}
+              aria-pressed={muted}
+              onClick={toggleMute}
+            >
+              {muted ? <MicOff /> : <Mic />}
+            </InputGroupButton>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className={cn("h-8 gap-2 rounded-lg px-3 font-medium", live ? "bg-info text-brand-secondary hover:bg-info/80" : "text-muted-foreground")}
+              aria-label={speaking ? "Stop speaking" : "Stop the answer"}
+              disabled={!live}
+              onClick={interrupt}
+            >
+              <Wave phase={phase} />
+              Stop
+            </Button>
+          </div>
+        </InputGroupAddon>
+      </InputGroup>
+      {speech.error === "blocked" ? <p className="mt-2 text-center text-xs text-destructive">Microphone access is blocked. Allow it in the browser&apos;s site settings.</p> : null}
+      {speech.error === "unavailable" ? <p className="mt-2 text-center text-xs text-destructive">Voice isn&apos;t available in this browser right now.</p> : null}
     </div>
   );
 }
