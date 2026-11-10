@@ -9,8 +9,6 @@ export const UI_TOOLS = [
   // App shell
   { name: "goToSection", surface: "Sidebar", control: "Home, Expenses, Reports, Insights, Policies, Team, Settings, Support, and the Orvo logo" },
   { name: "closeChat", surface: "Header", control: "Ask Orvo AI button (closes the chat)" },
-  { name: "resetDemo", surface: "Claims list", control: "Demo menu: Reset demo" },
-  { name: "setSaveErrorSimulation", surface: "Claims list", control: "Demo menu: Simulate a save error" },
   // Claims list
   { name: "showClaimsTab", surface: "Claims list", control: "Tabs: Needs review, Waiting on others, Done, All" },
   { name: "searchClaims", surface: "Claims list", control: "Search box" },

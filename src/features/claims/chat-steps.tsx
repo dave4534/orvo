@@ -35,8 +35,6 @@ const LABELS: Record<string, { running: (i: Input) => string; done: (i: Input) =
   "tool-typeInField": { running: () => "Typing", done: () => "Typed" },
   "tool-goToSection": { running: (i) => `Opening ${(i as { section?: string }).section ?? "the section"}`, done: (i) => `Opened ${(i as { section?: string }).section ?? "the section"}` },
   "tool-closeChat": { running: () => "Closing the chat", done: () => "Closed the chat" },
-  "tool-resetDemo": { running: () => "Resetting the demo", done: () => "Reset the demo" },
-  "tool-setSaveErrorSimulation": { running: () => "Changing the save error setting", done: () => "Changed the save error setting" },
   "tool-setFilters": { running: () => "Setting the filters", done: () => "Set the filters" },
   "tool-dismissBrief": { running: () => "Dismissing the brief", done: () => "Dismissed the brief" },
   "tool-reviewAll": { running: () => "Starting the review", done: () => "Started the review" },

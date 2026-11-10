@@ -49,8 +49,6 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
       inputSchema: z.object({ section: z.enum(SECTIONS) }),
     }),
     closeChat: tool({ description: "Close this chat panel.", inputSchema: z.object({}) }),
-    resetDemo: tool({ description: "Reset the demo to the start of Monday: all decisions undone, tabs and filters back to normal. Use only when Noa asks.", inputSchema: z.object({}) }),
-    setSaveErrorSimulation: tool({ description: "Turn on or off the demo setting that makes saving a decision fail, to show the error state.", inputSchema: z.object({ on: z.boolean() }) }),
     undoLastDecision: tool({
       description: "Undo the most recent decision, the same as the Undo button. Use when Noa asks to undo or reverse what was just done.",
       inputSchema: z.object({}),

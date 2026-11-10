@@ -31,8 +31,6 @@ The single list is `src/logic/assistant-tools.ts`. `npm run audit:assistant` che
 | --- | --- | --- |
 | `goToSection` | Sidebar | Home, Expenses, Reports, Insights, Policies, Team, Settings, Support, and the Orvo logo |
 | `closeChat` | Header | Ask Orvo AI button (closes the chat) |
-| `resetDemo` | Claims list | Demo menu: Reset demo |
-| `setSaveErrorSimulation` | Claims list | Demo menu: Simulate a save error |
 | `showClaimsTab` | Claims list | Tabs: Needs review, Waiting on others, Done, All |
 | `searchClaims` | Claims list | Search box |
 | `setFilters` | Claims list | Date range, Employee and Status filters |

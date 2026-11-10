@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, PartyPopper, SearchX, Sparkles } from "lucide-react";
+import { PartyPopper, SearchX, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -51,8 +50,8 @@ const tabOfStatus = (status: Status): TabId =>
   TABS.find((t) => t.statuses?.includes(status))?.id ?? "all";
 
 export function ClaimsView() {
-  const { claims, sessionIds, simulateError, setSimulateError, reset, undoLast, perform, performBatch, sendMessage } = useClaims();
-  const { aiOpen, setAiOpen, addAiMessage, lastTriageClaim, resetAi, setChatContext, setUiToolHandler, runAction, controlDialog, callControl, hasControl, voiceOpen, homeRequest } = useWorkspace();
+  const { claims, sessionIds, undoLast, perform, performBatch, sendMessage } = useClaims();
+  const { aiOpen, setAiOpen, addAiMessage, lastTriageClaim, setChatContext, setUiToolHandler, runAction, controlDialog, callControl, hasControl, voiceOpen, homeRequest } = useWorkspace();
   const seenHome = useRef(homeRequest);
 
   const [tab, setTab] = useState<TabId>("needs_review");
@@ -129,18 +128,6 @@ export function ClaimsView() {
         case "closeChat":
           setAiOpen(false);
           return { ok: true };
-        case "resetDemo":
-          reset();
-          resetAi();
-          closeWorkspace();
-          setTab("needs_review");
-          setFilters(DEFAULT_FILTERS);
-          setSelectedIds(new Set());
-          setBriefDismissed(new Set());
-          return { ok: true, note: "The demo is back at the start. All decisions are undone." };
-        case "setSaveErrorSimulation":
-          setSimulateError(input.on === true);
-          return { ok: true, saveErrorSimulation: input.on === true };
         case "openClaim": {
           const id = String(input.claimId ?? "");
           if (!claims.some((c) => c.id === id)) return { ok: false, error: `No claim ${id}.` };
@@ -521,37 +508,7 @@ export function ClaimsView() {
             />
           ) : (
       <main className="mx-auto flex min-w-0 w-full max-w-[1400px] flex-1 flex-col gap-6 p-8">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-3xl font-semibold tracking-tight">Claims</h1>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button variant="ghost" size="sm" className="text-muted-foreground">
-                  Demo <ChevronDown data-icon="inline-end" />
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuCheckboxItem checked={simulateError} onCheckedChange={(c) => setSimulateError(c)}>
-                Simulate a save error
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {
-                  reset();
-                  resetAi();
-                  closeWorkspace();
-                  setTab("needs_review");
-                  setFilters(DEFAULT_FILTERS);
-                  setSelectedIds(new Set());
-                  setBriefDismissed(new Set());
-                }}
-              >
-                Reset demo
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <h1 className="text-3xl font-semibold tracking-tight">Claims</h1>
 
         <Tabs
           value={tab}
