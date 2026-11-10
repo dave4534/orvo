@@ -624,7 +624,7 @@ export function ClaimsView() {
               onReviewAll={reviewDone}
             />
           ) : null
-        ) : tab !== "waiting" && !briefDismissed.has("needs_review") ? (
+        ) : tab !== "waiting" && brief.needsYou > 0 && !briefDismissed.has("needs_review") ? (
           <AiBriefBanner
             title="Good morning Noa, let's get started."
             text={briefSentence(brief)}
