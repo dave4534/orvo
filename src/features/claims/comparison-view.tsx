@@ -92,7 +92,7 @@ export function ComparisonView({ comparison }: { comparison: Comparison }) {
             <Check className="size-3.5" strokeWidth={3} />
           </span>
         ) : (
-          <WarningIcon aria-hidden className="size-5 shrink-0 text-warning-foreground" />
+          <WarningIcon aria-hidden className="size-5 shrink-0 text-gap" />
         )}
         {comparison.sentence}
       </p>
