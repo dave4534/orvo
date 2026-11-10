@@ -82,6 +82,11 @@ type WorkspaceStore = {
   setControl: (key: string, handler: ControlHandler | null) => void;
   hasControl: (key: string) => boolean;
   callControl: (key: string, input?: Record<string, unknown>) => UiToolResult;
+  /** Runs a screen tool as if the assistant had called it, for a button inside a chat card. */
+  runScreenTool: (name: string, input: Record<string, unknown>) => Promise<UiToolResult>;
+  /** The claims view registers how to widen the chat panel. A card that needs room (a table) asks for it. */
+  setAiWidener: (run: ((px: number) => void) | null) => void;
+  widenAi: (px: number) => void;
   /** The top bar logo asks the claims view to go back to the Expenses list. Each call bumps homeRequest. */
   homeRequest: number;
   goHome: () => void;
@@ -163,6 +168,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [homeRequest, setHomeRequest] = useState(0);
   const goHome = useCallback(() => setHomeRequest((n) => n + 1), []);
   const dialog = useRef<DialogControl | null>(null);
+  const widener = useRef<((px: number) => void) | null>(null);
   const runner = useRef<((label: string, extra?: ActionExtra) => ActionRunResult) | null>(null);
 
   const chat = useMemo(() => getChat(epoch, LIST_SESSION), [epoch]);
@@ -244,6 +250,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
+  const runScreenTool = useCallback(async (name: string, input: Record<string, unknown>): Promise<UiToolResult> => (await chatHooks.ui?.(name, input)) ?? { ok: false, error: "The screen is not ready." }, []);
+  const setAiWidener = useCallback((run: ((px: number) => void) | null) => {
+    widener.current = run;
+  }, []);
+  const widenAi = useCallback((px: number) => widener.current?.(px), []);
   const setUiToolHandler = useCallback((run: UiToolHandler | null) => {
     chatHooks.ui = run;
   }, []);
@@ -255,8 +266,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ aiOpen, setAiOpen, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, lastTriageClaim, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, askDraft, setAskDraft, setControl, hasControl, callControl, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome }),
-    [aiOpen, messages, status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, lastTriageClaim, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, askDraft, setAskDraft, setControl, hasControl, callControl, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome],
+    () => ({ aiOpen, setAiOpen, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, lastTriageClaim, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, askDraft, setAskDraft, setControl, hasControl, callControl, runScreenTool, setAiWidener, widenAi, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome }),
+    [aiOpen, messages, status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, lastTriageClaim, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, askDraft, setAskDraft, setControl, hasControl, callControl, runScreenTool, setAiWidener, widenAi, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

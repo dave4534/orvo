@@ -10,6 +10,8 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { STATIC_INSTRUCTIONS, uiInstructions } from "@/server/chat-prompt";
 import { buildChatTools, buildSuggestActionTool } from "@/server/chat-tools";
 import { isUiTool } from "@/logic/assistant-tools";
+import { buildCardTools } from "@/server/chat-card-tools";
+import { isCardTool } from "@/logic/chat-cards";
 import { buildUiTools } from "@/server/ui-tools";
 
 export const maxDuration = 60;
@@ -57,15 +59,18 @@ function cleanMessages(messages: z.infer<typeof bodySchema>["messages"]): UIMess
   for (const m of messages.slice(-MAX_MESSAGES)) {
     const texts: string[] = [];
     const notices: string[] = [];
+    const cards: string[] = [];
     for (const p of m.parts) {
       if (p.type === "text" && typeof (p as { text?: unknown }).text === "string") {
         texts.push(((p as unknown as { text: string }).text).slice(0, MAX_TEXT_CHARS));
+      } else if (p.type.startsWith("tool-") && isCardTool(p.type.slice(5)) && (p as { state?: unknown }).state === "output-available") {
+        cards.push(`showed the ${p.type.slice(5).replace(/^show/, "")} card in the chat`);
       } else if (p.type.startsWith("tool-") && isUiTool(p.type.slice(5)) && (p as { state?: unknown }).state === "output-available") {
         const q = p as { input?: unknown; output?: unknown };
         notices.push(`${p.type.slice(5)} ${JSON.stringify(q.input ?? {})} finished: ${JSON.stringify(q.output ?? {})}`.slice(0, 400));
       }
     }
-    const body = [texts.join("\n\n").trim(), ...notices.map((n) => `[Done on screen: ${n}]`)].filter(Boolean).join("\n\n");
+    const body = [texts.join("\n\n").trim(), ...notices.map((n) => `[Done on screen: ${n}]`), ...cards.map((c) => `[Done: ${c}]`)].filter(Boolean).join("\n\n");
     if (body) cleaned.push({ id: m.id ?? crypto.randomUUID(), role: m.role, parts: [{ type: "text", text: body }] });
     lastNotice = m.role === "assistant" && notices.length > 0 ? notices[notices.length - 1] : null;
   }
@@ -112,7 +117,7 @@ export async function POST(req: Request) {
       { role: "system", content: STATIC_INSTRUCTIONS, providerOptions: { anthropic: { cacheControl: { type: "ephemeral" } } } },
       { role: "system", content: uiInstructions(parsed.context.ui, openClaim, pastClaim) },
     ],
-    tools: { ...buildChatTools(claims), ...buildSuggestActionTool(openClaim), ...buildUiTools(activeClaim, claims, { claimOpen: Boolean(openClaim), pastOpen: Boolean(pastClaim), detailsOpen: parsed.context.ui.detailsOpen }) },
+    tools: { ...buildChatTools(claims), ...buildSuggestActionTool(openClaim), ...buildCardTools(claims, openClaim?.id), ...buildUiTools(activeClaim, claims, { claimOpen: Boolean(openClaim), pastOpen: Boolean(pastClaim), detailsOpen: parsed.context.ui.detailsOpen }) },
     stopWhen: isStepCount(6),
     maxOutputTokens: 700,
   });

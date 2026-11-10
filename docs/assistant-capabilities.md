@@ -62,6 +62,10 @@ The single list is `src/logic/assistant-tools.ts`. `npm run audit:assistant` che
 | `typeInField` | Anywhere | Any visible text field, by its label |
 | `messageEmployee` | Details panel | Chat tab: message box and Send |
 
+## Cards in the chat
+
+Besides acting on the screen, the assistant can show things inside the chat when asked, as cards: `showTransaction`, `showDocument` (receipt or attachment), `showPolicyBreakdown` and `showMessageCard` (server tools in `src/server/chat-card-tools.ts`, drawn by `src/features/claims/chat-cards.tsx`). They mirror the Overview and Policy tabs through shared components, so they cannot drift. The message card shows a drafted message with a "View in chat" button; nothing is sent until Noa sends it from the claim chat or says so.
+
 ## Not covered on purpose
 
 - Choosing a different voice in the voice bar, muting and ending voice chat. These are part of the voice feature itself.
