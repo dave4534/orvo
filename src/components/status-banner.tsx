@@ -24,6 +24,8 @@ type Props = {
   children?: ReactNode;
   /** Buttons shown at the right of the text. */
   actions?: ReactNode;
+  /** Draws the icon on its own, with no tinted circle behind it. */
+  plainIcon?: boolean;
   /** When set, a dismiss button shows and the banner evaporates before this is called. */
   onDismiss?: () => void;
   className?: string;
@@ -34,7 +36,7 @@ type Props = {
  * (src/components/shadcn-space/alert/alert-08.tsx): an icon chip, title and text, and a dismiss button.
  * Composed from the stock Alert and Button. Colors come from the project tokens.
  */
-export function StatusBanner({ icon, tone = "info", title, children, actions, onDismiss, className }: Props) {
+export function StatusBanner({ icon, tone = "info", title, children, actions, plainIcon = false, onDismiss, className }: Props) {
   const [visible, setVisible] = useState(true);
   const reduce = useReducedMotion();
   const destructive = tone === "destructive";
@@ -70,13 +72,14 @@ export function StatusBanner({ icon, tone = "info", title, children, actions, on
 
           <Alert
             variant={destructive ? "destructive" : "default"}
-            className={cn("relative flex items-start gap-3 overflow-hidden rounded-xl border-border/60 bg-card py-3.5 pl-4", onDismiss ? "pr-10" : "pr-4")}
+            className={cn("relative flex items-start gap-3 overflow-hidden rounded-xl border-border/60 bg-card py-3.5 pl-4", onDismiss ? (plainIcon ? "pr-13" : "pr-10") : "pr-4")}
           >
             <div
               aria-hidden
               className={cn(
-                "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full [&>svg]:size-4",
-                destructive ? "bg-destructive/10 text-destructive" : "bg-info text-info-foreground",
+                "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full",
+                plainIcon ? "" : "[&>svg]:size-4",
+                plainIcon ? "" : destructive ? "bg-destructive/10 text-destructive" : "bg-info text-info-foreground",
               )}
             >
               {icon}

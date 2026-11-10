@@ -22,7 +22,8 @@ function SunIcon({ className }: { className?: string }) {
 export function AiBriefBanner({ title, text, reviewCount, onDismiss, onReviewAll }: Props) {
   return (
     <StatusBanner
-      icon={<SunIcon className="size-5 text-brief" />}
+      icon={<SunIcon className="size-7 text-brief" />}
+      plainIcon
       title={title}
       onDismiss={onDismiss}
       actions={reviewCount > 0 ? <Button onClick={onReviewAll} className="bg-brief text-brief-foreground hover:bg-brief/90">Review all {reviewCount}</Button> : null}
