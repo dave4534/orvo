@@ -38,7 +38,7 @@ export const walkthroughSteps: WalkthroughStep<PlaceId>[] = [
   {
     title: "Crafting the Experience",
     body: [
-      { icon: Map, text: "UX Artifacts (Journey Map skill + User Flows based on research documents)" },
+      { icon: Map, text: "UX Artifacts ([Journey Map](image:/walkthrough/melio/journey-map.png) skill + User Flows based on research documents)" },
       { icon: Scissors, text: "Wireframing: Researching existing patterns I saw that most of them consisted of a list view and of a panel for triage. I explored a few different directions by hand, trying to rethink the list view and the triage." },
       { icon: Eye, text: "[Wireframe 1](image:/walkthrough/melio/wireframe-1.png)" },
       { icon: Eye, text: "[Wireframe 2](image:/walkthrough/melio/wireframe-2.png)" },
@@ -51,8 +51,8 @@ export const walkthroughSteps: WalkthroughStep<PlaceId>[] = [
   {
     title: "Lowering Approval time",
     body: [
-      "Noa’s and Employees’ biggest pain. I added time markers in a few places to indicate how long someone has been waiting, and how long it took Orvo AI to resolve its queue.",
-      "Part of quick decision making is Noa’s understanding, so quickly digestible information like what decision the AI made and why the AI made the decision it did at the list level makes it clear to Noa without having to go into Review mode.",
+      { icon: Clock, text: "Noa’s and Employees’ biggest pain. I added time markers in a few places to indicate how long someone has been waiting, and how long it took Orvo AI to resolve its queue." },
+      { icon: Eye, text: "Part of quick decision making is Noa’s understanding, so quickly digestible information like what decision the AI made and why the AI made the decision it did at the list level makes it clear to Noa without having to go into Review mode." },
     ],
     places: [
       { id: "review-tab", label: "Review Tab" },
