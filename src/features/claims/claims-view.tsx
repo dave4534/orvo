@@ -572,7 +572,7 @@ export function ClaimsView() {
 
   return (
     <div className={cn("w-full", inTriage ? "h-[calc(100svh-var(--header-height))] overflow-hidden" : "min-h-[calc(100svh-var(--header-height))]")}>
-      <ResizablePanelGroup className={inTriage ? "h-full" : "h-auto min-h-[calc(100svh-var(--header-height))]"}>
+      <ResizablePanelGroup className={inTriage ? "h-full" : "h-auto min-h-[calc(100svh-var(--header-height))]"} style={{ overflow: inTriage ? undefined : "visible" }}>
         <ResizablePanel id="main" minSize={420} style={{ overflow: inTriage ? "hidden" : "visible" }}>
           {inTriage ? (
             <ClaimsQueue
@@ -590,6 +590,8 @@ export function ClaimsView() {
             />
           ) : (
       <main className="mx-auto flex min-w-0 w-full max-w-[1400px] flex-1 flex-col gap-6 p-8">
+        {/* The title and tabs stay at the top while the list scrolls beneath them. */}
+        <div className="sticky top-16 z-20 -mx-8 flex flex-col gap-6 bg-background px-8 pt-8">
         <h1 className="text-3xl font-semibold tracking-tight">Claims</h1>
 
         <Tabs
@@ -613,6 +615,7 @@ export function ClaimsView() {
             ))}
           </TabsList>
         </Tabs>
+        </div>
 
         {tab === "done" ? (
           !briefDismissed.has("done") ? (
