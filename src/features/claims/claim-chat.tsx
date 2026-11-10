@@ -30,7 +30,23 @@ export function ClaimChat({ claim }: { claim: LocalClaim }) {
   const [draft, setDraft] = useState("");
   const name = firstName(claim);
   const lines = threadFor(claim);
-  const { setControl } = useWorkspace();
+  const { setControl, askDraft, setAskDraft } = useWorkspace();
+  // A question opened with Ask is typed in here and waits for Send. Sending it performs the Ask action.
+  const ask = askDraft && askDraft.claimId === claim.id ? askDraft : null;
+  const [seenAsk, setSeenAsk] = useState<unknown>(null);
+  if (ask && ask !== seenAsk) {
+    setSeenAsk(ask);
+    setDraft(ask.text);
+  }
+
+  function submit(text: string): boolean {
+    if (ask) {
+      if (!ask.send(text)) return false;
+      setAskDraft(null);
+    } else sendMessage(claim.id, text);
+    setDraft("");
+    return true;
+  }
 
   // The assistant can type into this box, send what is typed, or clear it, exactly as Noa would. It reports what really happened.
   useEffect(() => {
@@ -47,13 +63,14 @@ export function ClaimChat({ claim }: { claim: LocalClaim }) {
         case "send": {
           const text = (typeof input.text === "string" ? input.text : draft).trim();
           if (!text) return { ok: false, error: "There is no message typed to send." };
-          sendMessage(claim.id, text);
-          setDraft("");
-          return { ok: true, sent: text, to: name, note: "A message in the claim chat can't be undone, so do not offer undo." };
+          const wasAsk = Boolean(ask);
+          if (!submit(text)) return { ok: false, error: "The message could not be sent. Nothing was sent." };
+          return { ok: true, sent: text, to: name, note: wasAsk ? "The question was sent and the claim now waits on the employee. Undo is available." : "A message in the claim chat can't be undone, so do not offer undo." };
         }
         case "clear":
-          if (!draft.trim()) return { ok: false, error: "There is no unsent message." };
+          if (!draft.trim() && !ask) return { ok: false, error: "There is no unsent message." };
           setDraft("");
+          setAskDraft(null);
           return { ok: true };
         default:
           return { ok: false, error: "Unknown chat action." };
@@ -79,18 +96,32 @@ export function ClaimChat({ claim }: { claim: LocalClaim }) {
         )}
       </div>
       <form
-        className="flex items-end gap-2 border-t p-4"
+        className="flex flex-col gap-2 border-t p-4"
         onSubmit={(e) => {
           e.preventDefault();
-          sendMessage(claim.id, draft);
-          setDraft("");
+          submit(draft);
         }}
       >
-        <Textarea aria-label={`Message to ${name}`} placeholder={`Message ${name}`} rows={2} value={draft} onChange={(e) => setDraft(e.target.value)} />
-        <Button type="submit" disabled={!draft.trim()}>
-          <Send data-icon="inline-start" />
-          Send
-        </Button>
+        {ask ? <p className="text-xs text-muted-foreground">Sending this asks {name} the question and moves the claim to Waiting on employee.</p> : null}
+        <div className="flex items-end gap-2">
+          <Textarea aria-label={`Message to ${name}`} placeholder={`Message ${name}`} rows={2} value={draft} onChange={(e) => setDraft(e.target.value)} />
+          {ask ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setAskDraft(null);
+                setDraft("");
+              }}
+            >
+              Cancel
+            </Button>
+          ) : null}
+          <Button type="submit" disabled={!draft.trim()}>
+            <Send data-icon="inline-start" />
+            Send
+          </Button>
+        </div>
       </form>
     </div>
   );

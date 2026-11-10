@@ -99,7 +99,7 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
   if (active && labels.length > 0) {
     tools.takeAction = tool({
       description:
-        "Carry out one of the buttons on the claim now: approve, decline, hold for a receipt, send to Finance, approve a different amount, or for a claim waiting on the employee Decide now or Continue waiting. Only call it when Noa has asked for that or accepted your suggestion. The decision is applied at once, and Noa can undo it. The button that asks the employee a question opens the message pop-up for Noa to send instead of sending at once.",
+        "Carry out one of the buttons on the claim now: approve, decline, hold for a receipt, send to Finance, approve a different amount, or for a claim waiting on the employee Decide now or Continue waiting. Only call it when Noa has asked for that or accepted your suggestion. The decision is applied at once, and Noa can undo it. The button that asks the employee a question opens the Chat tab in Details with the question typed in for Noa to send, instead of sending at once.",
       inputSchema: z.object({
         buttonLabel: z.enum(labels as [string, ...string[]]).describe("Exact label of the button"),
         amount: z.number().positive().optional().describe('Only for "Approve a different amount": the amount in USD that Noa said. Required there.'),

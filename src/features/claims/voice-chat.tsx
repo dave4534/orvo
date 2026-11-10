@@ -39,6 +39,9 @@ type Props = {
   onEnd: () => void;
 };
 
+const wordsOf = (t: string) => t.toLowerCase().replace(/[^a-z0-9\s']/g, " ").split(/\s+/).filter(Boolean);
+const STOP_WORDS = new Set(["stop", "wait", "cancel", "pause", "hold"]);
+
 // How long to wait after speaking before listening again. A second part of the answer often follows right after a screen action.
 const GRACE_MS = 1200;
 // If nothing comes back for this long after a question, start listening again anyway.
@@ -78,25 +81,64 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
     window.clearTimeout(timers.current.watchdog);
   }
 
+  // Sends what was said, unless something is already in progress.
+  function submit(text: string) {
+    if (!alive.current || !text || pending.current || speakingRef.current || latest.current.busy) return;
+    pending.current = true;
+    keep.current = false;
+    setWaiting(true);
+    speech.stop();
+    window.clearTimeout(timers.current.watchdog);
+    timers.current.watchdog = window.setTimeout(() => {
+      pending.current = false;
+      setWaiting(false);
+      keep.current = !mutedRef.current;
+      listen();
+    }, WATCHDOG_MS);
+    latest.current.onAsk(text);
+  }
+
+  // While the assistant speaks the microphone stays on, so Noa can talk over it. Words that are not part of what is being said
+  // (so not the speaker's own sound coming back) or a word like "stop" cut the speech off, and the rest of the phrase is then sent.
+  function bargeListen(spoken: string) {
+    if (!alive.current || mutedRef.current) return;
+    const known = new Set(wordsOf(spoken));
+    speech.start({
+      onInterim: (t) => {
+        if (!speakingRef.current) {
+          setHeard(t);
+          return;
+        }
+        const words = wordsOf(t);
+        const fresh = words.filter((w) => !known.has(w));
+        if (fresh.length >= 2 || words.some((w) => STOP_WORDS.has(w))) {
+          queue.current = [];
+          cancelSpeech();
+          speakingRef.current = false;
+          setSpeaking(false);
+          keep.current = true;
+          setHeard(t);
+        }
+      },
+      onFinal: (text) => {
+        setHeard("");
+        if (!speakingRef.current) submit(text);
+      },
+      onEnded: () => {
+        if (!alive.current) return;
+        if (speakingRef.current) bargeListen(spoken);
+        else if (keep.current) listen();
+      },
+    });
+  }
+
   function listen() {
     if (!alive.current || !keep.current || mutedRef.current || speakingRef.current || pending.current || queue.current.length > 0 || latest.current.busy) return;
     speech.start({
       onInterim: setHeard,
       onFinal: (text) => {
         setHeard("");
-        if (!alive.current || !text || pending.current || speakingRef.current || latest.current.busy) return;
-        pending.current = true;
-        keep.current = false;
-        setWaiting(true);
-        speech.stop();
-        window.clearTimeout(timers.current.watchdog);
-        timers.current.watchdog = window.setTimeout(() => {
-          pending.current = false;
-          setWaiting(false);
-          keep.current = !mutedRef.current;
-          listen();
-        }, WATCHDOG_MS);
-        latest.current.onAsk(text);
+        submit(text);
       },
       // The browser ends listening after a stretch of silence. Start again while voice mode is on.
       onEnded: () => {
@@ -128,7 +170,7 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
     speakingRef.current = true;
     setWaiting(false);
     keep.current = false;
-    speech.stop();
+    bargeListen(text);
     const started = speak(text, { onStart: () => setSpeaking(true), onEnd: playNext });
     if (!started) playNext();
   }

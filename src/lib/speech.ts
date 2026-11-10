@@ -87,10 +87,14 @@ export function currentVoice(): SpeechSynthesisVoice | undefined {
   return voices.find((v) => v.name === chosen) ?? voices[0];
 }
 
+// The utterance being spoken, so cancelling can silence its callbacks (a cancel is not "finished speaking").
+let current: SpeechSynthesisUtterance | null = null;
+
 export function speak(text: string, handlers: { onStart?: () => void; onEnd?: () => void }): boolean {
   if (typeof window === "undefined" || !("speechSynthesis" in window) || !text) return false;
-  window.speechSynthesis.cancel();
+  cancelSpeech();
   const utterance = new SpeechSynthesisUtterance(text);
+  current = utterance;
   const voice = currentVoice();
   if (voice) {
     utterance.voice = voice;
@@ -107,5 +111,10 @@ export function speak(text: string, handlers: { onStart?: () => void; onEnd?: ()
 }
 
 export function cancelSpeech() {
+  if (current) {
+    current.onend = null;
+    current.onerror = null;
+    current = null;
+  }
   if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
 }

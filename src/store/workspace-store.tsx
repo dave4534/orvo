@@ -14,6 +14,9 @@ export type UiToolHandler = (name: string, input: Record<string, unknown>) => Ui
 /** A control that lives inside one component (the employee chat, the document window). The component registers it while it is on screen. */
 export type ControlHandler = (input: Record<string, unknown>) => UiToolResult;
 
+/** A question to the employee that is typed in the Chat tab and waits for Noa to send it. Sending performs the Ask action. */
+export type AskDraft = { claimId: string; text: string; send: (text: string) => boolean };
+
 export type AiMeta = {
   /** Posted by the app itself (claim summary and recommendation, offline reply), not by the model. */
   note?: boolean;
@@ -72,6 +75,9 @@ type WorkspaceStore = {
   /** The claims view runs screen tools for the chat. Returns the result sent back to the model. */
   setUiToolHandler: (run: UiToolHandler | null) => void;
   /** Components with their own state register what the assistant can do with them. Returns false when that control is not on screen. */
+  /** The question waiting in the employee chat, if any. */
+  askDraft: AskDraft | null;
+  setAskDraft: (draft: AskDraft | null) => void;
   setControl: (key: string, handler: ControlHandler | null) => void;
   hasControl: (key: string) => boolean;
   callControl: (key: string, input?: Record<string, unknown>) => UiToolResult;
@@ -153,6 +159,7 @@ function moveTurn(from: Chat<AiMessage>, start: number, to: Chat<AiMessage>) {
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [aiOpen, setAiOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
+  const [askDraft, setAskDraft] = useState<AskDraft | null>(null);
   const [aiSession, setAiSession] = useState(LIST_SESSION);
   const [epoch, setEpoch] = useState(0);
   const [homeRequest, setHomeRequest] = useState(0);
@@ -253,8 +260,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ aiOpen, setAiOpen, aiSession, setAiSession, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, setControl, hasControl, callControl, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome }),
-    [aiOpen, aiSession, messages, status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, setControl, hasControl, callControl, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome],
+    () => ({ aiOpen, setAiOpen, aiSession, setAiSession, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, askDraft, setAskDraft, setControl, hasControl, callControl, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome }),
+    [aiOpen, aiSession, messages, status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, askDraft, setAskDraft, setControl, hasControl, callControl, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
