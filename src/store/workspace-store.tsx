@@ -161,6 +161,16 @@ function appendNote(chat: Chat<AiMessage>, { role, text, heading, action, claimI
 
 /** Holds the Ask Orvo AI chats so they survive panel changes and are reachable from the top bar (PRD FR-AI-8). Each claim has its own chat. */
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
+  // The demo always starts from the beginning. A browser can bring a page back from its back-forward cache with the old statuses and chat
+  // still in memory, so a restored page is reloaded.
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted) window.location.reload();
+    };
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, []);
+
   const [aiOpen, setAiOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [askDraft, setAskDraft] = useState<AskDraft | null>(null);
