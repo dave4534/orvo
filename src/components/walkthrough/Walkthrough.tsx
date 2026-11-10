@@ -91,9 +91,22 @@ function RichText({ text, onImage, inlineGifSrc }: { text: string; onImage: (src
         if (typeof p === 'string') return <Fragment key={i}>{withInlineGif(p, inlineGifSrc)}</Fragment>
         if (p.href.startsWith('image:')) {
           return (
-            <button key={i} type="button" className="walkthrough-link" onClick={() => onImage(p.href.slice('image:'.length))}>
+            // A span, not a button: a button is an atomic box, so the browser can wrap the text after it (a comma) onto its own line.
+            <span
+              key={i}
+              role="button"
+              tabIndex={0}
+              className="walkthrough-link"
+              onClick={() => onImage(p.href.slice('image:'.length))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  onImage(p.href.slice('image:'.length))
+                }
+              }}
+            >
               {p.label}
-            </button>
+            </span>
           )
         }
         return (
@@ -168,8 +181,8 @@ export function Walkthrough<P extends string>({
   const [pos, setPos] = useState<Point | null>(() => (initial.pos ? clampToWindow(initial.pos) : null))
   // The images open in the lightbox, and which one is showing.
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null)
-  // First visit: open once on the first step. After that the guide stays closed.
-  const [open, setOpen] = useState(!initial.seen)
+  // Collapsed on every landing. It opens when the face is clicked, or after the auto-open delay.
+  const [open, setOpen] = useState(false)
   // Which side of the circle the card sits on, and how tall it may be there.
   const [layout, setLayout] = useState<{ below: boolean; alignRight: boolean; maxHeight: number }>({ below: false, alignRight: false, maxHeight: 480 })
   // Where the face starts on landing, when an anchor is given.

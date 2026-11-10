@@ -211,8 +211,9 @@
   color: var(--wt-muted, #5c6370);
 }
 
-/* A link that opens an image: looks like the other links. */
+/* A link that opens an image: looks like the other links. Inline, so the text after it (a comma, for example) stays on the same line. */
 .walkthrough-link {
+  display: inline;
   padding: 0;
   border: 0;
   background: none;
@@ -315,12 +316,13 @@
   right: 16px;
 }
 
-/* A profile photo on its own line, 50px square, 32px below the step's header (12px header margin + 20px). */
+/* A profile photo on its own line, 100px square, 32px below the step's header (12px header margin + 20px). A 1px light-gray ring sits outside the circle. */
 .walkthrough-photo {
   display: block;
-  width: 50px;
-  height: 50px;
+  width: 100px;
+  height: 100px;
   margin: 20px 0 12px;
   border-radius: 50%;
   object-fit: cover;
+  box-shadow: 0 0 0 1px oklch(0.922 0 0);
 }
