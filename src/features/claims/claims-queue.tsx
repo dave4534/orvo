@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, ChevronLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { Status } from "@/data/types";
@@ -29,23 +29,20 @@ export function ClaimsQueue(props: Props) {
   const { claim, allClaims, position, onPrev, onNext } = props;
   return (
     <section aria-label="Claims queue" className="flex h-full min-h-0 min-w-0 flex-col">
-      <div className="flex h-16 shrink-0 items-center justify-between gap-3 border-b bg-card px-4">
-        <div className="flex min-w-0 items-center gap-3">
+      <div className="grid h-16 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 border-b bg-card px-4">
+        <div className="flex min-w-0 items-center justify-start">
           <Button variant="outline" size="sm" className="shrink-0" onClick={props.onBack}>
             <ChevronLeft data-icon="inline-start" />
             Back to claims
           </Button>
-          <div>
-            <h2 className="flex items-center gap-2 text-base leading-5 font-semibold whitespace-nowrap">
-              {props.queueTitle === "Done Queue" ? <Sparkles aria-hidden className="size-4 text-primary" /> : null}
-              {props.queueTitle}
-            </h2>
-            <p className="text-xs whitespace-nowrap text-muted-foreground" aria-live="polite">
-              {position.index + 1} of {position.total} {position.noun}
-            </p>
-          </div>
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex flex-col items-center text-center">
+          <h2 className="text-base leading-5 font-semibold whitespace-nowrap">{props.queueTitle}</h2>
+          <p className="mt-1 text-xs leading-4 whitespace-nowrap text-muted-foreground" aria-live="polite">
+            {position.index + 1} of {position.total} {position.noun}
+          </p>
+        </div>
+        <div className="flex shrink-0 justify-end gap-2">
           <Button variant="outline" size="sm" disabled={!onPrev} onClick={onPrev}>
             <ArrowLeft data-icon="inline-start" />
             Previous
