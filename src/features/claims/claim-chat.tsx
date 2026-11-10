@@ -70,7 +70,7 @@ export function ClaimChat({ claim }: { claim: LocalClaim }) {
         ) : (
           lines.map((l, i) => (
             <div key={`${l.at}-${i}`} className={cn("flex max-w-[85%] flex-col gap-1", l.from === "manager" ? "self-end items-end" : "self-start")}>
-              <div className={cn("rounded-xl px-3.5 py-2.5 text-sm", l.from === "manager" ? "bg-(--primary) text-primary-foreground" : "border bg-card")}>{l.text}</div>
+              <div className={cn("rounded-xl px-3.5 py-2.5 text-sm", l.from === "manager" ? "bg-primary text-primary-foreground" : "border bg-card")}>{l.text}</div>
               <div className="text-xs text-muted-foreground">
                 {l.from === "manager" ? "Sent" : name}, {formatSubmitted(l.at)}
               </div>

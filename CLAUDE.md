@@ -20,9 +20,7 @@ Source documents (outside this folder, in `..`):
 
 ## The rule
 
-**Branch `explore/untitled-ui-coverage` only (the user lifted the shadcn-only rule for this branch; `main` keeps it unchanged):** Untitled UI React (React Aria, free components, https://www.untitledui.com/react/components) is the first choice for every element it has. Install it with `npx untitledui@latest add <names> --yes` (never copy by hand, never use the MCP server, it costs tokens every turn). Whatever Untitled UI does not have stays on shadcn (list in docs/untitled-ui-gaps.md). Untitled UI files: kebab-case, react-aria imports prefixed `Aria*`, classes via `cx` and `sortCx`, icons from `@untitledui/icons`. No PRO components (a paid license the user has not bought). The audit script still enforces the rest of the rule below for shadcn parts.
-
-shadcn/ui on Base UI is the UI source for everything Untitled UI lacks (and the only source on `main`). Not Radix, not Mondave, not any other component library, not hand-built components.
+shadcn/ui on Base UI is the only UI source for this project. Not Radix, not Mondave, not any other component library, not hand-built components.
 
 Order of preference for every UI element:
 1. A stock shadcn component (https://ui.shadcn.com/docs/components), installed with the CLI.

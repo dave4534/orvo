@@ -1,9 +1,14 @@
-import { ChevronDown, SearchLg } from "@untitledui/icons";
+import { ChevronDown, Search } from "lucide-react";
 
-import { Button } from "@/components/base/buttons/button";
-import { Dropdown } from "@/components/base/dropdown/dropdown";
-import { Input } from "@/components/base/input/input";
-import { Select } from "@/components/base/select/select";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { PersonId, Status } from "@/data/types";
 import {
   RANGES,
@@ -22,78 +27,92 @@ type Props = {
   showStatus: boolean;
 };
 
-const RANGE_ITEMS = RANGES.map((r) => ({ id: r.id, label: r.label }));
+const RANGE_ITEMS = RANGES.map((r) => ({ value: r.id, label: r.label }));
 
-type Selection = "all" | Set<string | number>;
-
-function keysOf(selection: Selection, all: string[]): string[] {
-  return selection === "all" ? all : [...selection].map(String);
+function toggle<T>(list: T[], value: T): T[] {
+  return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 }
 
 export function ClaimsFilters({ filters, onChange, onReset, canReset, showStatus }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <div className="w-full max-w-sm min-w-56 flex-1">
+      <div className="relative w-full max-w-sm min-w-56 flex-1">
+        <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
           aria-label="Search claims"
           placeholder="Search claims"
-          icon={SearchLg}
+          className="h-10 bg-card pl-9"
           value={filters.query}
-          onChange={(value) => onChange({ ...filters, query: value })}
+          onChange={(e) => onChange({ ...filters, query: e.target.value })}
         />
       </div>
 
-      <div className="flex items-center gap-2 text-md text-tertiary">
-        <span>Date range:</span>
-        <Select
-          aria-label="Date range"
-          className="w-44"
-          items={RANGE_ITEMS}
-          selectedKey={filters.range}
-          onSelectionChange={(key) => onChange({ ...filters, range: String(key) as RangeId })}
-        >
-          {(item) => <Select.Item id={item.id} label={item.label} />}
-        </Select>
-      </div>
+      <Select
+        value={filters.range}
+        items={RANGE_ITEMS}
+        onValueChange={(value) => onChange({ ...filters, range: value as RangeId })}
+      >
+        <SelectTrigger aria-label="Date range" className="h-10! bg-card px-3">
+          <span className="text-muted-foreground">Date range:</span>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {RANGES.map((r) => (
+            <SelectItem key={r.id} value={r.id}>
+              {r.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-      <Dropdown.Root>
-        <Button color="secondary" size="md" iconTrailing={ChevronDown}>
-          Employee{filters.employees.length > 0 ? ` (${filters.employees.length})` : ""}
-        </Button>
-        <Dropdown.Popover className="w-52" placement="bottom left">
-          <Dropdown.Menu
-            selectionMode="multiple"
-            selectedKeys={new Set<string>(filters.employees)}
-            onSelectionChange={(sel) => onChange({ ...filters, employees: keysOf(sel, teamMembers.map((p) => p.id)) as PersonId[] })}
-          >
-            {teamMembers.map((p) => (
-              <Dropdown.Item key={p.id} id={p.id} label={displayName(p)} selectionIndicator="checkbox" />
-            ))}
-          </Dropdown.Menu>
-        </Dropdown.Popover>
-      </Dropdown.Root>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button variant="outline" className="h-10 bg-card px-3">
+              Employee{filters.employees.length > 0 ? ` (${filters.employees.length})` : ""}
+              <ChevronDown data-icon="inline-end" />
+            </Button>
+          }
+        />
+        <DropdownMenuContent className="min-w-52">
+          {teamMembers.map((p) => (
+            <DropdownMenuCheckboxItem
+              key={p.id}
+              checked={filters.employees.includes(p.id as PersonId)}
+              onCheckedChange={() => onChange({ ...filters, employees: toggle(filters.employees, p.id as PersonId) })}
+            >
+              {displayName(p)}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {showStatus ? (
-        <Dropdown.Root>
-          <Button color="secondary" size="md" iconTrailing={ChevronDown}>
-            Status{filters.statuses.length > 0 ? ` (${filters.statuses.length})` : ""}
-          </Button>
-          <Dropdown.Popover className="w-56" placement="bottom left">
-            <Dropdown.Menu
-              selectionMode="multiple"
-              selectedKeys={new Set<string>(filters.statuses)}
-              onSelectionChange={(sel) => onChange({ ...filters, statuses: keysOf(sel, [...STATUS_FILTER_OPTIONS]) as Status[] })}
-            >
-              {STATUS_FILTER_OPTIONS.map((s: Status) => (
-                <Dropdown.Item key={s} id={s} label={STATUS_LABEL[s]} selectionIndicator="checkbox" />
-              ))}
-            </Dropdown.Menu>
-          </Dropdown.Popover>
-        </Dropdown.Root>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button variant="outline" className="h-10 bg-card px-3">
+                Status{filters.statuses.length > 0 ? ` (${filters.statuses.length})` : ""}
+                <ChevronDown data-icon="inline-end" />
+              </Button>
+            }
+          />
+          <DropdownMenuContent className="min-w-56">
+            {STATUS_FILTER_OPTIONS.map((s: Status) => (
+              <DropdownMenuCheckboxItem
+                key={s}
+                checked={filters.statuses.includes(s)}
+                onCheckedChange={() => onChange({ ...filters, statuses: toggle(filters.statuses, s) })}
+              >
+                {STATUS_LABEL[s]}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       ) : null}
 
-      <Button color="tertiary" size="md" onPress={onReset} isDisabled={!canReset}>
+      <Button variant="ghost" className="h-10" onClick={onReset} disabled={!canReset}>
         Reset
       </Button>
     </div>

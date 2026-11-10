@@ -7,15 +7,12 @@ import { join, relative, extname, basename } from "node:path";
 const ROOT = process.cwd();
 const SRC = join(ROOT, "src");
 const UI_DIR = join(SRC, "components", "ui");
-// Untitled UI files installed by `npx untitledui add` (branch explore/untitled-ui-coverage). Treated like components/ui.
-const UNTITLED_DIRS = ["base", "application", "foundations", "shared-assets"].map((d) => join(SRC, "components", d));
-const isGenerated = (f) => f.startsWith(UI_DIR) || UNTITLED_DIRS.some((d) => f.startsWith(d));
 
 const RAW = ["button", "input", "select", "textarea", "table", "dialog"];
 // Allowed for UI: @/components/ui/*, @base-ui/react, lucide-react. Anything matching below is flagged.
 const UI_LIKE_IMPORT = [
   /^@radix-ui\//, /^radix-ui$/, /^@mui\//, /^@chakra-ui\//, /^@mantine\//, /^@headlessui\//,
-  /^@ark-ui\//, /^@nextui-org\//, /^@heroui\//, /^@ariakit\//, 
+  /^@ark-ui\//, /^@nextui-org\//, /^@heroui\//, /^@ariakit\//, /^react-aria/, /^@react-aria\//,
   /^antd$/, /^primereact/, /^react-bootstrap/, /^@fluentui\//, /^@blueprintjs\//,
   /^@mondaydotcomorg\//, /^monday-ui-react-core/, /^react-icons/, /^@heroicons\//, /^@phosphor-icons\//,
 ];
@@ -34,7 +31,7 @@ function walk(dir, out = []) {
 const rel = (p) => relative(ROOT, p);
 const files = walk(SRC);
 const code = files.filter((f) => [".ts", ".tsx"].includes(extname(f)));
-const outsideUi = code.filter((f) => !isGenerated(f));
+const outsideUi = code.filter((f) => !f.startsWith(UI_DIR));
 
 // 1. Raw interactive elements outside components/ui
 const rawHits = [];
@@ -59,14 +56,14 @@ for (const f of code) {
 
 // 3. Custom .css files (only src/tailwind.css is allowed)
 const cssHits = files
-  .filter((f) => extname(f) === ".css" && ![join("src", "tailwind.css"), join("src", "styles", "untitledui.css")].includes(rel(f)))
+  .filter((f) => extname(f) === ".css" && rel(f) !== join("src", "tailwind.css"))
   .map(rel);
 
 // 4. Components not registered in docs
 const read = (p) => (existsSync(p) ? readFileSync(p, "utf8") : "");
 const registry = read(join(ROOT, "docs", "components.md")) + "\n" + read(join(ROOT, "docs", "exceptions.md"));
 const componentFiles = files
-  .filter((f) => f.startsWith(join(SRC, "components")) && f.endsWith(".tsx") && !UNTITLED_DIRS.some((d) => f.startsWith(d)))
+  .filter((f) => f.startsWith(join(SRC, "components")) && f.endsWith(".tsx"))
   .map((f) => basename(f, ".tsx"));
 const unregistered = componentFiles.filter((name) => !new RegExp(`\\b${name}\\b`).test(registry));
 

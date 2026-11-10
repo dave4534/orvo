@@ -22,7 +22,7 @@ export function Wave({ phase }: { phase: "listening" | "thinking" | "speaking" |
           key={i}
           className={cn(
             "w-1 origin-center rounded-full",
-            phase === "muted" ? "h-1 bg-muted-foreground" : phase === "thinking" ? "h-1.5 animate-pulse bg-muted-foreground" : "h-6 bg-(--primary)",
+            phase === "muted" ? "h-1 bg-muted-foreground" : phase === "thinking" ? "h-1.5 animate-pulse bg-muted-foreground" : "h-6 bg-primary",
             (phase === "listening" || phase === "speaking") && "animate-wave",
           )}
           style={{ animationDelay: `${i * 110}ms`, animationDuration: phase === "speaking" ? "0.55s" : "1.1s" }}

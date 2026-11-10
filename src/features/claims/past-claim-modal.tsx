@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Status } from "@/data/types";
 import type { ActionId } from "@/logic/actions";
 import type { LocalClaim } from "@/logic/local";
@@ -19,16 +19,14 @@ type Props = {
 /** A past claim opened over the review, so closing it returns to exactly where the review was. */
 export function PastClaimModal({ claim, allClaims, onClose, onDecided, onReopen }: Props) {
   return (
-    <ModalOverlay isOpen isDismissable onOpenChange={(open) => (open ? undefined : onClose())}>
-      <Modal className="max-w-3xl">
-        <Dialog className="flex max-h-[85svh] flex-col overflow-hidden" aria-label={claim.merchant}>
-          <header className="shrink-0 border-b border-secondary px-6 py-4">
-            <h2 className="text-base font-semibold text-primary">{claim.merchant}</h2>
-            <p className="text-sm text-tertiary">Submitted {dayFormat.format(new Date(claim.submitted_at)).replace(",", "")}</p>
-          </header>
-          <TriagePanel key={claim.id} claim={claim} allClaims={allClaims} stacked={false} padded={false} flat primary={false} onDecided={onDecided} onReopen={onReopen} />
-        </Dialog>
-      </Modal>
-    </ModalOverlay>
+    <Dialog open onOpenChange={(open) => (open ? undefined : onClose())}>
+      <DialogContent className="flex max-h-[85svh] flex-col gap-0 overflow-hidden p-0 bg-card sm:max-w-3xl">
+        <DialogHeader className="shrink-0 border-b px-6 py-4">
+          <DialogTitle className="text-base">{claim.merchant}</DialogTitle>
+          <DialogDescription>Submitted {dayFormat.format(new Date(claim.submitted_at)).replace(",", "")}</DialogDescription>
+        </DialogHeader>
+        <TriagePanel key={claim.id} claim={claim} allClaims={allClaims} stacked={false} padded={false} flat primary={false} onDecided={onDecided} onReopen={onReopen} />
+      </DialogContent>
+    </Dialog>
   );
 }

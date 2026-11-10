@@ -171,7 +171,7 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
     <aside aria-label="Ask Orvo AI" className="relative flex h-full min-h-0 w-full flex-col bg-card">
       <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
         <h2 className="flex items-center gap-2 text-base font-semibold">
-          <Sparkles aria-hidden className="size-4 text-(--primary)" />
+          <Sparkles aria-hidden className="size-4 text-primary" />
           Ask Orvo AI
         </h2>
         <div className="flex items-center gap-1">
@@ -194,7 +194,7 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
         >
           {aiMessages.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-              <span aria-hidden className="flex size-11 items-center justify-center rounded-full bg-info text-(--primary)">
+              <span aria-hidden className="flex size-11 items-center justify-center rounded-full bg-info text-primary">
                 <Sparkles className="size-5" />
               </span>
               <div>

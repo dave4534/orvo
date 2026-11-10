@@ -1,16 +1,23 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { FC } from "react";
-import { ArrowRight, Bank, SlashCircle01, Check, CheckDone01, ChevronDown, Clock, CurrencyDollarCircle, Edit03, MessageSquare01, Tool01 } from "@untitledui/icons";
-import { Info } from "lucide-react";
+import { ArrowRight, Ban, Check, ChevronDown, CircleDollarSign, Clock, Info, Landmark, ListChecks, MessageSquare, Pencil, Wrench, type LucideIcon } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Avatar } from "@/components/base/avatar/avatar";
-import { Button } from "@/components/base/buttons/button";
-import { Dropdown } from "@/components/base/dropdown/dropdown";
-import { Select } from "@/components/base/select/select";
-import { TextArea } from "@/components/base/textarea/textarea";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { dataset } from "@/data";
 import type { Status } from "@/data/types";
 import { actionPreview, firstName, type ActionId, type ActionInput } from "@/logic/actions";
@@ -51,16 +58,16 @@ type Props = {
 };
 
 const dayFormat = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
-const ACTION_ICON: Partial<Record<ActionId, FC<{ className?: string }>>> = {
+const ACTION_ICON: Partial<Record<ActionId, LucideIcon>> = {
   approve: Check,
-  approve_amount: CurrencyDollarCircle,
+  approve_amount: CircleDollarSign,
   exception: Check,
-  decline: SlashCircle01,
-  ask: MessageSquare01,
+  decline: Ban,
+  ask: MessageSquare,
   hold: Clock,
-  to_finance: Bank,
-  to_finance_both: Bank,
-  correct: Edit03,
+  to_finance: Landmark,
+  to_finance_both: Landmark,
+  correct: Pencil,
 };
 
 type Outcome = "keep" | "approved" | "declined";
@@ -233,10 +240,12 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
           ) : null}
           <div className={cn("relative flex flex-1 flex-col overflow-hidden", !flat && "rounded-2xl border bg-card shadow-md")}>
             <div className="flex items-center gap-3.5 border-b px-6 py-[18px]">
-              <Avatar size="lg" initials={initials(full)} />
+              <Avatar size="lg">
+                <AvatarFallback>{initials(full)}</AvatarFallback>
+              </Avatar>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[1.375rem] leading-7 font-semibold">{full}</div>
-                {flat ? null : <div className="text-xs text-tertiary">{subtitle}</div>}
+                {flat ? null : <div className="text-xs text-muted-foreground">{subtitle}</div>}
               </div>
               <div className="text-right text-3xl leading-9 font-semibold tabular-nums">{formatUsd(claimed)}</div>
             </div>
@@ -244,18 +253,22 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
             <div className="flex items-center justify-between gap-3 border-b bg-muted/40 px-6 py-2.5">
               {editable ? (
                 <>
-                  <p className="min-w-0 text-sm text-tertiary">{decidedSummary}</p>
+                  <p className="min-w-0 text-sm text-muted-foreground">{decidedSummary}</p>
                   <div className="flex shrink-0 flex-col items-start gap-1.5">
-                    <Select
-                      id="decision-select"
-                      label="Status"
-                      size="sm"
-                      className="w-44"
-                      items={decisionOptions.map((o) => ({ id: o, label: decisionItems[o] }))}
-                      selectedKey={choice}
-                      onSelectionChange={(key) => key != null && setChoice(key as Outcome)}
-                    >
-                      {(item) => <Select.Item id={item.id} label={item.label} />}
+                    <Label htmlFor="decision-select" className="text-xs text-muted-foreground">
+                      Status
+                    </Label>
+                    <Select items={decisionItems} value={choice} onValueChange={(v) => setChoice(v as Outcome)}>
+                      <SelectTrigger id="decision-select" className="bg-card font-medium">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent alignItemWithTrigger={false} align="end">
+                        {decisionOptions.map((o) => (
+                          <SelectItem key={o} value={o}>
+                            {decisionItems[o]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
                   </div>
                 </>
@@ -266,8 +279,8 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                 </span>
               )}
               {onOpenDetails ? (
-                <Button color="secondary" size="sm" iconTrailing={ArrowRight} onPress={onOpenDetails}>
-                  View details
+                <Button variant="outline" size="sm" onClick={onOpenDetails}>
+                  View details <ArrowRight data-icon="inline-end" />
                 </Button>
               ) : null}
             </div>
@@ -290,15 +303,15 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
       <div className={cn("flex shrink-0 flex-col gap-3 border-t px-6 py-4", "bg-card")}>
         {changed && choice === "declined" ? (
           <div className="flex flex-col gap-1.5">
-            <TextArea
+            <Label htmlFor="decline-reason">Reason for declining</Label>
+            <Textarea
               id="decline-reason"
-              label="Reason for declining"
-              hint={`Sent to ${name} in chat after the update.`}
               rows={3}
               value={reason}
-              onChange={setReason}
+              onChange={(e) => setReason(e.target.value)}
               placeholder="Say why the claim is declined"
             />
+            <p className="text-xs text-muted-foreground">Sent to {name} in chat after the update.</p>
           </div>
         ) : null}
 
@@ -324,10 +337,10 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
             <AlertDescription className="flex flex-col gap-2">
               <span>Nothing was sent to {name} and the claim is unchanged. Try again, or leave it in the queue.</span>
               <span className="flex gap-2">
-                <Button size="sm" onPress={() => run(error)}>
+                <Button size="sm" onClick={() => run(error)}>
                   Try again
                 </Button>
-                <Button size="sm" color="secondary" onPress={() => setError(null)}>
+                <Button size="sm" variant="outline" onClick={() => setError(null)}>
                   Dismiss
                 </Button>
               </span>
@@ -336,54 +349,61 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
         ) : null}
 
         {needsReview && rec && !rec.recommended ? (
-          <p className="text-sm text-tertiary">No recommendation for this claim. {claim.agent.unsure ? "It could not be judged." : ""}</p>
+          <p className="text-sm text-muted-foreground">No recommendation for this claim. {claim.agent.unsure ? "It could not be judged." : ""}</p>
         ) : null}
 
         {claim.status === "waiting_on_finance" ? (
-          <p className="text-sm text-tertiary">With Finance since {claim.noa ? formatDay(claim.noa.decided_at) : "today"}. No action is needed until Finance decides.</p>
+          <p className="text-sm text-muted-foreground">With Finance since {claim.noa ? formatDay(claim.noa.decided_at) : "today"}. No action is needed until Finance decides.</p>
         ) : null}
 
         <div className="flex flex-wrap items-center gap-2">
-          <Dropdown.Root>
-            <Button color="secondary" size="lg" iconTrailing={ChevronDown}>
-              More options
-            </Button>
-            <Dropdown.Popover placement="top start" className="w-72">
-              <Dropdown.Menu>
-                {decisionMenu.length > 0 ? (
-                  <Dropdown.Section>
-                    <Dropdown.SectionHeader className="px-3 py-1.5 text-xs font-semibold text-quaternary">DECISION</Dropdown.SectionHeader>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="outline" size="lg" className="h-11">
+                  More options <ChevronDown data-icon="inline-end" />
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="start" side="top" className="w-72">
+              {decisionMenu.length > 0 ? (
+                <>
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>DECISION</DropdownMenuLabel>
                     {decisionMenu.map((spec) => {
                       const Icon = ACTION_ICON[spec.id];
                       return (
-                        <Dropdown.Item key={spec.label} id={spec.label} textValue={spec.label} icon={Icon} onAction={() => choose(spec)}>
+                        <DropdownMenuItem key={spec.label} onClick={() => choose(spec)}>
+                          {Icon ? <Icon /> : null}
                           {spec.label}
-                        </Dropdown.Item>
+                        </DropdownMenuItem>
                       );
                     })}
-                  </Dropdown.Section>
-                ) : null}
-                {decisionMenu.length > 0 ? <Dropdown.Separator /> : null}
-                <Dropdown.Section>
-                  <Dropdown.SectionHeader className="px-3 py-1.5 text-xs font-semibold text-quaternary">ABOUT AUTOMATIC DECISIONS</Dropdown.SectionHeader>
-                  <Dropdown.Item id="fix" textValue="Correct an automatic decision" icon={Tool01} onAction={() => setFixOpen(true)}>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                </>
+              ) : null}
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>ABOUT AUTOMATIC DECISIONS</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => setFixOpen(true)}>
+                  <Wrench />
+                  <span className="flex flex-col">
+                    <span>Correct an automatic decision</span>
+                    <span className="text-xs text-muted-foreground">Record what went wrong</span>
+                  </span>
+                </DropdownMenuItem>
+                {onOpenMore ? (
+                  <DropdownMenuItem onClick={() => onOpenMore("policy")}>
+                    <ListChecks />
                     <span className="flex flex-col">
-                      <span>Correct an automatic decision</span>
-                      <span className="text-xs font-normal text-tertiary">Record what went wrong</span>
+                      <span>See how the decision was made</span>
+                      <span className="text-xs text-muted-foreground">Evidence and checks that were run</span>
                     </span>
-                  </Dropdown.Item>
-                  {onOpenMore ? (
-                    <Dropdown.Item id="how" textValue="See how the decision was made" icon={CheckDone01} onAction={() => onOpenMore("policy")}>
-                      <span className="flex flex-col">
-                        <span>See how the decision was made</span>
-                        <span className="text-xs font-normal text-tertiary">Evidence and checks that were run</span>
-                      </span>
-                    </Dropdown.Item>
-                  ) : null}
-                </Dropdown.Section>
-              </Dropdown.Menu>
-            </Dropdown.Popover>
-          </Dropdown.Root>
+                  </DropdownMenuItem>
+                ) : null}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
             {needsReview && rec ? (
@@ -391,13 +411,14 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                 {rec.secondary.map((spec) => {
                   const Icon = ACTION_ICON[spec.id];
                   return (
-                    <Button key={spec.label} color="secondary" size="lg" iconLeading={Icon} onPress={() => choose(spec)}>
+                    <Button key={spec.label} variant="outline" size="lg" className="h-11" onClick={() => choose(spec)}>
+                      {Icon ? <Icon data-icon="inline-start" /> : null}
                       {spec.label}
                     </Button>
                   );
                 })}
                 {rec.recommended ? (
-                  <Button size="lg" className="bg-success-solid hover:bg-success-solid_hover" onPress={() => choose(rec.recommended!)}>
+                  <Button size="lg" className="h-11 bg-success text-success-foreground hover:bg-success/90" onClick={() => choose(rec.recommended!)}>
                     {rec.recommended.label}
                   </Button>
                 ) : null}
@@ -405,7 +426,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
             ) : null}
 
             {spot ? (
-              <Button size="lg" className="bg-success-solid hover:bg-success-solid_hover" onPress={() => run({ id: "confirm" })}>
+              <Button size="lg" className="h-11 bg-success text-success-foreground hover:bg-success/90" onClick={() => run({ id: "confirm" })}>
                 Confirm decision
               </Button>
             ) : null}
@@ -414,9 +435,10 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
               changed && savedInput ? (
                 <>
                   <Button
-                    color="secondary"
+                    variant="outline"
                     size="lg"
-                    onPress={() => {
+                    className="h-11"
+                    onClick={() => {
                       setChoice("keep");
                       setReason("");
                     }}
@@ -425,8 +447,9 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                   </Button>
                   <Button
                     size="lg"
-                    isDisabled={choice === "declined" && !reason.trim()}
-                    onPress={() => {
+                    className="h-11"
+                    disabled={choice === "declined" && !reason.trim()}
+                    onClick={() => {
                       const text = reason.trim();
                       if (run(savedInput) && choice === "declined" && text) sendMessage(claim.id, text);
                     }}
@@ -435,22 +458,23 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                   </Button>
                 </>
               ) : (
-                <Button color="secondary" size="lg" isDisabled>
+                <Button variant="outline" size="lg" className="h-11" disabled>
                   Save
                 </Button>
               )
             ) : agentDecided || decidedByNoa ? (
-              <Button color="secondary" size="lg" iconLeading={Edit03} onPress={() => setFixOpen(true)}>
+              <Button variant="outline" size="lg" className="h-11" onClick={() => setFixOpen(true)}>
+                <Pencil data-icon="inline-start" />
                 Edit decision
               </Button>
             ) : null}
 
             {claim.status === "waiting_on_employee" ? (
               <>
-                <Button color="tertiary" size="lg" onPress={() => run({ id: "decide_now" })}>
+                <Button variant="ghost" size="lg" className="h-11" onClick={() => run({ id: "decide_now" })}>
                   Decide now
                 </Button>
-                <Button size="lg" onPress={() => onContinue?.()}>
+                <Button size="lg" className="h-11" onClick={() => onContinue?.()}>
                   Continue waiting
                 </Button>
               </>
