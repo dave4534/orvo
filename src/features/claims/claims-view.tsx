@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { PartyPopper, SearchX, Sparkles } from "lucide-react";
+import { SearchX } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -57,7 +57,7 @@ const tabOfClaim = (claim: LocalClaim | undefined, now: Date): TabId =>
   claim ? (["needs_review", "waiting", "done"] as TabId[]).find((t) => inTab([claim], t, now).length > 0) ?? "all" : "needs_review";
 
 export function ClaimsView() {
-  const { claims, now, skipAhead, sessionIds, undoLast, perform, performBatch, sendMessage } = useClaims();
+  const { claims, now, skipAhead, undoLast, perform, performBatch, sendMessage } = useClaims();
   const { aiOpen, setAiOpen, addAiMessage, lastTriageClaim, setChatContext, setUiToolHandler, runAction, controlDialog, callControl, hasControl, setAiWidener, voiceOpen, setVoiceOpen, homeRequest } = useWorkspace();
   const seenHome = useRef(homeRequest);
   const aiPanel = usePanelRef();
@@ -567,11 +567,6 @@ export function ClaimsView() {
 
   const inTriage = openClaim !== null && position !== null;
 
-  // Cleared-queue summary from what was decided this session (PRD EMP-1).
-  const sessionClaims = claims.filter((c) => sessionIds.includes(c.id));
-  const decidedCount = sessionClaims.filter((c) => c.status === "approved_by_noa" || c.status === "declined_by_noa").length;
-  const financeCount = sessionClaims.filter((c) => c.status === "waiting_on_finance").length;
-  const waitingCount = sessionClaims.filter((c) => c.status === "waiting_on_employee").length;
   const cleared = tab === "needs_review" && !filtered && rows.length === 0;
   const hasSpotChecks = claims.some((c) => c.status === "approved_by_agent" && isSpotCheck(c));
 
@@ -678,13 +673,10 @@ export function ClaimsView() {
         ) : cleared ? (
           <Empty className="rounded-xl border bg-card py-16">
             <EmptyHeader>
-              <EmptyMedia variant="icon">{sessionIds.length > 0 ? <PartyPopper /> : <Sparkles />}</EmptyMedia>
-              <EmptyTitle>{sessionIds.length > 0 ? "Queue cleared" : "Nothing needs review"}</EmptyTitle>
-              <EmptyDescription>
-                {sessionIds.length > 0
-                  ? `Decided ${decidedCount}, sent ${financeCount} to Finance, ${waitingCount} waiting on employees.`
-                  : `${brief.approvedByOrvo} claims were approved automatically. Nothing needs review.`}
-              </EmptyDescription>
+              {/* The high-five illustration from the brand kit (Brand/Modal/high-five.svg). */}
+              <img src="/brand/high-five.svg" alt="" className="mx-auto h-40 w-auto" />
+              <EmptyTitle>Rock on Noa! Queue cleared.</EmptyTitle>
+              <EmptyDescription>New items will appear here ({counts.waiting} pending).</EmptyDescription>
             </EmptyHeader>
             <EmptyContent className="flex-row justify-center">
               {hasSpotChecks ? (
