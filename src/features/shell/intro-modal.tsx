@@ -40,6 +40,15 @@ export function IntroModal() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  // The walkthrough checks this to sit beneath the modal overlay while it is open.
+  useEffect(() => {
+    if (!open) return;
+    document.documentElement.dataset.introOpen = "true";
+    return () => {
+      delete document.documentElement.dataset.introOpen;
+    };
+  }, [open]);
+
   function close() {
     markSeen();
     setOpen(false);
@@ -53,7 +62,7 @@ export function IntroModal() {
 
   return (
     <Dialog open={open} onOpenChange={(next) => (next ? setOpen(true) : close())}>
-      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-lg">
+      <DialogContent initialFocus={false} className="gap-0 overflow-hidden p-0 sm:max-w-lg">
         <div className="flex justify-center px-6 pt-6">
           {/* The animated card carousel from the brand kit (Brand/Modal), at 80% of the card width. */}
           <img src="/intro/card-carousel-960.gif" alt="" className="block w-4/5 rounded-md" />

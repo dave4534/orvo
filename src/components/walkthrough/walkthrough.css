@@ -225,6 +225,11 @@
   cursor: pointer;
 }
 
+/* While the intro modal is open, the guide drops beneath its overlay (z-50). */
+html[data-intro-open='true'] .walkthrough {
+  z-index: 40;
+}
+
 /* Lightbox: above the card (60) and dialogs. */
 .walkthrough-lightbox {
   position: fixed;
