@@ -40,7 +40,15 @@ export function useSpeechInput() {
     const Ctor = getRecognitionCtor();
     // Nothing may start listening after the component that asked for it is gone.
     if (!Ctor || !mounted.current) return;
-    recognition.current?.abort();
+    // Replace the old session quietly: its "ended" callback must not start yet another one.
+    const previous = recognition.current;
+    if (previous) {
+      previous.onresult = null;
+      previous.onerror = null;
+      previous.onend = null;
+      running.delete(previous);
+      previous.abort();
+    }
     const r = new Ctor();
     r.lang = "en-US";
     r.continuous = true;
