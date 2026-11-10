@@ -111,11 +111,15 @@ export function VoiceBar({ busy, onAsk, onStopAnswer, onEnd }: Props) {
         }
         const words = wordsOf(t);
         const fresh = words.filter((w) => !known.has(w));
-        if (fresh.length >= 2 || words.some((w) => STOP_WORDS.has(w))) {
+        if (fresh.length >= 3 || words.some((w) => STOP_WORDS.has(w))) {
+          // Same reset as the Stop button: nothing is pending any more, so the next phrase is sent normally.
+          clearTimers();
           queue.current = [];
           cancelSpeech();
           speakingRef.current = false;
           setSpeaking(false);
+          pending.current = false;
+          setWaiting(false);
           keep.current = true;
           setHeard(t);
         }
