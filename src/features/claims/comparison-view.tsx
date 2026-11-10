@@ -1,4 +1,4 @@
-import { Check } from "@untitledui/icons";
+import { AlertTriangle, Check } from "@untitledui/icons";
 
 import { formatUsd } from "@/logic/format";
 import type { Comparison, Half } from "@/logic/comparison";
@@ -76,11 +76,16 @@ export function ComparisonView({ comparison }: { comparison: Comparison }) {
       </div>
       {comparison.scale ? <GapScale scale={comparison.scale} /> : null}
       <p className={cn("flex items-center gap-2 px-6 pb-3 text-base font-semibold text-balance", comparison.scale ? "pt-11" : "pt-5")}>
-        {comparison.matches ? (
-          <span aria-hidden className="flex size-5 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground">
-            <Check className="size-3.5" strokeWidth={3} />
-          </span>
-        ) : null}
+        {/* Always an icon before the sentence: a filled green check when it matches, a filled warning when it is an issue. */}
+        <span
+          aria-hidden
+          className={cn(
+            "flex size-5 shrink-0 items-center justify-center rounded-full",
+            comparison.matches === true ? "bg-success text-success-foreground" : "bg-warning text-warning-foreground",
+          )}
+        >
+          {comparison.matches === true ? <Check className="size-3.5" strokeWidth={3} /> : <AlertTriangle className="size-3" strokeWidth={2.5} />}
+        </span>
         {comparison.sentence}
       </p>
       {comparison.evidence.length > 0 ? (

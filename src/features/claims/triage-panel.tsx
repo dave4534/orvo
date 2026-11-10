@@ -261,7 +261,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
               ) : (
                 <span className="inline-flex min-w-0 items-center gap-2 font-medium">
                   <Info aria-hidden className="size-4 shrink-0" />
-                  <span className="truncate">{needsReview ? dataset.enums.reason_type[claim.agent.reason_type] : claimStatusLabel(claim)}</span>
+                  <span className="truncate">{needsReview ? (comparison.summary ?? dataset.enums.reason_type[claim.agent.reason_type]) : claimStatusLabel(claim)}</span>
                 </span>
               )}
               {onOpenDetails ? (

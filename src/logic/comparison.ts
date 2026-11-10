@@ -24,7 +24,9 @@ export type Comparison = {
   scale?: { max: number; marks: { value: number; label: string }[] };
   /** One plain sentence that states the gap. */
   sentence: string;
-  /** True when the receipt and the approval agree. The view marks it with a green check. */
+  /** Two or three words for the label beside the info icon at the top of the card. Says the same as the sentence. */
+  summary?: string;
+  /** True when the receipt and the approval agree: a filled green check. Anything else is an issue: a filled warning. */
   matches?: boolean;
   evidence: { label: string; value: string; differs?: boolean }[];
 };
@@ -128,13 +130,13 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
       case "currency_mismatch": {
         const fx = claim.amount.fx;
         if (fx) {
-          const ceiling = Math.round(fx.usd_computed * (1 + fx.tolerance_pct / 100) * 100) / 100;
           return {
             kind: "money",
             left: { label: "Receipt, converted", tone: "neutral", amount: fx.usd_computed, sub: `${money(original.value, original.currency)} at ${fx.rate} on ${new Date(fx.rate_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}` },
             right: { label: "Claim", tone: "info", amount: claimed, sub: "Card statement amount" },
             scale: scaleFor(fx.usd_computed, claimed),
-            sentence: `${formatUsd(fx.gap_usd)} (${fx.gap_pct}%) over the receipt. The limit is ${fx.tolerance_pct}%, which is ${formatUsd(ceiling)}.`,
+            sentence: `${fx.gap_pct}% over the receipt (the limit is ${fx.tolerance_pct}%).`,
+            summary: `${fx.gap_pct}% over receipt`,
             evidence: note,
           };
         }
@@ -323,6 +325,8 @@ export function buildComparison(claim: LocalClaim, all: LocalClaim[]): Compariso
     left: { label: "Expected", tone: "neutral", text: check?.label ?? "Policy" },
     right: { label: "Observed", tone: "info", text: check?.detail ?? claim.agent.headline },
     sentence: claim.agent.headline,
+    // Within policy means nothing is wrong, so the card shows the green check.
+    matches: reason === "within_policy",
     evidence: [],
   };
 }

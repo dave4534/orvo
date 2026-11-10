@@ -93,6 +93,7 @@ Static text written ahead of time: labels, buttons, status lines, empty states, 
 - **No Slack.** Messages to employees stay in the local claim chat (the Chat tab in Details).
 - **Brand names are exempt:** "Orvo" as the product name, "Ask Orvo AI", and the Orvo logo text.
 - **Claim summary** (posted in the chat when a claim opens): at most 170 characters and 35 words. It says the gap, why the claim was escalated and could not be decided automatically, and the next action. No "Orvo asks:" label.
+- **Comparison sentence** (the line under the bar in a claim card): one short sentence that states the gap and why it matters, for example "7.3% over the receipt (the limit is 3%)." It always has an icon to its left: a filled green check when the receipt and the approval agree, a filled amber warning when they do not. The label beside the info icon at the top of the card is two or three words that say the same thing, for example "7.3% over receipt".
 - Before reporting product text as done, search src and Data Generation for "you", "your", "Orvo" and "Noa" used as actors.
 
 ### 2. Ask Orvo AI (how the assistant talks)

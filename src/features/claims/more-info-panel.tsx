@@ -225,14 +225,14 @@ function Policy({ claim }: { claim: LocalClaim }) {
       <SectionLabel>Checks run</SectionLabel>
       <Table aria-label="Checks run" size="sm" className="table-fixed">
         <Table.Header>
-          <Table.Head id="check" isRowHeader label="Check" className="w-[34%] px-4 text-left" />
+          <Table.Head id="check" isRowHeader label="Check" className="w-[34%] pr-4 pl-0 text-left md:pl-0" />
           <Table.Head id="policy" label="Policy" className="px-4 text-left" />
           <Table.Head id="passed" label="Passed" className="w-28 px-4 text-left" />
         </Table.Header>
         <Table.Body>
           {claim.agent.checks.map((c) => (
             <Table.Row key={c.id} id={c.id} className="h-auto">
-              <Table.Cell className="px-4 py-4 font-medium whitespace-normal text-primary">{c.label}</Table.Cell>
+              <Table.Cell className="py-4 pr-4 pl-0 font-medium whitespace-normal text-primary md:pl-0">{c.label}</Table.Cell>
               <Table.Cell className="px-4 py-4 whitespace-normal text-left">{rules.find((r) => r.id === c.rule_id)?.text ?? "No policy number"}</Table.Cell>
               <Table.Cell className="px-4 py-4 text-left">
                 <Badge type="pill-color" size="md" color={CHECK_COLOR[c.result]}>
@@ -258,10 +258,11 @@ export function MoreInfoPanel({ claim, allClaims, tab, onTab, onClose, onOpenPas
       </div>
       <Tabs selectedKey={tab} onSelectionChange={(k) => onTab(k as MoreTab)} className="min-h-0 flex-1 gap-0">
         <Tabs.List type="underline" size="sm" aria-label="Details" className="h-11 w-full shrink-0 items-end gap-5 px-6">
-          <Tabs.Item id="overview" label="Overview" />
-          <Tabs.Item id="policy" label="Policy" />
-          <Tabs.Item id="past" label="Past claims" />
-          <Tabs.Item id="chat" label="Chat" />
+          {/* No side padding on the tabs, so the first one lines up with the Details heading. */}
+          <Tabs.Item id="overview" label="Overview" className="px-0" />
+          <Tabs.Item id="policy" label="Policy" className="px-0" />
+          <Tabs.Item id="past" label="Past claims" className="px-0" />
+          <Tabs.Item id="chat" label="Chat" className="px-0" />
         </Tabs.List>
         <Tabs.Panel id="overview" className="min-h-0 flex-1 overflow-y-auto p-6">
           <Overview claim={claim} onView={setViewing} />
