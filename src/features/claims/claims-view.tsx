@@ -29,6 +29,7 @@ import { isSpotCheck, type LocalClaim } from "@/logic/local";
 import { sectionsFor } from "@/logic/sections";
 import { buildChatContext } from "@/logic/chat-context";
 import { triageNote } from "@/logic/summary";
+import { firstName } from "@/logic/actions";
 import { TABS_LIST, TABS_TRIGGER } from "@/lib/blocks";
 import { cn } from "@/lib/utils";
 import { track } from "@/logic/track";
@@ -262,6 +263,15 @@ export function ClaimsView() {
         case "typeInField":
           return typeInField(String(input.field ?? ""), String(input.text ?? ""));
         case "messageEmployee": {
+          // Sending needs no panel: the message goes straight to the claim's chat thread.
+          if (input.send === true) {
+            const target = claims.find((c) => c.id === (typeof input.claimId === "string" ? input.claimId : openId));
+            const text = String(input.text ?? "").trim();
+            if (!target) return claimOnly;
+            if (!text) return { ok: false, error: "There was no text to send." };
+            sendMessage(target.id, text);
+            return { ok: true, sent: text, to: firstName(target), claimId: target.id, note: "The message is sent and the chat shows it as a card. Do not repeat it." };
+          }
           if (openId === null) return claimOnly;
           setPastId(null);
           if (!detailsOpen || moreTab !== "chat") openMore("chat");

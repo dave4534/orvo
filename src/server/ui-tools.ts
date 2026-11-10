@@ -49,6 +49,11 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
       inputSchema: z.object({ section: z.enum(SECTIONS) }),
     }),
     closeChat: tool({ description: "Close this chat panel.", inputSchema: z.object({}) }),
+    messageEmployee: tool({
+      description:
+        'Message an employee about a claim. With send true the message is sent at once, in the claim chat, without moving the screen, and the chat shows it as a card; use it whenever Noa asks you to send or write to someone and the wording is settled. With send false the text is only typed into the message box in Details, Chat tab (Noa then presses Send). Name the claim with claimId, or leave it out for the open claim. Write the text as a short imperative with no "you", "your" or "could you", and no exclamation marks.',
+      inputSchema: z.object({ text: z.string().min(1).max(500), send: z.boolean(), claimId: z.enum(ids).optional() }),
+    }),
     undoLastDecision: tool({
       description: "Undo the most recent decision, the same as the Undo button. Use when Noa asks to undo or reverse what was just done.",
       inputSchema: z.object({}),
@@ -101,11 +106,6 @@ export function buildUiTools(active: LocalClaim | undefined, claims: LocalClaim[
     });
     tools.closeDocument = tool({ description: "Close the receipt or attachment window.", inputSchema: z.object({}) });
     tools.openPastClaim = tool({ description: "Open one of the employee's other claims in a window over the review, as the Past claims tab does.", inputSchema: z.object({ claimId: z.enum(ids) }) });
-    tools.messageEmployee = tool({
-      description:
-        'Write a message to the employee in the claim chat (Details, Chat tab). With send false, the text is typed into the message box for Noa to check and send ("send it" calls confirmDialog). With send true it is sent at once: use that only when Noa said to send it. Write the text as a short imperative with no "you", "your" or "could you".',
-      inputSchema: z.object({ text: z.string().min(1).max(500), send: z.boolean() }),
-    });
     if (opts.pastOpen) tools.closePastClaim = tool({ description: "Close the past claim window and return to the review.", inputSchema: z.object({}) });
   }
 

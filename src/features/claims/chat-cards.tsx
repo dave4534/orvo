@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { firstName } from "@/logic/actions";
-import { isCardTool, type CardTool } from "@/logic/chat-cards";
+import { isCardTool, type CardKind } from "@/logic/chat-cards";
 import type { LocalClaim } from "@/logic/local";
 import { photoFor } from "@/logic/photos";
 import { useClaims } from "@/store/claims-store";
@@ -19,12 +19,15 @@ import { DocumentBody, DocumentDialog, type DocumentView } from "./document-dial
 export type CardPart = { type: string; state?: string; output?: unknown };
 
 /** The cards in a message: finished card tools whose result says ok. */
-export function cardsOf(parts: { type: string }[]): { tool: CardTool; output: Record<string, unknown> }[] {
-  const out: { tool: CardTool; output: Record<string, unknown> }[] = [];
+export function cardsOf(parts: { type: string }[]): { tool: CardKind; output: Record<string, unknown> }[] {
+  const out: { tool: CardKind; output: Record<string, unknown> }[] = [];
   for (const p of parts as CardPart[]) {
     const name = p.type.replace(/^tool-/, "");
     const o = p.output as Record<string, unknown> | undefined;
-    if (p.type.startsWith("tool-") && isCardTool(name) && p.state === "output-available" && o?.ok === true) out.push({ tool: name, output: o });
+    if (!p.type.startsWith("tool-") || p.state !== "output-available" || o?.ok !== true) continue;
+    if (isCardTool(name)) out.push({ tool: name, output: o });
+    // A message that was really sent (the screen tool reports what it sent) is shown as a card.
+    else if (name === "messageEmployee" && typeof o.sent === "string") out.push({ tool: "messageEmployee", output: o });
   }
   return out;
 }
@@ -75,7 +78,7 @@ function PolicyCard({ claim }: { claim: LocalClaim }) {
   );
 }
 
-/** A drafted message, shown as it would be sent: Noa's photo and the text. "View in chat" opens it in the claim chat, where it can be sent. */
+/** A message that was sent, shown as it went: Noa's photo and the text. "View in chat" opens the claim chat, where the thread is. */
 function MessageCard({ claim, text }: { claim: LocalClaim; text: string }) {
   const { runScreenTool } = useWorkspace();
   const [busy, setBusy] = useState(false);
@@ -83,10 +86,9 @@ function MessageCard({ claim, text }: { claim: LocalClaim; text: string }) {
   async function viewInChat() {
     setBusy(true);
     try {
-      // Opens the claim if another one is showing, then types the message into its chat. It is not sent from here.
       await runScreenTool("openClaim", { claimId: claim.id });
       await new Promise((r) => setTimeout(r, 300));
-      await runScreenTool("messageEmployee", { text, send: false });
+      await runScreenTool("openDetails", { tab: "chat" });
     } finally {
       setBusy(false);
     }
@@ -102,7 +104,9 @@ function MessageCard({ claim, text }: { claim: LocalClaim; text: string }) {
           </Avatar>
           <div className="min-w-0">
             <CardTitle>Noa</CardTitle>
-            <CardDescription>To {firstName(claim)}, {claim.id}</CardDescription>
+            <CardDescription>
+              Sent to {firstName(claim)}, {claim.id}
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -118,7 +122,7 @@ function MessageCard({ claim, text }: { claim: LocalClaim; text: string }) {
 }
 
 /** Draws one card from a card tool's result. Uses the claim's current data from the store. */
-export function ChatCard({ tool, output }: { tool: CardTool; output: Record<string, unknown> }) {
+export function ChatCard({ tool, output }: { tool: CardKind; output: Record<string, unknown> }) {
   const { claims } = useClaims();
   const claim = claims.find((c) => c.id === output.claimId);
   if (!claim) return null;
@@ -132,7 +136,7 @@ export function ChatCard({ tool, output }: { tool: CardTool; output: Record<stri
     }
     case "showPolicyBreakdown":
       return <PolicyCard claim={claim} />;
-    case "showMessageCard":
-      return <MessageCard claim={claim} text={String(output.text ?? "")} />;
+    case "messageEmployee":
+      return <MessageCard claim={claim} text={String(output.sent ?? "")} />;
   }
 }

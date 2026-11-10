@@ -62,7 +62,7 @@ The single list is `src/logic/assistant-tools.ts`. `npm run audit:assistant` che
 
 ## Cards in the chat
 
-Besides acting on the screen, the assistant can show things inside the chat when asked, as cards: `showTransaction`, `showDocument` (receipt or attachment), `showPolicyBreakdown` and `showMessageCard` (server tools in `src/server/chat-card-tools.ts`, drawn by `src/features/claims/chat-cards.tsx`). They mirror the Overview and Policy tabs through shared components, so they cannot drift. The message card shows a drafted message with a "View in chat" button; nothing is sent until Noa sends it from the claim chat or says so.
+Besides acting on the screen, the assistant can show things inside the chat when asked, as cards: `showTransaction`, `showDocument` (receipt or attachment), and `showPolicyBreakdown` (server tools in `src/server/chat-card-tools.ts`, drawn by `src/features/claims/chat-cards.tsx`). They mirror the Overview and Policy tabs through shared components, so they cannot drift. A message sent with `messageEmployee` (send true) is shown as a card too, drawn from the tool result, so the card only appears if the message was really sent. It has a "View in chat" button that opens the claim chat.
 
 ## Not covered on purpose
 

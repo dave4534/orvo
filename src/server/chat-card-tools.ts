@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { LocalClaim } from "@/logic/local";
 
 /**
- * Tools that put a card in the chat: the transaction, a receipt or attachment, the policy breakdown, or a drafted message.
+ * Tools that put a card in the chat: the transaction, a receipt or attachment, or the policy breakdown.
  * They only describe what to show. The chat draws the card from the claim's data, so the card is always current.
  * Use them only when Noa asks to see the thing.
  */
@@ -48,15 +48,6 @@ export function buildCardTools(claims: LocalClaim[], openClaimId: string | undef
         const claim = pick(claimId);
         if (!claim) return noClaim;
         return claim.agent.checks.length > 0 ? shown("policy", claim.id) : { ok: false, error: `No checks were run on ${claim.id}.` };
-      },
-    }),
-    showMessageCard: tool({
-      description:
-        'Show a drafted message to the employee as a card in the chat, with a "View in chat" button that opens it in the claim chat (Details, Chat tab). Use it once the wording is settled: Noa dictated it or accepted your offer to write it. Write the text as a short imperative with no "you", "your" or "could you". Nothing is sent by this.',
-      inputSchema: z.object({ claimId: claimField, text: z.string().min(1).max(500) }),
-      execute: async ({ claimId, text }) => {
-        const claim = pick(claimId);
-        return claim ? { ...shown("message", claim.id), text } : noClaim;
       },
     }),
   };
