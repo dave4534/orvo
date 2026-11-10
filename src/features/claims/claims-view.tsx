@@ -578,6 +578,7 @@ export function ClaimsView() {
         {rows.length > 0 ? (
           <>
             <ClaimsTable
+              tab={tab}
               sections={sections}
               expanded={expanded}
               onToggleSection={toggleSection}

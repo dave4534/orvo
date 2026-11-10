@@ -1,6 +1,7 @@
 import type { ReasonType } from "@/data/types";
 import type { LocalClaim } from "./local";
 import { NOW } from "@/data";
+import { daysOverTarget, WAIT_TARGET_DAYS } from "./wait";
 
 // UI-layer fixture (PRD 9.1): reasons where Orvo's evidence points to a routine approval.
 // Everything else is a judgment call.
@@ -16,6 +17,8 @@ export type DailyBrief = {
   approvedByOrvo: number;
   chasing: number;
   chasingReceipts: boolean;
+  /** Open claims waiting on Noa that are already past the approval target. */
+  pastTarget: number;
 };
 
 /** Counts for the daily brief. Derived from the claims, never typed. */
@@ -34,6 +37,7 @@ export function buildDailyBrief(claims: LocalClaim[], now: Date = NOW): DailyBri
     approvedByOrvo: claims.filter((c) => c.status === "approved_by_agent").length,
     chasing: chasing.length,
     chasingReceipts: chasing.length > 0 && chasing.every((c) => RECEIPT_REASONS.includes(c.agent.reason_type)),
+    pastTarget: needs.filter((c) => daysOverTarget(c, now) > 0).length,
   };
 }
 
@@ -77,6 +81,7 @@ export function briefSentence(b: DailyBrief): string {
         ? `: ${b.quick} quick ${b.quick === 1 ? "approval" : "approvals"} and ${b.judgment} judgment ${b.judgment === 1 ? "call" : "calls"}`
         : "";
     parts.push(`${b.needsYou} ${b.needsYou === 1 ? "claim needs" : "claims need"} review${split}.`);
+    if (b.pastTarget > 0) parts.push(`${b.pastTarget} of ${b.needsYou} are past the ${WAIT_TARGET_DAYS}-day target.`);
   }
   const did = `I approved ${b.approvedByOrvo} on my own`;
   const chase = b.chasing > 0 ? ` and am chasing ${b.chasing} ${b.chasingReceipts ? "receipts" : "claims"}` : "";

@@ -23,11 +23,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { dataset } from "@/data";
 import type { Category } from "@/data/types";
 import { basisFor } from "@/logic/basis";
+import { NOW } from "@/data";
+import { formatDuration, timeToDecision, waitingFor } from "@/logic/wait";
 import { employeeName } from "@/logic/comparison";
 import { claimStatusLabel, formatSubmitted, formatUsd, initials } from "@/logic/format";
 import { photoFor } from "@/logic/photos";
 import type { LocalClaim } from "@/logic/local";
 import type { Section } from "@/logic/sections";
+import type { TabId } from "@/logic/claims";
 import { PILL } from "@/lib/blocks";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +47,7 @@ const CATEGORY_ICON: Record<Category, LucideIcon> = {
 };
 
 type Props = {
+  tab: TabId;
   sections: Section[];
   expanded: Set<string>;
   onToggleSection: (id: string) => void;
@@ -58,6 +62,31 @@ function statusStyle(claim: LocalClaim): string {
   if (claim.status === "waiting_on_noa") return "border-warning-border bg-warning text-warning-foreground";
   if (claim.status === "approved_by_agent" || claim.status === "approved_by_noa") return "border-success-border bg-card text-success";
   return "bg-card text-muted-foreground";
+}
+
+/** Column header per tab. Open claims show how long they have waited; decided claims show how long the decision took. */
+const TIME_HEADER: Record<TabId, string> = {
+  needs_review: "Waiting",
+  waiting: "Waiting",
+  done: "Time to decision",
+  all: "Submitted",
+};
+
+/** The time cell. The plain value shows in the row, and hovering it shows the exact time. */
+function TimeCell({ tab, claim }: { tab: TabId; claim: LocalClaim }) {
+  const value =
+    tab === "done"
+      ? timeToDecision(claim) ?? ""
+      : tab === "all"
+        ? `${formatDuration(NOW.getTime() - new Date(claim.submitted_at).getTime())} ago`
+        : waitingFor(claim, NOW);
+  const exact = tab === "done" && claim.noa ? `Decided ${formatSubmitted(claim.noa.decided_at)}` : `Submitted ${formatSubmitted(claim.submitted_at)}`;
+  return (
+    <Tooltip>
+      <TooltipTrigger render={<span tabIndex={0} className="cursor-default tabular-nums" />}>{value}</TooltipTrigger>
+      <TooltipContent>{exact}</TooltipContent>
+    </Tooltip>
+  );
 }
 
 /** Why a decided claim was decided. Shown on Done and All only, since open claims have no decision yet. */
@@ -79,7 +108,7 @@ function BasisPill({ claim }: { claim: LocalClaim }) {
   );
 }
 
-export function ClaimsTable({ sections, expanded, onToggleSection, selectedIds, activeId, onToggle, onToggleAll, onReview }: Props) {
+export function ClaimsTable({ tab, sections, expanded, onToggleSection, selectedIds, activeId, onToggle, onToggleAll, onReview }: Props) {
   const visible = sections.flatMap((s) => (s.collapsible && !expanded.has(s.id) ? [] : s.claims));
   const allSelected = visible.length > 0 && visible.every((c) => selectedIds.has(c.id));
   const someSelected = !allSelected && visible.some((c) => selectedIds.has(c.id));
@@ -101,7 +130,7 @@ export function ClaimsTable({ sections, expanded, onToggleSection, selectedIds, 
               />
             </TableHead>
             <TableHead className={showBasis ? "w-[20%]" : "w-[24%]"}>Employee</TableHead>
-            <TableHead className={showBasis ? "w-[15%]" : "w-[19%]"}>Submitted</TableHead>
+            <TableHead className={showBasis ? "w-[15%]" : "w-[19%]"}>{TIME_HEADER[tab]}</TableHead>
             <TableHead className={showBasis ? "w-[15%]" : "w-[19%]"}>Category</TableHead>
             <TableHead className={showBasis ? "w-[10%] text-right" : "w-[12%] text-right"}>Amount</TableHead>
             <TableHead className={showBasis ? "w-[17%]" : "w-[18%]"}>Status</TableHead>
@@ -117,6 +146,7 @@ export function ClaimsTable({ sections, expanded, onToggleSection, selectedIds, 
             return (
               <SectionRows
                 key={section.id}
+                tab={tab}
                 section={section}
                 collapsed={collapsed}
                 showBasis={showBasis}
@@ -136,6 +166,7 @@ export function ClaimsTable({ sections, expanded, onToggleSection, selectedIds, 
 }
 
 function SectionRows({
+  tab,
   section,
   collapsed,
   showBasis,
@@ -146,6 +177,7 @@ function SectionRows({
   onToggle,
   onReview,
 }: {
+  tab: TabId;
   section: Section;
   collapsed: boolean;
   showBasis: boolean;
@@ -207,7 +239,9 @@ function SectionRows({
                     <span className="truncate font-medium">{name}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-muted-foreground">{formatSubmitted(claim.submitted_at)}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  <TimeCell tab={tab} claim={claim} />
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Icon aria-hidden className="size-4 shrink-0 text-muted-foreground" />

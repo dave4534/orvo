@@ -19,11 +19,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { dataset } from "@/data";
+import { dataset, NOW } from "@/data";
 import type { Status } from "@/data/types";
 import { actionPreview, firstName, type ActionId, type ActionInput } from "@/logic/actions";
 import { buildComparison, employeeName } from "@/logic/comparison";
 import { claimStatusLabel, formatUsd, initials } from "@/logic/format";
+import { daysOverTarget, formatDuration, isOpen, WAIT_TARGET_DAYS, waitingFor } from "@/logic/wait";
 import { isAgentDecided, isSpotCheck, type LocalClaim } from "@/logic/local";
 import { allActionsFor, moreOptionsFor, recommendationFor, type ActionSpec } from "@/logic/recommendations";
 import { photoFor } from "@/logic/photos";
@@ -241,7 +242,9 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
     ? `${category}, ${claim.status === "approved_by_agent" ? "approved" : "declined"} automatically ${formatDay(claim.agent.decided_at)}`
     : decidedByNoa && claim.noa
       ? `${category}, ${claim.noa.overrode_agent ? "corrected" : claim.noa.decision} ${formatDay(claim.noa.decided_at)}`
-      : `${category}, submitted ${formatDay(claim.submitted_at)}`;
+      : isOpen(claim)
+        ? `${category}, submitted ${formatDay(claim.submitted_at)}, waiting ${waitingFor(claim, NOW)}${daysOverTarget(claim, NOW) > 0 ? `, ${formatDuration(daysOverTarget(claim, NOW) * 86400000)} over the ${WAIT_TARGET_DAYS}-day target` : ""}`
+        : `${category}, submitted ${formatDay(claim.submitted_at)}`;
   const subtitle = `${claim.id}, ${detail}`;
 
   const chase = claim.agent.chase;
