@@ -9,6 +9,7 @@ import type { LocalClaim } from "@/logic/local";
 import { track } from "@/logic/track";
 import { allActionsFor } from "@/logic/recommendations";
 import { replyTo, suggestedPrompts } from "@/mocks/ai-replies";
+import { isUndoable, undoDecision, useClaims } from "@/store/claims-store";
 import { useWorkspace, type AiMessage } from "@/store/workspace-store";
 import { ChatComposer } from "./chat-composer";
 import { ChatMarkdown } from "./chat-markdown";
@@ -73,6 +74,9 @@ function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry }: { m: A
   const text = textOf(m);
   const steps = stepsOf(m);
   const action = m.metadata?.action;
+  const undo = m.metadata?.undo;
+  // Re-renders when a decision is undone, so the button can say so.
+  useClaims();
   const enter = "animate-in fade-in-0 slide-in-from-bottom-1 duration-200";
 
   if (m.role === "user") {
@@ -87,6 +91,11 @@ function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry }: { m: A
         {m.metadata.heading ? <div className="text-xs text-muted-foreground">{m.metadata.heading}</div> : null}
         <ChatMarkdown>{text}</ChatMarkdown>
         {noteSuggest ? <SuggestedAction label={noteSuggest} onAct={onAct} /> : null}
+        {undo ? (
+          <Button variant="outline" size="sm" className="self-start" disabled={!isUndoable(undo.entryId)} onClick={() => undoDecision(undo.entryId)}>
+            {isUndoable(undo.entryId) ? "Undo" : "Undone"}
+          </Button>
+        ) : null}
         {action ? (
           <Button variant="outline" size="sm" className="self-start" onClick={() => onOpenMore(action.kind)}>
             {action.label}
@@ -132,13 +141,6 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
   const { aiMessages, aiStatus, askAi, stopAi, regenerateAi, addAiMessage, setAiFallback, runAction, voiceOpen, setVoiceOpen } = useWorkspace();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
-  const sessionKey = claim?.id ?? "list";
-  const [seenSession, setSeenSession] = useState(sessionKey);
-  if (seenSession !== sessionKey) {
-    // A different claim has its own chat: show it from the bottom.
-    setSeenSession(sessionKey);
-    setAtBottom(true);
-  }
   const busy = aiStatus === "submitted" || aiStatus === "streaming";
   const last = aiMessages[aiMessages.length - 1];
 
@@ -148,9 +150,9 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
 
   // If the live model can't answer (no connection, limit reached), a scripted reply from the claim's data steps in.
   useEffect(() => {
-    setAiFallback((prompt, session) => {
+    setAiFallback((prompt) => {
       const reply = replyTo(prompt, claim, allClaims);
-      addAiMessage(session, { role: "assistant", text: reply.text, action: reply.action, heading: "Offline reply" });
+      addAiMessage({ role: "assistant", text: reply.text, action: reply.action, heading: "Offline reply" });
     });
     return () => setAiFallback(null);
   });
@@ -183,7 +185,6 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
 
       <div className="relative min-h-0 flex-1">
         <div
-          key={sessionKey}
           ref={scrollRef}
           onScroll={(e) => {
             const el = e.currentTarget;
@@ -230,7 +231,7 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
       {voiceOpen ? (
         <VoiceBar busy={busy} onAsk={send} onStopAnswer={stopAi} onEnd={() => setVoiceOpen(false)} />
       ) : (
-        <ChatComposer key={sessionKey} busy={busy} onSend={send} onStop={stopAi} onVoiceChat={() => setVoiceOpen(true)} />
+        <ChatComposer busy={busy} onSend={send} onStop={stopAi} onVoiceChat={() => setVoiceOpen(true)} />
       )}
 
     </aside>

@@ -25,15 +25,15 @@ import {
   type TabId,
 } from "@/logic/claims";
 import { bulkActionsFor, type BulkActionId } from "@/logic/bulk";
-import { isSpotCheck } from "@/logic/local";
+import { isSpotCheck, type LocalClaim } from "@/logic/local";
 import { sectionsFor } from "@/logic/sections";
 import { buildChatContext } from "@/logic/chat-context";
-import { claimSummary, openingLine } from "@/logic/summary";
+import { triageNote } from "@/logic/summary";
 import { TABS_LIST, TABS_TRIGGER } from "@/lib/blocks";
 import { cn } from "@/lib/utils";
 import { track } from "@/logic/track";
-import { useClaims } from "@/store/claims-store";
-import { LIST_SESSION, useWorkspace } from "@/store/workspace-store";
+import { setDecisionNotifier, useClaims } from "@/store/claims-store";
+import { useWorkspace } from "@/store/workspace-store";
 import { notInPrototype } from "@/features/shell/not-in-prototype";
 import { RANGES } from "@/logic/claims";
 import { controlSummary, lookAtScreen, pressControl, typeInField } from "./screen-control";
@@ -52,7 +52,7 @@ const tabOfStatus = (status: Status): TabId =>
 
 export function ClaimsView() {
   const { claims, sessionIds, simulateError, setSimulateError, reset, undoLast, perform, performBatch, sendMessage } = useClaims();
-  const { aiOpen, setAiOpen, setAiSession, addAiMessage, hasAiMessages, resetAi, setChatContext, setUiToolHandler, runAction, controlDialog, callControl, hasControl, voiceOpen, homeRequest } = useWorkspace();
+  const { aiOpen, setAiOpen, addAiMessage, lastTriageClaim, resetAi, setChatContext, setUiToolHandler, runAction, controlDialog, callControl, hasControl, voiceOpen, homeRequest } = useWorkspace();
   const seenHome = useRef(homeRequest);
 
   const [tab, setTab] = useState<TabId>("needs_review");
@@ -64,6 +64,7 @@ export function ClaimsView() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [pastId, setPastId] = useState<string | null>(null);
   const [moreTab, setMoreTab] = useState<MoreTab>("overview");
+  const reopened = useRef<string | null>(null);
 
   // Tells the AI chat where the user is and what changed this session, each time a question is sent.
   useEffect(() => {
@@ -360,21 +361,40 @@ export function ClaimsView() {
     else track("filter_used");
   }
 
-  // Opening a claim posts its summary and recommendation in the AI chat. The first claim of a visit also opens the chat with a greeting.
+  // The chat is one continuous conversation. Each time a new claim comes up it adds a short note (policy gap, recommendation, reasoning).
+  function postTriageNote(claim: LocalClaim) {
+    if (lastTriageClaim() === claim.id) return;
+    const { heading, text, suggest } = triageNote(claim);
+    addAiMessage({ role: "assistant", text, heading, claimId: claim.id, suggest: suggest ?? undefined, triage: true });
+  }
+
   function openClaimById(id: string) {
     track("claim_opened", { claim: id });
     const claim = claims.find((c) => c.id === id);
     const entering = openId === null;
-    // Every claim has its own chat. A new one starts with the summary and the recommendation, in one message.
-    if (claim && !hasAiMessages(id)) {
-      const { summary, recommendation, recommendationLabel } = claimSummary(claim);
-      const text = [entering ? openingLine(claim) : null, summary, recommendation].filter(Boolean).join("\n\n");
-      addAiMessage(id, { role: "assistant", text, claimId: claim.id, suggest: recommendationLabel ?? undefined });
-    }
+    if (claim) postTriageNote(claim);
     if (entering) setAiOpen(true);
-    setAiSession(id);
     setOpenId(id);
   }
+
+  // After an undo, the claim comes back into the chat with a fresh note once its state is back.
+  useEffect(() => {
+    const id = reopened.current;
+    const claim = id ? claims.find((c) => c.id === id) : null;
+    if (claim) {
+      reopened.current = null;
+      postTriageNote(claim);
+    }
+  });
+
+  // Decisions are confirmed in the chat, with an Undo button, instead of in a toast.
+  useEffect(() => {
+    setDecisionNotifier(({ summary, entryId, claimId }) => {
+      addAiMessage({ role: "assistant", text: summary, claimId, undo: { entryId } });
+      setAiOpen(true);
+    });
+    return () => setDecisionNotifier(null);
+  });
 
   function closeWorkspace() {
     setOpenId(null);
@@ -382,7 +402,6 @@ export function ClaimsView() {
     setPastId(null);
     // Going back to the claims list closes the chat pane, unless voice mode is on: the conversation carries on there.
     if (!voiceOpen) setAiOpen(false);
-    setAiSession(LIST_SESSION);
   }
 
   function openMore(nextTab: MoreTab = "overview") {
@@ -409,8 +428,9 @@ export function ClaimsView() {
   function onReopen(claimId: string) {
     const claim = claims.find((c) => c.id === claimId);
     setTab(tabOfStatus(claim?.status ?? "waiting_on_noa"));
-    setAiSession(claimId);
     setOpenId(claimId);
+    // The note is posted once the undone claim is in its new state, in the effect below.
+    reopened.current = claimId;
   }
 
   const step = (delta: number) => {

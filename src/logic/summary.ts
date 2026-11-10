@@ -1,52 +1,108 @@
 import { employeeName } from "./comparison";
-import { formatUsd } from "./format";
-import { isAgentDecided, type LocalClaim } from "./local";
-import { recommendationFor, recommendationReason } from "./recommendations";
+import { formatUsd, claimStatusLabel } from "./format";
+import { FINANCE_LIMIT, MEAL_CAP, RECEIPT_LIMIT, type LocalClaim } from "./local";
+import { recommendationFor } from "./recommendations";
 
-export type ClaimSummary = {
-  /** Who and which claim the messages are about. */
+export type TriageNote = {
+  /** Who and which claim the note is about. */
   heading: string;
-  /** The AI summary. For escalated claims: the gap, why it was escalated, and the next action (max 170 characters, 35 words). */
-  summary: string;
-  /** Short lead-in for the recommendation, when there is one. */
-  recommendation: string | null;
-  /** Label of the recommended button. The chat shows it as a button under the lead-in. */
-  recommendationLabel: string | null;
+  /** Three short lines, each at most 8 words after its label. */
+  text: string;
+  /** Label of the recommended button. The chat shows it as a button under the text. */
+  suggest: string | null;
 };
 
-/** Greeting at the top of the chat when a visit starts on this claim. It matches what the claim is, so a closed claim never gets "review the open claims". Pure. */
-export function openingLine(claim: LocalClaim): string | null {
-  if (claim.status === "waiting_on_noa") return "Let's review the open claims.";
-  if (isAgentDecided(claim)) return "Here is what was decided automatically.";
-  return null;
+const parseUsd = (value: string | undefined) => {
+  const n = Number(value?.replace(/[^0-9.]/g, ""));
+  return Number.isFinite(n) && value ? n : 0;
+};
+
+/** The gap between the claim and the policy, in at most 8 words. */
+function policyGap(claim: LocalClaim): string {
+  const claimed = claim.amount.usd_claimed;
+  switch (claim.agent.reason_type) {
+    case "over_finance_threshold":
+      return `${formatUsd(claimed - FINANCE_LIMIT)} over the Finance limit`;
+    case "unusual_amount": {
+      const usual = parseUsd(claim.agent.facts.find((f) => /median/i.test(f.label))?.value);
+      return usual ? `${formatUsd(claimed - usual)} above a usual ride` : "Higher than a usual ride";
+    }
+    case "currency_mismatch": {
+      const receipt = claim.amount.fx?.usd_computed ?? claimed;
+      return `${formatUsd(claimed - receipt)} above the receipt amount`;
+    }
+    case "possible_split":
+      return "Two claims may be one purchase";
+    case "receipt_missing_unresolved":
+      return `${formatUsd(claimed - RECEIPT_LIMIT)} over the no-receipt limit`;
+    case "no_matching_rule":
+      return "No policy rule covers this spend";
+    case "over_meal_cap": {
+      const people = claim.receipt.document?.covers ?? claim.attendees.count;
+      return `${formatUsd(claimed - MEAL_CAP * people)} over the meal cap`;
+    }
+    case "possible_duplicate":
+      return "Looks like a duplicate claim";
+    case "receipt_missing":
+      return `${formatUsd(claimed)} claimed, no receipt`;
+    case "receipt_unreadable":
+      return "Receipt image can't be read";
+    case "unusual_pattern":
+      return "Unusual pattern, no limit broken";
+    default:
+      return "None, every check passed";
+  }
 }
 
-/** Text the AI chat posts when a claim is opened. Pure. */
-export function claimSummary(claim: LocalClaim): ClaimSummary {
+/** Why the claim sits where it does, in at most 8 words. */
+function reasoning(claim: LocalClaim): string {
+  switch (claim.agent.reason_type) {
+    case "over_finance_threshold":
+      return "Valid claim, only Finance sign-off needed";
+    case "unusual_amount":
+      return "Higher than usual, but no rule broken";
+    case "currency_mismatch":
+      return "Receipt supports the exchange-rate amount";
+    case "possible_split":
+      return "Receipts read as separate purchases";
+    case "receipt_missing_unresolved":
+      return "Statement proves the spend, reminder already sent";
+    case "no_matching_rule":
+      return "Close call, depends on advance approval";
+    case "over_meal_cap":
+      return "Policy allows the cap, not the excess";
+    case "possible_duplicate":
+      return "Fare and route match another claim";
+    case "receipt_missing":
+      return `Policy needs a receipt above ${formatUsd(RECEIPT_LIMIT)}`;
+    case "receipt_unreadable":
+      return "Amounts can't be checked from the image";
+    case "unusual_pattern":
+      return "Pattern flagged, no rule broken";
+    default:
+      return "All checks passed";
+  }
+}
+
+const line = (label: string, value: string) => `**${label}:** ${value}`;
+
+/**
+ * The note the chat posts each time a new claim comes up. Three lines of at most 8 words each (policy gap, recommendation or
+ * decision, reasoning), so it can be read at a glance. The recommended button shows below it. Pure.
+ */
+export function triageNote(claim: LocalClaim): TriageNote {
   const heading = `${employeeName(claim)}, ${claim.id}`;
-  const agent = claim.agent;
-  const decidedByNoa = claim.status === "approved_by_noa" || claim.status === "declined_by_noa";
-
   if (claim.status === "waiting_on_noa") {
-    const next = agent.needs_from_noa ? ` Next: ${agent.needs_from_noa}` : "";
-    const label = recommendationFor(claim).recommended?.label;
-    const why = recommendationReason(claim);
-    // Always says why: the reasoning for the recommended step and the weaker options, or that it is a toss-up and what it depends on.
-    const recommendation = label ? `I recommend this next step because ${why.text}` : `There is no clear favorite. ${why.text.charAt(0).toUpperCase()}${why.text.slice(1)}`;
-    return { heading, summary: `${agent.headline}. ${agent.explanation}${next}`, recommendation, recommendationLabel: label ?? null };
+    const label = recommendationFor(claim).recommended?.label ?? null;
+    return {
+      heading,
+      text: [line("Policy gap", policyGap(claim)), line("Recommendation", label ?? "None, it is a close call"), line("Reasoning", reasoning(claim))].join("\n\n"),
+      suggest: label,
+    };
   }
-
-  if (decidedByNoa && claim.noa) {
-    const approved = claim.noa.decision === "approved";
-    const last = claim.events[claim.events.length - 1]?.text ?? "";
-    const note = claim.noa.note ? ` Note: ${claim.noa.note}` : "";
-    return { heading, summary: `${approved ? "Approved" : "Declined"} ${formatUsd(approved ? claim.noa.approved_amount_usd : claim.amount.usd_claimed)}. ${last}${note}`, recommendation: null, recommendationLabel: null };
-  }
-
-  if (isAgentDecided(claim)) {
-    const verb = claim.status === "approved_by_agent" ? "Approved" : "Declined";
-    return { heading, summary: `${verb} ${formatUsd(claim.amount.usd_claimed)} automatically. ${agent.explanation}`, recommendation: null, recommendationLabel: null };
-  }
-
-  return { heading, summary: `${agent.headline}. ${agent.explanation}`, recommendation: null, recommendationLabel: null };
+  return {
+    heading,
+    text: [line("Policy gap", policyGap(claim)), line("Decision", claimStatusLabel(claim)), line("Reasoning", reasoning(claim))].join("\n\n"),
+    suggest: null,
+  };
 }

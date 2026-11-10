@@ -1,7 +1,8 @@
 "use client";
 
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Ban, Check, ChevronDown, CircleDollarSign, Clock, Info, Landmark, ListChecks, MessageSquare, Pencil, TriangleAlert, Wrench, type LucideIcon } from "lucide-react";
+import { ArrowRight, Ban, Check, ChevronDown, Command, CornerDownLeft, CircleDollarSign, Clock, Info, Landmark, ListChecks, MessageSquare, Pencil, TriangleAlert, Wrench, type LucideIcon } from "lucide-react";
 
 import { StatusBanner } from "@/components/status-banner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -150,6 +151,22 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
       setPending(target);
     } else run(target.input);
   }
+
+  // Command+Enter (Control+Enter elsewhere) takes the recommended action, like the shortcut hint on the button. It stays out of the way
+  // while typing in a field and while a dialog is open.
+  useEffect(() => {
+    if (!primary || !needsReview || !rec?.recommended) return;
+    const spec = rec.recommended;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Enter" || !(e.metaKey || e.ctrlKey) || e.defaultPrevented) return;
+      const t = e.target as HTMLElement | null;
+      if (t?.closest("input,textarea,select,[contenteditable=true]") || document.querySelector("[role=dialog],[role=alertdialog]")) return;
+      e.preventDefault();
+      choose(spec);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   useEffect(() => {
     if (!primary) return;
@@ -432,6 +449,12 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                 {rec.recommended ? (
                   <Button size="lg" className="h-11 bg-success text-success-foreground hover:bg-success/90" onClick={() => choose(rec.recommended!)}>
                     {rec.recommended.label}
+                    {primary ? (
+                      <KbdGroup aria-hidden className="ml-1">
+                        <Kbd className="bg-white/20 text-current"><Command /></Kbd>
+                        <Kbd className="bg-white/20 text-current"><CornerDownLeft /></Kbd>
+                      </KbdGroup>
+                    ) : null}
                   </Button>
                 ) : null}
               </>

@@ -13,6 +13,18 @@ import { UNDO_MS, UndoToast } from "@/components/undo-toast";
 
 type UndoEntry = { id: number; previous: LocalClaim[]; claimId: string };
 
+/** Confirms a decision somewhere the user sees it. The chat registers itself here; with no listener the confirmation is a toast. */
+export type DecisionNotice = { summary: string; entryId: number; claimId: string };
+let decisionNotifier: ((notice: DecisionNotice) => void) | null = null;
+export function setDecisionNotifier(run: ((notice: DecisionNotice) => void) | null) {
+  decisionNotifier = run;
+}
+
+// How to undo each decision that can still be undone. The chat's Undo button uses these.
+const undoers = new Map<number, () => void>();
+export const undoDecision = (entryId: number) => undoers.get(entryId)?.();
+export const isUndoable = (entryId: number) => undoers.has(entryId);
+
 type PerformOptions = {
   /** Called after an undo so the UI can reopen the claim. */
   onUndo?: (claimId: string) => void;
@@ -55,6 +67,7 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
       current.map((c) => entry.previous.find((p) => p.id === c.id) ?? c),
     );
     undoStack.current = undoStack.current.filter((e) => e.id !== entryId);
+    undoers.delete(entryId);
     track("decision_undone", { claim: entry.claimId });
     onUndo?.(entry.claimId);
   }, []);
@@ -78,8 +91,10 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
       }
       track("decision_made", { claim: claimId, action: input.id, amount: input.amount });
 
+      undoers.set(entry.id, () => undo(entry.id, options?.onUndo));
       if (!options?.silent) {
-        toast.custom((id) => <UndoToast id={id} message={result.summary} onUndo={() => undo(entry.id, options?.onUndo)} />, { duration: UNDO_MS });
+        if (decisionNotifier) decisionNotifier({ summary: result.summary, entryId: entry.id, claimId });
+        else toast.custom((id) => <UndoToast id={id} message={result.summary} onUndo={() => undo(entry.id, options?.onUndo)} />, { duration: UNDO_MS });
       }
       return { ok: true, summary: result.summary, changedIds: result.changed.map((c) => c.id), status: result.changed[0].status };
     },
@@ -134,6 +149,7 @@ export function ClaimsProvider({ children }: { children: ReactNode }) {
     setClaims(initialClaims());
     setSessionIds([]);
     undoStack.current = [];
+    undoers.clear();
     tick.current = 0;
     toast("Demo reset to the start of Monday 16 Nov");
   }, []);

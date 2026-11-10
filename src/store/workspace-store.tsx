@@ -26,25 +26,26 @@ export type AiMeta = {
   claimId?: string;
   suggest?: string;
   action?: { label: string; kind: "overview" | "policy" };
+  /** The summary the app posts when a new claim comes up. */
+  triage?: boolean;
+  /** A decision the app confirms in the chat, with an Undo button. The id is the entry in the claims store's undo list. */
+  undo?: { entryId: number };
 };
 export type AiMessage = UIMessage<AiMeta>;
 
-type NewMessage = { role: "user" | "assistant"; text: string } & AiMeta;
+export type NewMessage = { role: "user" | "assistant"; text: string } & AiMeta;
 
 /** What a spoken or typed command can add to a button: the wording of a message, or an amount. */
 export type ActionExtra = { message?: string; amount?: number; /** The button was clicked, so a missing amount opens the dialog instead of failing. */ interactive?: boolean };
 export type ActionRunResult = { ok: boolean; error?: string; note?: string };
 export type DialogControl = { confirm: () => ActionRunResult; cancel: () => ActionRunResult };
 
-/** Which chat is shown: one per claim, plus one for the claims list. */
-export const LIST_SESSION = "list";
+/** The one chat. It is continuous across the whole prototype: opening a claim, going back, deciding or undoing never starts another. */
+export const LIST_SESSION = "chat";
 
 type WorkspaceStore = {
   aiOpen: boolean;
   setAiOpen: (open: boolean) => void;
-  /** The chat that is shown. Every claim has its own. */
-  aiSession: string;
-  setAiSession: (session: string) => void;
   aiMessages: AiMessage[];
   aiStatus: ChatStatus;
   /** Sends a question to the live model, in the chat that is shown. */
@@ -58,10 +59,10 @@ type WorkspaceStore = {
   stopAi: () => void;
   /** Writes the last answer again. */
   regenerateAi: () => void;
-  /** Adds a message to one chat without calling the model, for example the summary posted when a claim opens. */
-  addAiMessage: (session: string, message: NewMessage) => void;
-  /** True when that chat already has messages. */
-  hasAiMessages: (session: string) => boolean;
+  /** Adds a message from the app without calling the model, for example the summary posted when a claim comes up. While an answer is being written it waits until the answer is done, so it never lands inside it. */
+  addAiMessage: (message: NewMessage) => void;
+  /** The claim the last triage note was about, so the same claim is not summarized twice in a row. */
+  lastTriageClaim: () => string | null;
   /** Clears every chat. */
   resetAi: () => void;
   /** The triage panel registers how to run its actions, so a button in the chat can run one by its label. Returns false if there is no such button. */
@@ -85,7 +86,7 @@ type WorkspaceStore = {
   homeRequest: number;
   goHome: () => void;
   /** Called when the live model can't answer, so scripted replies can step in. */
-  setAiFallback: (run: ((prompt: string, session: string) => void) | null) => void;
+  setAiFallback: (run: ((prompt: string) => void) | null) => void;
 };
 
 const Context = createContext<WorkspaceStore | null>(null);
@@ -95,7 +96,7 @@ const EMPTY_CONTEXT: ChatContext = { ui: { tab: "needs_review", openClaimId: nul
 // Module level, so the chat transport and the chats do not depend on rendering.
 const chatContextSource: { read: (() => ChatContext) | null } = { read: null };
 const chatHooks: {
-  fallback: ((prompt: string, session: string) => void) | null;
+  fallback: ((prompt: string) => void) | null;
   lastPrompt: string;
   ui: UiToolHandler | null;
   reply: ((text: string) => void) | null;
@@ -139,7 +140,7 @@ function getChat(epoch: number, session: string): Chat<AiMessage> {
       },
       onError: () => {
         created.clearError();
-        chatHooks.fallback?.(chatHooks.lastPrompt, session);
+        chatHooks.fallback?.(chatHooks.lastPrompt);
       },
     });
     chats.set(key, created);
@@ -148,11 +149,9 @@ function getChat(epoch: number, session: string): Chat<AiMessage> {
   return chat;
 }
 
-/** Moves the messages of one turn (from index `start`) out of the chat it ran in and onto the end of another chat. */
-function moveTurn(from: Chat<AiMessage>, start: number, to: Chat<AiMessage>) {
-  const moved = from.messages.slice(start);
-  from.messages = from.messages.slice(0, start);
-  to.messages = [...to.messages, ...moved];
+/** Adds a message from the app to the end of a chat. */
+function appendNote(chat: Chat<AiMessage>, { role, text, heading, action, claimId, suggest, triage, undo }: NewMessage) {
+  chat.messages = [...chat.messages, { id: crypto.randomUUID(), role, parts: [{ type: "text", text }], metadata: { note: true, heading, action, claimId, suggest, triage, undo } }];
 }
 
 /** Holds the Ask Orvo AI chats so they survive panel changes and are reachable from the top bar (PRD FR-AI-8). Each claim has its own chat. */
@@ -160,62 +159,58 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [aiOpen, setAiOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [askDraft, setAskDraft] = useState<AskDraft | null>(null);
-  const [aiSession, setAiSession] = useState(LIST_SESSION);
   const [epoch, setEpoch] = useState(0);
   const [homeRequest, setHomeRequest] = useState(0);
   const goHome = useCallback(() => setHomeRequest((n) => n + 1), []);
   const dialog = useRef<DialogControl | null>(null);
   const runner = useRef<((label: string, extra?: ActionExtra) => ActionRunResult) | null>(null);
 
-  // A turn stays in the chat it started in, even when a screen tool moves to another claim, so its steps and its reply stay visible.
-  // When the turn is over, it moves into the chat of the claim Noa is now on.
-  const [turnOrigin, setTurnOrigin] = useState<string | null>(null);
-  const turnStart = useRef(0);
-  const sawBusy = useRef(false);
-  const shownSession = turnOrigin ?? aiSession;
-  const chat = useMemo(() => getChat(epoch, shownSession), [epoch, shownSession]);
+  const chat = useMemo(() => getChat(epoch, LIST_SESSION), [epoch]);
   const { messages, sendMessage, status, stop, regenerate } = useChat<AiMessage>({ chat });
 
   const askAi = useCallback(
     (text: string) => {
       chatHooks.lastPrompt = text;
-      turnStart.current = chat.messages.length;
-      sawBusy.current = false;
-      setTurnOrigin(shownSession);
       void sendMessage({ text });
     },
-    [sendMessage, chat, shownSession],
+    [sendMessage],
   );
 
-  useEffect(() => {
-    if (turnOrigin === null) return;
-    // The turn only counts as over after it has actually started.
-    if (status === "submitted" || status === "streaming") {
-      sawBusy.current = true;
-      return;
-    }
-    if (!sawBusy.current) return;
-    // More work is still coming if a screen tool is running or its result has not been sent back yet.
+  // Messages from the app wait while an answer is being written, then go in once it is done.
+  const queued = useRef<NewMessage[]>([]);
+  const statusRef = useRef(status);
+  const append = useCallback((message: NewMessage) => appendNote(chat, message), [chat]);
+  const isWorking = useCallback(() => {
+    if (statusRef.current === "submitted" || statusRef.current === "streaming") return true;
+    // A screen tool may be running, or its result may not be sent back yet.
     const last = chat.messages[chat.messages.length - 1];
-    const working = last?.role === "assistant" && last.parts.some((p) => p.type.startsWith("tool-") && ((p as { state?: string }).state === "input-available" || (p as { state?: string }).state === "input-streaming"));
-    if (working || lastAssistantMessageIsCompleteWithToolCalls({ messages: chat.messages })) return;
-    if (turnOrigin !== aiSession) moveTurn(chat, turnStart.current, getChat(epoch, aiSession));
-    // The turn is over: this is the chat finishing, an external system, so the state follows it.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTurnOrigin(null);
-  }, [turnOrigin, status, chat, aiSession, epoch]);
+    const running = last?.role === "assistant" && last.parts.some((p) => p.type.startsWith("tool-") && ["input-available", "input-streaming"].includes((p as { state?: string }).state ?? ""));
+    return running || lastAssistantMessageIsCompleteWithToolCalls({ messages: chat.messages });
+  }, [chat]);
+  useEffect(() => {
+    statusRef.current = status;
+    if (queued.current.length > 0 && !isWorking()) {
+      const waiting = queued.current;
+      queued.current = [];
+      for (const m of waiting) append(m);
+    }
+  }, [status, messages, isWorking, append]);
   const addAiMessage = useCallback(
-    (session: string, { role, text, heading, action, claimId, suggest }: NewMessage) => {
-      const target = getChat(epoch, session);
-      target.messages = [...target.messages, { id: crypto.randomUUID(), role, parts: [{ type: "text", text }], metadata: { note: true, heading, action, claimId, suggest } }];
+    (message: NewMessage) => {
+      if (isWorking()) queued.current.push(message);
+      else append(message);
     },
-    [epoch],
+    [isWorking, append],
   );
-  const hasAiMessages = useCallback((session: string) => getChat(epoch, session).messages.length > 0, [epoch]);
+  const lastTriageClaim = useCallback((): string | null => {
+    const all: { meta?: AiMeta }[] = [...chat.messages.map((m) => ({ meta: m.metadata })), ...queued.current.map((m) => ({ meta: m }))];
+    for (let i = all.length - 1; i >= 0; i--) if (all[i].meta?.triage) return all[i].meta?.claimId ?? null;
+    return null;
+  }, [chat]);
   const resetAi = useCallback(() => {
     void stop();
     chats.clear();
-    setTurnOrigin(null);
+    queued.current = [];
     setEpoch((e) => e + 1);
   }, [stop]);
   const stopAi = useCallback(() => void stop(), [stop]);
@@ -255,13 +250,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const setChatContext = useCallback((read: (() => ChatContext) | null) => {
     chatContextSource.read = read;
   }, []);
-  const setAiFallback = useCallback((run: ((prompt: string, session: string) => void) | null) => {
+  const setAiFallback = useCallback((run: ((prompt: string) => void) | null) => {
     chatHooks.fallback = run;
   }, []);
 
   const value = useMemo(
-    () => ({ aiOpen, setAiOpen, aiSession, setAiSession, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, askDraft, setAskDraft, setControl, hasControl, callControl, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome }),
-    [aiOpen, aiSession, messages, status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, hasAiMessages, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, askDraft, setAskDraft, setControl, hasControl, callControl, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome],
+    () => ({ aiOpen, setAiOpen, aiMessages: messages, aiStatus: status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, lastTriageClaim, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, askDraft, setAskDraft, setControl, hasControl, callControl, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome }),
+    [aiOpen, messages, status, askAi, stopAi, regenerateAi, voiceOpen, setVoiceOpen, setReplyListener, addAiMessage, lastTriageClaim, resetAi, setActionRunner, runAction, setDialogControl, controlDialog, askDraft, setAskDraft, setControl, hasControl, callControl, setChatContext, setUiToolHandler, setAiFallback, homeRequest, goHome],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
