@@ -32,10 +32,11 @@ export function RailNav({ label, items }: { label?: string; items: RailItem[] })
     <SidebarGroup>
       {label ? <SidebarGroupLabel>{label}</SidebarGroupLabel> : null}
       <SidebarGroupContent>
-        <SidebarMenu>
+        <SidebarMenu className="gap-1">
           {items.map((item) => (
             <SidebarMenuItem key={item.id}>
               <SidebarMenuButton
+                className="gap-3"
                 isActive={item.isActive}
                 tooltip={item.label}
                 aria-current={item.isActive ? "page" : undefined}

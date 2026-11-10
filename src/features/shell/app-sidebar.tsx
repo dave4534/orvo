@@ -11,7 +11,7 @@ import {
   Users,
 } from "lucide-react";
 
-import { AccountButton, RailNav, type RailItem } from "@/components/ui/c-sidebar-2";
+import { RailNav, type RailItem } from "@/components/ui/c-sidebar-2";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarRail } from "@/components/ui/sidebar";
 import { useClaims } from "@/store/claims-store";
 import { notInPrototype } from "./not-in-prototype";
@@ -51,13 +51,12 @@ export function AppSidebar() {
       className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
       aria-label="Main navigation"
     >
-      <SidebarContent role="navigation" aria-label="Primary">
+      <SidebarContent role="navigation" aria-label="Primary" className="pt-3">
         <RailNav items={toRail(MAIN)} />
       </SidebarContent>
 
       <SidebarFooter>
         <RailNav items={toRail(FOOTER)} />
-        <AccountButton name="Noa Levi" role="Manager" initials="NL" />
       </SidebarFooter>
 
       <SidebarRail />
