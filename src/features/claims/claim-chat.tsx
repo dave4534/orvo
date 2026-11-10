@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,18 @@ export function ClaimChat({ claim }: { claim: LocalClaim }) {
   // A question opened with Ask is typed in here and waits for Send. Sending it performs the Ask action.
   const ask = askDraft && askDraft.claimId === claim.id ? askDraft : null;
   const [seenAsk, setSeenAsk] = useState<unknown>(null);
+  const box = useRef<HTMLTextAreaElement>(null);
+  // The question is ready to read and edit: the box gets focus with the caret at the end.
+  useEffect(() => {
+    const el = box.current;
+    if (!ask || !el) return;
+    // A moment later, so a closing menu does not take the focus back.
+    const t = window.setTimeout(() => {
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+    }, 150);
+    return () => window.clearTimeout(t);
+  }, [ask]);
   if (ask && ask !== seenAsk) {
     setSeenAsk(ask);
     setDraft(ask.text);
@@ -104,7 +116,7 @@ export function ClaimChat({ claim }: { claim: LocalClaim }) {
       >
         {ask ? <p className="text-xs text-muted-foreground">Sending this asks {name} the question and moves the claim to Waiting on employee.</p> : null}
         <div className="flex items-end gap-2">
-          <Textarea aria-label={`Message to ${name}`} placeholder={`Message ${name}`} rows={2} value={draft} onChange={(e) => setDraft(e.target.value)} />
+          <Textarea ref={box} aria-label={`Message to ${name}`} placeholder={`Message ${name}`} rows={2} value={draft} onChange={(e) => setDraft(e.target.value)} />
           {ask ? (
             <Button
               type="button"

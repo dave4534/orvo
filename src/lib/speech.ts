@@ -61,30 +61,69 @@ export function currentVoice(): SpeechSynthesisVoice | undefined {
   return english.find((v) => v.name === DEFAULT_VOICE) ?? [...english].sort((a, b) => voiceScore(b) - voiceScore(a) || a.name.localeCompare(b.name))[0];
 }
 
+// Browsers load their voices a moment after the page does, and Google's cloud voices last of all. Speaking before that would use
+// another voice for the first sentence, so the first utterance waits (at most two seconds) for the chosen voice to appear.
+let voicesSettled = false;
+let waiting: Promise<void> | null = null;
+
+function voicesReady(): Promise<void> {
+  if (voicesSettled || typeof window === "undefined" || !("speechSynthesis" in window)) return Promise.resolve();
+  const synth = window.speechSynthesis;
+  const has = () => synth.getVoices().some((v) => v.name === DEFAULT_VOICE);
+  if (has()) {
+    voicesSettled = true;
+    return Promise.resolve();
+  }
+  waiting ??= new Promise<void>((resolve) => {
+    const finish = () => {
+      voicesSettled = true;
+      synth.removeEventListener("voiceschanged", check);
+      window.clearTimeout(timer);
+      resolve();
+    };
+    const check = () => {
+      if (has()) finish();
+    };
+    synth.addEventListener("voiceschanged", check);
+    const timer = window.setTimeout(finish, 2000);
+  });
+  return waiting;
+}
+
+// Start loading the voices as soon as the app is open.
+if (typeof window !== "undefined" && "speechSynthesis" in window) void voicesReady();
+
 // The utterance being spoken, so cancelling can silence its callbacks (a cancel is not "finished speaking").
 let current: SpeechSynthesisUtterance | null = null;
+// Bumped by every cancel, so a sentence that was still waiting for the voices is dropped.
+let token = 0;
 
 export function speak(text: string, handlers: { onStart?: () => void; onEnd?: () => void }): boolean {
   if (typeof window === "undefined" || !("speechSynthesis" in window) || !text) return false;
   cancelSpeech();
-  const utterance = new SpeechSynthesisUtterance(text);
-  current = utterance;
-  const voice = currentVoice();
-  if (voice) {
-    utterance.voice = voice;
-    utterance.lang = voice.lang;
-  } else {
-    utterance.lang = "en-US";
-  }
-  utterance.rate = 1;
-  utterance.onstart = () => handlers.onStart?.();
-  utterance.onend = () => handlers.onEnd?.();
-  utterance.onerror = () => handlers.onEnd?.();
-  window.speechSynthesis.speak(utterance);
+  const mine = token;
+  void voicesReady().then(() => {
+    if (mine !== token) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    current = utterance;
+    const voice = currentVoice();
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+    } else {
+      utterance.lang = "en-US";
+    }
+    utterance.rate = 1;
+    utterance.onstart = () => handlers.onStart?.();
+    utterance.onend = () => handlers.onEnd?.();
+    utterance.onerror = () => handlers.onEnd?.();
+    window.speechSynthesis.speak(utterance);
+  });
   return true;
 }
 
 export function cancelSpeech() {
+  token++;
   if (current) {
     current.onend = null;
     current.onerror = null;

@@ -131,7 +131,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
   });
 
   // Ask a question does not open a pop-up. It switches Details to the Chat tab with the wording typed in, and Send there asks it.
-  const asksInChat = needsReview && !flat && Boolean(onOpenMore);
+  const asksInChat = !flat && Boolean(onOpenMore);
   function openAsk(target: ActionSpec, spec: ActionSpec, message?: string) {
     setAskDraft({ claimId: claim.id, text: message || defaultMessage(spec, claim), send: (text) => runRef.current({ ...target.input, message: text.trim() }) });
     onOpenMore?.("chat");

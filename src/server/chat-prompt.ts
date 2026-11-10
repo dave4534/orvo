@@ -85,6 +85,6 @@ export function uiInstructions(ui: ChatUi, openClaim?: LocalClaim, pastClaim?: L
           return `\nButtons for ${target.id}: recommended "${rec.recommended?.label ?? "none"}"; others ${[...rec.secondary, ...rec.more].map((s) => `"${s.label}"`).join(", ")}.`;
         })()
       : "";
-  const voice = ui.voice ? "\nNoa is talking to you by voice and your reply will be read aloud. Answer in one or two short spoken sentences: no lists, no bold, no claim ids unless needed, and never more than 30 words. Acting on the screen is still required: call the tools, do not only talk about it." : "";
+  const voice = ui.voice ? "\nNoa is talking to you by voice and your reply will be read aloud. Answer in one or two short spoken sentences: no lists, no bold, no claim ids unless needed, and never more than 30 words. Acting on the screen is still required: call the tools, do not only talk about it. In voice, do not narrate actions: after opening, navigating, switching tabs or Details, filtering, searching, selecting, pressing menus or controls, or typing, write nothing at all, because Noa can see it happen (skip the \"Got it. I'll ...\" line too). Speak only when a decision was made on a claim (approve, decline, hold, send to Finance, a changed decision, a question or message sent, an undo): then write one short sentence saying what was decided, with no lead-in line. Also speak when something failed or you need an answer from Noa, or when she asked a question." : "";
   return `Where Noa is right now: ${where}${extras ? ` ${extras}` : ""}${buttons}${voice}`;
 }
