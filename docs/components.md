@@ -46,3 +46,4 @@ Every component in `src/components` is listed here. Update this file every time 
 | kbd | shadcn (stock, base-nova), the Command and Enter hint on the recommended action button | 2026-11-10 |
 | card | shadcn (stock, base-nova), the cards the chat shows (transaction, receipt, policy breakdown, message) | 2026-11-10 |
 | spinner | shadcn (stock, base-nova), used for steps in progress | 2026-11-09 |
+| flag-list (features/claims) | Composition of button (stock) and the flag icon in `docs/exceptions.md`: the employee's flags under the past claims table | 2026-11-10 |

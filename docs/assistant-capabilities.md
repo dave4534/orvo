@@ -44,7 +44,8 @@ The single list is `src/logic/assistant-tools.ts`. `npm run audit:assistant` che
 | `nextClaim` | Claim page | Next |
 | `previousClaim` | Claim page | Previous |
 | `backToClaims` | Claim page | Back to claims |
-| `takeAction` | Claim page | Every button in the action bar and More options: approve, decline, hold, ask, send to Finance, different amount, decide now, continue waiting |
+| `takeAction` | Claim page | Every button in the action bar and More options: approve, decline, wait for receipt, ask, send to Finance, different amount, flag claim, decide now, continue waiting |
+| `skipAhead` | Claims list | Skip ahead 14 days button beside the filters on Waiting on others (demo clock: waits end and their claims return to Needs review) |
 | `changeDecision` | Claim page and past claim window | Changing a decision that is already made (status menu, Edit decision, Fix) |
 | `confirmDialog` | Pop-ups and chat | Send or Confirm in a pop-up, and Send in the employee chat |
 | `cancelDialog` | Pop-ups and chat | Cancel in a pop-up, and clearing an unsent message |
@@ -53,7 +54,8 @@ The single list is `src/logic/assistant-tools.ts`. `npm run audit:assistant` che
 | `closeDetails` | Details panel | Close (X) |
 | `viewDocument` | Details panel | View on the receipt, the card statement and attachments |
 | `closeDocument` | Details panel | Close on the document window |
-| `openPastClaim` | Details panel | A row in Past claims |
+| `openPastClaim` | Details panel | A row in Past claims, and a row in the Flags list under it. The flag chip beside the employee's name opens that tab (`openDetails`) |
+| `removeFlag` | Details panel | Remove on a flag Noa added, in the Flags list under Past claims |
 | `closePastClaim` | Past claim window | Close on the past claim window |
 | `lookAtScreen` | Anywhere | Reading what is on screen: open dialogs and every visible control |
 | `pressControl` | Anywhere | Any visible button, menu item, tab, checkbox, radio, option or link, by its label (for example More options, a filter, the steps of a dialog) |
