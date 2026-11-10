@@ -82,7 +82,7 @@ function retarget(spec: ActionSpec, claim: LocalClaim): ActionSpec {
 /** Triage column of the claims queue: the claim, its comparison and the decision actions (actions stay pinned at the bottom). */
 export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMore, padded = true, flat = false, primary = true, onDecided, onReopen, onContinue }: Props) {
   const { perform, sendMessage } = useClaims();
-  const { setActionRunner, setDialogControl } = useWorkspace();
+  const { setActionRunner, setDialogControl, setAskDraft } = useWorkspace();
   const [pending, setPending] = useState<ActionSpec | null>(null);
   /** Wording to start the pop-up with, when it was opened from the chat. */
   const [pendingMessage, setPendingMessage] = useState<string | undefined>(undefined);
@@ -117,8 +117,25 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
     return true;
   }
 
+  // Always the latest run, since the question is sent later from the Chat tab.
+  const runRef = useRef(run);
+  useEffect(() => {
+    runRef.current = run;
+  });
+
+  // Ask a question does not open a pop-up. It switches Details to the Chat tab with the wording typed in, and Send there asks it.
+  const asksInChat = needsReview && !flat && Boolean(onOpenMore);
+  function openAsk(target: ActionSpec, spec: ActionSpec, message?: string) {
+    setAskDraft({ claimId: claim.id, text: message || defaultMessage(spec, claim), send: (text) => runRef.current({ ...target.input, message: text.trim() }) });
+    onOpenMore?.("chat");
+  }
+
   function choose(spec: ActionSpec) {
     const target = retarget(spec, claim);
+    if (asksInChat && spec.askMessage === "ask") {
+      openAsk(target, spec);
+      return;
+    }
     track("action_chosen", { claim: claim.id, action: target.id, recommended: rec?.recommended?.label === spec.label });
     if (target.confirm) {
       setPendingMessage(undefined);
@@ -137,6 +154,10 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
             const target = retarget(spec, claim);
             // Asking the employee a question opens the message pop-up with the wording filled in, so it can be read and sent or cancelled.
             if (spec.askMessage === "ask") {
+              if (asksInChat) {
+                openAsk(target, spec, extra?.message?.trim());
+                return { ok: true, note: `The Chat tab is open with the question to ${name} typed in. It is not sent yet. Noa can say "send it" to send it or "cancel" to clear it.` };
+              }
               setPendingMessage(extra?.message?.trim() || undefined);
               setPending(target);
               return { ok: true, note: `The message to ${name} is open for Noa to check. She can say "send it" to send it or "cancel" to close it.` };
