@@ -1,8 +1,18 @@
-import { Check, TriangleAlert } from "lucide-react";
+import type * as React from "react";
+import { Check } from "lucide-react";
 
 import { formatUsd } from "@/logic/format";
 import type { Comparison, Half } from "@/logic/comparison";
 import { cn } from "@/lib/utils";
+
+/** Material Icons "Warning", filled (Apache 2.0). Used alone, with no circle behind it. */
+function WarningIcon({ className, ...props }: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} {...props}>
+      <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
+    </svg>
+  );
+}
 
 const DOT: Record<Half["tone"], string> = {
   neutral: "bg-muted-foreground",
@@ -77,15 +87,13 @@ export function ComparisonView({ comparison }: { comparison: Comparison }) {
       {comparison.scale ? <GapScale scale={comparison.scale} /> : null}
       <p className={cn("flex items-center gap-2 px-6 pb-3 text-base font-semibold text-balance", comparison.scale ? "pt-11" : "pt-5")}>
         {/* Always an icon before the sentence: a filled green check when it matches, a filled warning when it is an issue. */}
-        <span
-          aria-hidden
-          className={cn(
-            "flex size-5 shrink-0 items-center justify-center rounded-full",
-            comparison.matches === true ? "bg-success text-success-foreground" : "bg-warning text-warning-foreground",
-          )}
-        >
-          {comparison.matches === true ? <Check className="size-3.5" strokeWidth={3} /> : <TriangleAlert className="size-3" strokeWidth={2.5} />}
-        </span>
+        {comparison.matches === true ? (
+          <span aria-hidden className="flex size-5 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground">
+            <Check className="size-3.5" strokeWidth={3} />
+          </span>
+        ) : (
+          <WarningIcon aria-hidden className="size-5 shrink-0 text-warning-foreground" />
+        )}
         {comparison.sentence}
       </p>
       {comparison.evidence.length > 0 ? (
