@@ -1,6 +1,6 @@
 "use client";
 
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import { Kbd } from "@/components/ui/kbd";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Ban, Check, ChevronDown, Command, CornerDownLeft, CircleDollarSign, Clock, Info, Landmark, ListChecks, MessageSquare, Pencil, TriangleAlert, Wrench, type LucideIcon } from "lucide-react";
 
@@ -450,10 +450,10 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                   <Button size="lg" className="h-11 bg-success text-success-foreground hover:bg-success/90" onClick={() => choose(rec.recommended!)}>
                     {rec.recommended.label}
                     {primary ? (
-                      <KbdGroup aria-hidden className="ml-1">
-                        <Kbd className="bg-white/20 text-current"><Command /></Kbd>
-                        <Kbd className="bg-white/20 text-current"><CornerDownLeft /></Kbd>
-                      </KbdGroup>
+                      <span aria-hidden className="ml-1 inline-flex items-center gap-1">
+                        <Kbd className="border border-current/25 bg-transparent text-current opacity-70"><Command /></Kbd>
+                        <Kbd className="border border-current/25 bg-transparent text-current opacity-70"><CornerDownLeft /></Kbd>
+                      </span>
                     ) : null}
                   </Button>
                 ) : null}

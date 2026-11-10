@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, Check, Copy, RotateCcw, Sparkles, X } from "lucide-react";
+import { ArrowDown, Check, Command, Copy, CornerDownLeft, RotateCcw, Sparkles, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Kbd } from "@/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { LocalClaim } from "@/logic/local";
 import { track } from "@/logic/track";
@@ -38,10 +39,24 @@ function suggestionOf(m: AiMessage): { claimId: string; label: string } | null {
 }
 
 /** The default small outline button under a message that suggests an action. It runs the same action as the one in the action bar. */
-function SuggestedAction({ label, onAct }: { label: string; onAct: (label: string) => void }) {
+/** Claude's shortcut hint: keys in a subtle outline with a transparent background, 4px apart. */
+export const ShortcutKeys = () => (
+  <span aria-hidden className="inline-flex items-center gap-1">
+    <Kbd className="h-5 min-w-5 rounded-md border border-current/25 bg-transparent text-current opacity-70">
+      <Command />
+    </Kbd>
+    <Kbd className="h-5 min-w-5 rounded-md border border-current/25 bg-transparent text-current opacity-70">
+      <CornerDownLeft />
+    </Kbd>
+  </span>
+);
+
+/** The default small outline button under a message that suggests an action. Cmd+Enter runs the latest one, shown with its keys. */
+function SuggestedAction({ label, onAct, shortcut = false }: { label: string; onAct: (label: string) => void; shortcut?: boolean }) {
   return (
-    <Button variant="outline" size="sm" className="self-start" onClick={() => onAct(label)}>
+    <Button variant="outline" size="sm" className="gap-2 self-start" onClick={() => onAct(label)}>
       {label}
+      {shortcut ? <ShortcutKeys /> : null}
     </Button>
   );
 }
@@ -69,7 +84,7 @@ function workingLabel(last: AiMessage | undefined): string {
   return textOf(last) ? "Writing" : "Thinking";
 }
 
-function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry }: { m: AiMessage; isLast: boolean; busy: boolean; canAct: (claimId: string, label: string) => boolean; onAct: (label: string) => void; onOpenMore: (tab: MoreTab) => void; onRetry: () => void }) {
+function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry, shortcutLabel }: { m: AiMessage; isLast: boolean; busy: boolean; canAct: (claimId: string, label: string) => boolean; onAct: (label: string) => void; onOpenMore: (tab: MoreTab) => void; onRetry: () => void; shortcutLabel: string | null }) {
   const [copied, setCopied] = useState(false);
   const text = textOf(m);
   const steps = stepsOf(m);
@@ -90,7 +105,7 @@ function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry }: { m: A
       <div className={`${enter} flex flex-col gap-2 text-sm leading-relaxed`}>
         {m.metadata.heading ? <div className="text-xs text-muted-foreground">{m.metadata.heading}</div> : null}
         <ChatMarkdown>{text}</ChatMarkdown>
-        {noteSuggest ? <SuggestedAction label={noteSuggest} onAct={onAct} /> : null}
+        {noteSuggest ? <SuggestedAction label={noteSuggest} onAct={onAct} shortcut={shortcutLabel === noteSuggest} /> : null}
         {undo ? (
           <Button variant="outline" size="sm" className="self-start" disabled={!isUndoable(undo.entryId)} onClick={() => undoDecision(undo.entryId)}>
             {isUndoable(undo.entryId) ? "Undo" : "Undone"}
@@ -113,7 +128,7 @@ function Message({ m, isLast, busy, canAct, onAct, onOpenMore, onRetry }: { m: A
     <div className={`${enter} flex flex-col gap-2 text-sm leading-relaxed`}>
       {steps.length > 0 ? <ToolSteps steps={steps} running={stepsRunning} /> : null}
       {text ? <ChatMarkdown>{text}</ChatMarkdown> : null}
-      {suggestion && finished && canAct(suggestion.claimId, suggestion.label) ? <SuggestedAction label={suggestion.label} onAct={onAct} /> : null}
+      {suggestion && finished && canAct(suggestion.claimId, suggestion.label) ? <SuggestedAction label={suggestion.label} onAct={onAct} shortcut={shortcutLabel === suggestion.label} /> : null}
       {text && finished ? (
         <div className="-ml-1.5 flex items-center gap-0.5 text-muted-foreground">
           <IconAction
@@ -147,6 +162,31 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
   // A suggested action only shows while that claim is open and still waiting for review.
   const availableLabels = claim && claim.status === "waiting_on_noa" ? allActionsFor(claim).map((s) => s.label) : [];
   const canAct = (claimId: string, label: string) => claim?.id === claimId && availableLabels.includes(label);
+
+  // Cmd+Enter (Ctrl+Enter elsewhere) runs the suggested action of the latest answer, the one shown with its keys. It stays out of the way
+  // while a dialog is open, and while typing a message that has text in it.
+  const latestSuggestion = (() => {
+    const m = aiMessages[aiMessages.length - 1];
+    if (!m || m.role !== "assistant") return null;
+    if (m.metadata?.note) return m.metadata.suggest && m.metadata.claimId && canAct(m.metadata.claimId, m.metadata.suggest) ? m.metadata.suggest : null;
+    const s = suggestionOf(m);
+    return s && !busy && canAct(s.claimId, s.label) ? s.label : null;
+  })();
+  useEffect(() => {
+    if (!latestSuggestion) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Enter" || !(e.metaKey || e.ctrlKey) || e.defaultPrevented) return;
+      const t = e.target as HTMLElement | null;
+      const typing = t?.closest("input,textarea,select,[contenteditable=true]");
+      if (typing && (t as HTMLTextAreaElement).value?.trim()) return;
+      if (document.querySelector("[role=dialog],[role=alertdialog]")) return;
+      e.preventDefault();
+      runAction(latestSuggestion, { interactive: true });
+    };
+    // Capture phase, so this runs before the bottom bar's handler and can mark the event as handled.
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [latestSuggestion, runAction]);
 
   // If the live model can't answer (no connection, limit reached), a scripted reply from the claim's data steps in.
   useEffect(() => {
@@ -211,7 +251,7 @@ export function AiPanel({ claim, allClaims, onClose, onOpenMore }: Props) {
               </div>
             </div>
           ) : (
-            aiMessages.map((m) => <Message key={m.id} m={m} isLast={m === last} busy={busy} canAct={canAct} onAct={(label) => runAction(label, { interactive: true })} onOpenMore={onOpenMore} onRetry={regenerateAi} />)
+            aiMessages.map((m) => <Message key={m.id} m={m} isLast={m === last} busy={busy} canAct={canAct} onAct={(label) => runAction(label, { interactive: true })} onOpenMore={onOpenMore} onRetry={regenerateAi} shortcutLabel={latestSuggestion} />)
           )}
           {busy ? <WorkingIndicator label={workingLabel(last)} /> : null}
         </div>
