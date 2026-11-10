@@ -361,8 +361,8 @@ export function ClaimsView() {
     setOpenId(null);
     setDetailsOpen(false);
     setPastId(null);
-    // Going back to the claims list closes the chat pane.
-    setAiOpen(false);
+    // Going back to the claims list closes the chat pane, unless voice mode is on: the conversation carries on there.
+    if (!voiceOpen) setAiOpen(false);
     setAiSession(LIST_SESSION);
   }
 
