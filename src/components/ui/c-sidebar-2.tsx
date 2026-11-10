@@ -44,7 +44,7 @@ export function RailNav({ label, items }: { label?: string; items: RailItem[] })
                 {item.icon}
                 <span>{item.label}</span>
               </SidebarMenuButton>
-              {item.badge ? <SidebarMenuBadge>{item.badge}</SidebarMenuBadge> : null}
+              {item.badge ? <SidebarMenuBadge className="right-3">{item.badge}</SidebarMenuBadge> : null}
             </SidebarMenuItem>
           ))}
         </SidebarMenu>

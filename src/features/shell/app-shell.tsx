@@ -56,7 +56,7 @@ function TopBar() {
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="[--header-height:4rem]">
-      <SidebarProvider className="flex min-h-svh flex-col">
+      <SidebarProvider className="flex min-h-svh flex-col" style={{ "--sidebar-width": "14rem" } as React.CSSProperties}>
         <TopBar />
         <div className="flex flex-1">
           <AppSidebar />
