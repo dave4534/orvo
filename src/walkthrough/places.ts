@@ -8,4 +8,6 @@ export type PlaceId =
   | "claims-queue"
   | "queue-ai-voice"
   | "chat-cards"
-  | "more-options";
+  | "more-options"
+  | "needs-review-triage"
+  | "voice-mode";

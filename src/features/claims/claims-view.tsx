@@ -536,10 +536,12 @@ export function ClaimsView() {
           setTab("done");
           setOpenId(null);
           break;
+        case "needs-review-triage":
         case "claims-queue":
           setTab("needs_review");
           if (firstReview) openClaimById(firstReview);
           break;
+        case "voice-mode":
         case "queue-ai-voice":
           setTab("needs_review");
           if (firstReview) openClaimById(firstReview);
