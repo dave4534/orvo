@@ -5,7 +5,7 @@ The comparison in the triage card is built in `src/logic/comparison.ts`. Every c
 1. **Same attribute on both halves.** Amount against amount, ride ID against ride ID, one purchase against another. Never a claim against a status such as "Declined", and never claim numbers, which always differ.
 2. **The sentence is about what the halves show.** It names that attribute and says in plain words whether it passes or fails. A pass has the green check, a fail has the amber warning.
 3. **Status lives in the status bar.** "Declined" or "Approved" is shown in the bar and in the activity, never as a half. A claim the manager declined keeps the comparison of the reason it came to review, so it shows what the decision was about.
-4. **Tiles hold supporting facts only.** One small card per fact (label above, value below), in a row that wraps. The amount is never a tile, because it is already at the top right of the card.
+4. **No key/value tiles.** The card shows the two halves, the sentence and the policy only. The bottom line states why Noa sees the claim and where its rule comes from.
 5. **Every comparison names its policy.** The one of the three policies the claim is read against (Meals, Receipt or Finance) is shown under the money as a small solid icon and its name, and nothing else. It is set by `policyForClaim` in `policy.ts`, so decided claims get one too, not only the queue.
 6. **The chat note reads the same facts.** `assess` in `recommendations.ts` builds the policy gap and the short reason from the same data, so the note never disagrees with the card.
 
