@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatUsd } from "@/logic/format";
 import type { Comparison, Half } from "@/logic/comparison";
 import { policyLabel, type PolicyId } from "@/logic/policy";
+import { clipTo, TILE_VALUE_MAX } from "@/logic/limits";
 import { cn } from "@/lib/utils";
 
 /** Material Icons "Warning", filled (Apache 2.0). Used alone, with no circle behind it. */
@@ -124,7 +125,8 @@ export function ComparisonView({ comparison }: { comparison: Comparison }) {
             <Card key={`${e.label}-${e.value}`} size="sm" className="gap-0 bg-muted/40 p-0 shadow-none">
               <CardContent className="flex min-w-0 flex-col gap-1 p-3">
                 <span className="text-xs text-muted-foreground">{e.label}</span>
-                <span className="text-base leading-snug font-semibold break-words">{e.value}</span>
+                {/* A value is at most 20 characters. The full text is in the tooltip. */}
+                <span title={e.value} className="text-base leading-snug font-semibold break-words">{clipTo(e.value, TILE_VALUE_MAX)}</span>
               </CardContent>
             </Card>
           ))}

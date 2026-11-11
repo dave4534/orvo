@@ -173,7 +173,8 @@ function buildComparisonCore(claim: LocalClaim, all: LocalClaim[]): Comparison {
           scale: scaleFor(RECEIPT_LIMIT, claimed),
           sentence: `${formatUsd(claimed - RECEIPT_LIMIT)} over the no-receipt limit.`,
           evidence: [
-            ...(statement ? [{ label: "Card statement", value: statement.shows }] : []),
+            // The merchant only: the amount and date are already in the claim.
+            ...(statement ? [{ label: "Card statement", value: statement.shows.replace(/\s*\$[\d,.]+.*$/, "") }] : []),
             ...note,
             ...(requests ? [{ label: "Requests sent", value: `${requests}, one a day` }] : []),
           ],
