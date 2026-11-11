@@ -95,7 +95,7 @@ export function ComparisonView({ comparison }: { comparison: Comparison }) {
   const leftDot = isDuplicate ? SCALE_DOT.low : comparison.scale ? (noGap || lowIsLeft ? SCALE_DOT.low : SCALE_DOT.high) : DOT[comparison.left.tone];
   const rightDot = isDuplicate ? (comparison.matches ? SCALE_DOT.low : SCALE_DOT.high) : comparison.scale ? (noGap || !lowIsLeft ? SCALE_DOT.low : SCALE_DOT.high) : DOT[comparison.right.tone];
   return (
-    <div>
+    <div className="flex flex-1 flex-col">
       <div className="grid grid-cols-[1fr_1px_1fr] border-y">
         <HalfView half={comparison.left} dot={leftDot} />
         <div className="bg-border" />

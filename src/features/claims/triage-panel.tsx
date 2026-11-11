@@ -335,7 +335,7 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
               ) : null}
             </div>
 
-            <div>
+            <div className="flex flex-1 flex-col">
               <ComparisonView comparison={comparison} />
             </div>
 
@@ -358,8 +358,8 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
               </p>
             ) : null}
             {needsReview ? (
-              // Why Noa sees this claim, why it needs her, and why the agent could not do it itself. Twenty words at most.
-              <div className="flex items-start gap-2 border-t bg-muted/40 px-6 py-3 text-sm">
+              // Why Noa sees this claim, why it needs her, and why the agent could not do it itself. Pinned to the bottom of the card.
+              <div className="mt-auto flex items-start gap-2 bg-muted/40 px-6 py-3 text-sm">
                 <VisibilityIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                 <p className="text-muted-foreground">{whyNoaSees(claim, allClaims, now)}</p>
               </div>
