@@ -21,3 +21,9 @@ A custom component is allowed only when no shadcn component, Studio or reui bloc
 - **What:** the three solid icons shown under the money on a policy half of the card: "Restaurant" for the meals policy, "Receipt" for the receipt policy and "Account balance" for the Finance policy, drawn as inline SVG.
 - **Why no shadcn part fits:** shadcn has no icon components, and Noa asked for solid Material icons for small icons.
 - **Built from:** nothing. Each is one SVG path from Google Material Icons (Apache 2.0), used with currentColor.
+
+## visibility (src/components/icons/visibility.tsx)
+
+- **What:** the eye icon at the bottom of each Needs review card, next to the line that says why Noa is seeing the claim. The Material "Visibility" icon, filled, drawn as inline SVG.
+- **Why no shadcn part fits:** shadcn has no icon components and its lucide eye is an outline. Noa asked for solid Material icons on small glyphs.
+- **Built from:** nothing. One SVG path from Google Material Icons (Apache 2.0), used with currentColor.

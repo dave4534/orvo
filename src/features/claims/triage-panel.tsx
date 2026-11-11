@@ -4,6 +4,7 @@ import { Kbd } from "@/components/ui/kbd";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Ban, Check, ChevronDown, Command, CornerDownLeft, CircleDollarSign, Clock, Info, Landmark, MessageSquare, Pencil, TriangleAlert, Wrench, type LucideIcon } from "lucide-react";
 
+import { VisibilityIcon } from "@/components/icons/visibility";
 import { StatusBanner } from "@/components/status-banner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import { daysOverTarget, formatDuration, isOpen, WAIT_TARGET_DAYS, waitingFor } 
 import { isAgentDecided, isSpotCheck, isWaitOver, type LocalClaim } from "@/logic/local";
 import { allActionsFor, assess, moreOptionsFor, recommendationFor, type ActionSpec } from "@/logic/recommendations";
 import { photoFor } from "@/logic/photos";
+import { whyNoaSees } from "@/logic/why-noa";
 import { track } from "@/logic/track";
 import { cn } from "@/lib/utils";
 import { useClaims } from "@/store/claims-store";
@@ -354,6 +356,13 @@ export function TriagePanel({ claim, allClaims, stacked, onOpenDetails, onOpenMo
                 Waiting on {name}. {chase.attempts.length} {chase.attempts.length === 1 ? "request" : "requests"} sent, one a day until there is a reply.
                 {chase.next_attempt_at ? ` Next request ${formatDay(chase.next_attempt_at)}.` : ""}
               </p>
+            ) : null}
+            {needsReview ? (
+              // Why Noa sees this claim, why it needs her, and why the agent could not do it itself. Twenty words at most.
+              <div className="flex items-start gap-2 border-t bg-muted/40 px-6 py-3 text-sm">
+                <VisibilityIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                <p className="text-muted-foreground">{whyNoaSees(claim, allClaims, now)}</p>
+              </div>
             ) : null}
           </div>
         </div>
